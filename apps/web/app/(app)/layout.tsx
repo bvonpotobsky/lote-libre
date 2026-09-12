@@ -14,7 +14,11 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-svh flex-col">
-      <Encabezado nombre={user.name} />
+      <Encabezado
+        nombre={user.name}
+        email={user.email}
+        image={user.image}
+      />
       <main className="flex-1">{children}</main>
     </div>
   )

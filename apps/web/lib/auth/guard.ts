@@ -3,14 +3,19 @@ import { headers } from "next/headers"
 import { ApiError } from "@/lib/http/responses"
 import { auth } from "./index"
 
-export type CurrentUser = { id: string; email: string; name: string }
+export type CurrentUser = {
+  id: string
+  email: string
+  name: string
+  image: string | null
+}
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const result = await auth.api.getSession({ headers: await headers() })
   if (!result) return null
 
-  const { id, email, name } = result.user
-  return { id, email, name }
+  const { id, email, name, image } = result.user
+  return { id, email, name, image: image ?? null }
 }
 
 /**

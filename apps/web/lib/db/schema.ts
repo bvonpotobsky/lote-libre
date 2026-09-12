@@ -39,7 +39,9 @@ export type OtbnCategory =
 
 export type VerificationStatus = "pending" | "ready" | "failed"
 
-export type LoteSource = "draw" | "kml" | "geojson"
+export type LoteSource = "draw" | "kml" | "geojson" | "api"
+
+export type ApiKeyScope = "lotes:read" | "lotes:create"
 
 /** One consulted layer, recorded so the PDF can cite what it was based on. */
 export type SourceRef = {
@@ -83,6 +85,30 @@ export const user = pgTable("user", {
     .notNull()
     .defaultNow(),
 })
+
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    keyPrefix: text("key_prefix").notNull(),
+    keyHash: text("key_hash").notNull(),
+    scopes: jsonb("scopes").notNull().$type<ApiKeyScope[]>().default([]),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("api_keys_hash_idx").on(table.keyHash),
+    index("api_keys_user_id_idx").on(table.userId),
+  ],
+)
 
 export const session = pgTable(
   "session",

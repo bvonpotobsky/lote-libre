@@ -36,6 +36,46 @@ export const ERRORS = {
     message: "Los datos que mandaste no son válidos.",
     hint: "Revisá el nombre y la geometría del lote.",
   },
+  API_KEY_REQUIRED: {
+    status: 401,
+    message: "Falta la API key.",
+    hint: "Enviá Authorization: Bearer llk_... en la request.",
+  },
+  API_KEY_INVALID: {
+    status: 401,
+    message: "La API key no es válida.",
+    hint: "Revisá la key o generá una nueva desde tu cuenta.",
+  },
+  API_KEY_REVOKED: {
+    status: 401,
+    message: "La API key fue revocada.",
+    hint: "Generá una nueva key desde tu cuenta.",
+  },
+  API_KEY_EXPIRED: {
+    status: 401,
+    message: "La API key venció.",
+    hint: "Generá una nueva key desde tu cuenta.",
+  },
+  INSUFFICIENT_SCOPE: {
+    status: 403,
+    message: "La API key no tiene permiso para esta operación.",
+    hint: "Usá una key con el permiso requerido.",
+  },
+  API_KEY_LIMIT: {
+    status: 422,
+    message: "Llegaste al límite de API keys activas.",
+    hint: "Revocá una key que ya no uses antes de crear otra.",
+  },
+  API_KEY_NOT_FOUND: {
+    status: 404,
+    message: "No encontramos esa API key.",
+    hint: "Revisá la credencial que querés revocar.",
+  },
+  INVALID_CURSOR: {
+    status: 422,
+    message: "El cursor no es válido.",
+    hint: "Volvé a pedir la primera página de resultados.",
+  },
 
   /* --- Geometry ---------------------------------------------------------- */
   GEOMETRY_NOT_POLYGON: {

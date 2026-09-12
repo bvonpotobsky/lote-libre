@@ -271,10 +271,14 @@ export const satelliteImages = sqliteTable(
     dateFrom: text("date_from").notNull(),
     dateTo: text("date_to").notNull(),
 
-    /** Whether the window came from Xweather or from the wide-range fallback. */
+    /**
+     * "xweather"  - a clear five-day window chosen from real cloud data.
+     * "ampliada"  - that window came back empty, so the wide range was used.
+     * "fallback"  - Xweather gave us nothing, so the wide range was used.
+     */
     windowSource: text("window_source")
       .notNull()
-      .$type<"xweather" | "fallback">(),
+      .$type<"xweather" | "ampliada" | "fallback">(),
     /** Mean daily cloud cover over the chosen window, 0-100. Null on fallback. */
     cloudAvgPct: real("cloud_avg_pct"),
 

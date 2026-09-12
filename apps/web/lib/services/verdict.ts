@@ -51,23 +51,32 @@ export function decideVerdict({
   forestLossPct,
   otbnCategory,
 }: VerdictInput): VerdictOutcome {
-  const reasons: VerdictReason[] = []
-
   if (forestLossPct >= MARGINAL_LOSS_PCT) {
-    reasons.push("FOREST_LOSS_AFTER_CUTOFF")
-    return { verdict: "rojo", reasons }
+    return { verdict: "rojo", reasons: ["FOREST_LOSS_AFTER_CUTOFF"] }
   }
 
-  if (forestLossPct > 0) reasons.push("FOREST_LOSS_MARGINAL")
-  if (otbnCategory === "rojo") reasons.push("OTBN_CATEGORY_I")
-  if (otbnCategory === "amarillo") reasons.push("OTBN_CATEGORY_II")
-  if (otbnCategory === "sin_cobertura") reasons.push("OTBN_NO_COVERAGE")
-  // `fuera_de_otbn` adds no reason: it is the absence of a restriction, not a
-  // finding, and it does not on its own keep a lote from being green.
+  /** Findings force amber. Notes are recorded but do not change the verdict. */
+  const findings: VerdictReason[] = []
+  const notes: VerdictReason[] = []
 
-  if (reasons.length > 0) return { verdict: "amarillo", reasons }
+  if (forestLossPct > 0) findings.push("FOREST_LOSS_MARGINAL")
+  if (otbnCategory === "rojo") findings.push("OTBN_CATEGORY_I")
+  if (otbnCategory === "amarillo") findings.push("OTBN_CATEGORY_II")
+  if (otbnCategory === "sin_cobertura") findings.push("OTBN_NO_COVERAGE")
 
-  return { verdict: "verde", reasons: ["NO_FINDINGS"] }
+  // Recorded even when the verdict is green. The shipped OTBN layers are
+  // simplified, and the area that simplification drops is the smallest
+  // scattered patches — so "outside the zoning" carries a real, if small,
+  // chance of being "inside a patch too small to survive simplification".
+  // A green verdict has to say that out loud; a silent false green is the
+  // worst failure this document can produce.
+  if (otbnCategory === "fuera_de_otbn") notes.push("OTBN_OUTSIDE")
+
+  if (findings.length > 0) {
+    return { verdict: "amarillo", reasons: [...findings, ...notes] }
+  }
+
+  return { verdict: "verde", reasons: [...notes, "NO_FINDINGS"] }
 }
 
 /** Spanish copy for each reason, shown in the evidence panel and the PDF. */
@@ -83,7 +92,7 @@ export const REASON_COPY: Record<VerdictReason, string> = {
   OTBN_NO_COVERAGE:
     "No hay capa de OTBN cargada para esta provincia, así que no pudimos verificar la categoría.",
   OTBN_OUTSIDE:
-    "El lote no está comprendido en el OTBN de la provincia: no fue clasificado como bosque nativo.",
+    "El lote no está comprendido en el OTBN de la provincia: no fue clasificado como bosque nativo. La capa publicada está simplificada, así que los parches más chicos podrían no estar representados.",
   NO_FINDINGS:
     "Sin pérdida de cobertura posterior al 31/12/2020 y sin restricción del OTBN.",
 }

@@ -11,7 +11,7 @@ export type DocumentImagery = {
   desde: string
   hasta: string
   nubosidadMediaPct: number | null
-  origenVentana: "xweather" | "fallback"
+  origenVentana: "xweather" | "ampliada" | "fallback"
   sinImagen: boolean
 }
 

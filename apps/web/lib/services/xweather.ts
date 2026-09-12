@@ -11,9 +11,14 @@ const BASE_URL = "https://data.api.xweather.com/conditions/summary"
 /** Xweather answers at most one month per request. Longer spans get chunked. */
 const MAX_DAYS_PER_REQUEST = 31
 const REQUEST_TIMEOUT_MS = 10_000
-/** Requests answer in 120-500 ms, so pacing them costs almost nothing. */
-const INTER_REQUEST_DELAY_MS = 250
-const RATE_LIMIT_BACKOFF_MS = 3_000
+/**
+ * Requests answer in 120-500 ms, so pacing them is nearly free — and the
+ * account's per-minute allowance is small enough that a burst of three trips
+ * it. Measured: 250 ms was still too tight when several lotes are processed
+ * back to back, as the seed does.
+ */
+const INTER_REQUEST_DELAY_MS = 700
+const RATE_LIMIT_BACKOFF_MS = 8_000
 
 export type DailyCloud = { date: string; cloudPct: number }
 

@@ -127,3 +127,73 @@
     @apply bg-background text-foreground;
     }
 }
+/* ==========================================================================
+   Lote Limpio — design tokens
+   A field tool, not a dashboard. Everything here answers to one constraint:
+   a producer reading this on a phone, in the sun, with one hand free.
+   ========================================================================== */
+
+@theme {
+  /* Surfaces. Paper, not "card". */
+  --color-paper: #fafaf8;
+  --color-field: #eff1ec;
+  --color-line: #d5d9d2;
+
+  /* Pure black ink is a deliberate choice, not a default: maximum luminance
+     contrast is what keeps this legible on a windshield-lit screen. */
+  --color-ink: #000000;
+  --color-ink-soft: #4a524c;
+
+  /* Verdict. Never used alone — every verdict also carries its words. */
+  --color-verde: #17663a;
+  --color-amarillo: #e0a106;
+  --color-rojo: #b3161c;
+  /* Amber is unreadable as text on white; this is its ink counterpart. */
+  --color-alerta: #8a5a00;
+
+  /* OTBN categories in the Ministerio de Ambiente's own published SLD colours,
+     so the chip matches the map a producer may already have seen. */
+  --color-otbn-i: #f10000;
+  --color-otbn-ii: #eff60b;
+  --color-otbn-iii: #33a02c;
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
+  --card: #ffffff;
+  --card-foreground: var(--color-ink);
+  --primary: var(--color-ink);
+  --primary-foreground: var(--color-paper);
+  --secondary: var(--color-field);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-field);
+  --muted-foreground: var(--color-ink-soft);
+  --border: var(--color-line);
+  --input: var(--color-line);
+  --ring: var(--color-ink);
+  --radius: 0.375rem;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  /* Hectares and percentages line up column to column. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Touch targets sized for a gloved thumb on a moving vehicle. */
+@utility tap {
+  min-height: 3.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

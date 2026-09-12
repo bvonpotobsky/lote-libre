@@ -1,0 +1,37 @@
+[     109ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[     119ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[    6841ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[    6887ms] [LOG] [Fast Refresh] done in 148ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[    7107ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[    7230ms] [LOG] [Fast Refresh] done in 224ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[    8416ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[    8520ms] [LOG] [Fast Refresh] done in 205ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[    8783ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[    8917ms] [LOG] [Fast Refresh] done in 235ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   38931ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   39126ms] [LOG] [Fast Refresh] done in 266ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   58343ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   58395ms] [LOG] [Fast Refresh] done in 153ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   59497ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   59505ms] [LOG] [Fast Refresh] done in 110ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   59613ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   59666ms] [LOG] [Fast Refresh] done in 154ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   62827ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   62839ms] [LOG] [Fast Refresh] done in 114ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   65691ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   65702ms] [LOG] [Fast Refresh] done in 113ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   65808ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   65826ms] [LOG] [Fast Refresh] done in 120ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   66936ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   66998ms] [LOG] [Fast Refresh] done in 164ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   69734ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   70013ms] [LOG] [Fast Refresh] done in 380ms @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477
+[   70301ms] ApiError: UNAUTHORIZED
+    at requireUser (about://React/Server/file:///Users/bvonpotobsky/Desktop/www/lote-limpio/apps/web/.next/dev/server/chunks/ssr/%5Broot-of-the-server%5D__0myc~21._.js?48:643:22)
+    at  LotePage (about://React/Server/file:///Users/bvonpotobsky/Desktop/www/lote-limpio/apps/web/.next/dev/server/chunks/ssr/%5Broot-of-the-server%5D__09t61zt._.js?49:247:18)
+    at resolveErrorDev (http://localhost:3000/_next/static/chunks/0kic_next_dist_compiled_react-server-dom-turbopack_0-bnmap._.js:1919:150)
+    at processFullStringRow (http://localhost:3000/_next/static/chunks/0kic_next_dist_compiled_react-server-dom-turbopack_0-bnmap._.js:2434:29)
+    at processFullBinaryRow (http://localhost:3000/_next/static/chunks/0kic_next_dist_compiled_react-server-dom-turbopack_0-bnmap._.js:2393:9)
+    at processBinaryChunk (http://localhost:3000/_next/static/chunks/0kic_next_dist_compiled_react-server-dom-turbopack_0-bnmap._.js:2502:221)
+    at progress (http://localhost:3000/_next/static/chunks/0kic_next_dist_compiled_react-server-dom-turbopack_0-bnmap._.js:2689:13)
+[   73422ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0kic_next_dist_0z41kha._.js:2477

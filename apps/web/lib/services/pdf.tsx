@@ -213,6 +213,9 @@ function DueDiligenceDocument({
                 {imagen.origenVentana === "fallback"
                   ? " (sin datos meteorológicos; se aplicó el criterio de menor nubosidad de Sentinel Hub)"
                   : ""}
+                {imagen.origenVentana === "ampliada"
+                  ? " (la ventana despejada no tuvo imágenes utilizables; se amplió al período completo)"
+                  : ""}
                 {imagen.sinImagen ? " — no se obtuvo imagen despejada" : ""}
               </Text>
             ))}

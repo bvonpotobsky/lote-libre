@@ -1,0 +1,42 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - generic [ref=f2e4]:
+        - paragraph [ref=f2e5]: Lote Limpio
+        - heading "Demostrá que tu lote no viene de tierra desmontada." [level=1] [ref=f2e6]
+        - paragraph [ref=f2e7]: Europa le pide al importador, el importador al exportador, el exportador al acopio y el acopio a vos. Cargá el lote, verificalo contra las capas oficiales y descargá el documento para entregar.
+      - list [ref=f2e8]:
+        - listitem [ref=f2e9]:
+          - paragraph [ref=f2e10]: Sin observaciones
+          - paragraph [ref=f2e11]: Sin pérdida de bosque posterior al 31/12/2020.
+        - listitem [ref=f2e12]:
+          - paragraph [ref=f2e13]: Con observaciones
+          - paragraph [ref=f2e14]: Categoría protegida del OTBN, o superposición mínima.
+        - listitem [ref=f2e15]:
+          - paragraph [ref=f2e16]: No cumple
+          - paragraph [ref=f2e17]: Desmonte detectado dentro del lote después de la fecha de corte.
+      - paragraph [ref=f2e18]: "Fuentes: Monitoreo de Superficie de Bosque Nativo e Inventario de Bosques Nativos (Ley 26.331) del Ministerio de Ambiente, e imágenes Sentinel-2 de Copernicus."
+    - generic [ref=f2e20]:
+      - heading "Entrá a tu cuenta" [level=2] [ref=f2e21]
+      - generic [ref=f2e22]:
+        - generic [ref=f2e23]:
+          - generic [ref=f2e24]: Email
+          - textbox "Email" [ref=f2e25]:
+            - /placeholder: tu@campo.com.ar
+            - text: ana@campo.test
+        - generic [ref=f2e26]:
+          - generic [ref=f2e27]: Contraseña
+          - textbox "Contraseña" [ref=f2e28]: cosecha2026
+        - button "Entrando…" [disabled]
+      - paragraph [ref=f2e30]:
+        - text: ¿Todavía no tenés cuenta?
+        - link "Creá una" [ref=f2e31] [cursor=pointer]:
+          - /url: /crear-cuenta
+  - button "Open Next.js Dev Tools" [ref=f2e42] [cursor=pointer]:
+    - generic [ref=f2e45]:
+      - text: Compiling
+      - generic [ref=f2e46]:
+        - generic [ref=f2e47]: .
+        - generic [ref=f2e48]: .
+        - generic [ref=f2e49]: .
+  - alert [ref=f2e41]

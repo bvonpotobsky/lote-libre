@@ -1,0 +1,31 @@
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e37] [cursor=pointer]
+  - alert [ref=e41]
+  - generic [ref=e42]:
+    - banner [ref=e43]:
+      - link "Lote Limpio" [ref=e44] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e45]:
+        - generic [ref=e46]: Ana Gómez
+        - button "Salir" [ref=e47]
+    - main [ref=e48]:
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - heading "Tus lotes" [level=1] [ref=e51]
+          - link "Cargar un lote" [ref=e52] [cursor=pointer]:
+            - /url: /lotes/nuevo
+        - list [ref=e53]:
+          - listitem [ref=e54]:
+            - link "Sin observaciones La Amarga 500,2 ha · Córdoba · RENSPA 14.105.0.00238/CD" [ref=e55] [cursor=pointer]:
+              - /url: /lotes/DzFZsVDerRb0
+              - generic [ref=e56]: Sin observaciones
+              - generic [ref=e57]:
+                - generic [ref=e58]: La Amarga
+                - generic [ref=e59]: 500,2 ha · Córdoba · RENSPA 14.105.0.00238/CD
+          - listitem [ref=e60]:
+            - link "No cumple Pellegrini Norte 501,0 ha · Santiago del Estero · RENSPA 22.019.0.00471/AB" [ref=e61] [cursor=pointer]:
+              - /url: /lotes/k97NAhK-Fn_y
+              - generic [ref=e62]: No cumple
+              - generic [ref=e63]:
+                - generic [ref=e64]: Pellegrini Norte
+                - generic [ref=e65]: 501,0 ha · Santiago del Estero · RENSPA 22.019.0.00471/AB

@@ -51,6 +51,8 @@ describe("decideVerdict", () => {
       otbnCategory: "fuera_de_otbn",
     })
     expect(result.verdict).toBe("verde")
+    // Still says so out loud: the shipped layer is simplified.
+    expect(result.reasons).toContain("OTBN_OUTSIDE")
   })
 
   it("is still red for a cleared lote outside the zoning", () => {

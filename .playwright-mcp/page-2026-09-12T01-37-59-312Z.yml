@@ -1,0 +1,80 @@
+- generic [active] [ref=f3e1]:
+  - generic [ref=f3e2]:
+    - banner [ref=f3e3]:
+      - link "Lote Limpio" [ref=f3e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f3e5]:
+        - generic [ref=f3e6]: Ana Productora
+        - button "Salir" [ref=f3e7]
+    - main [ref=f3e8]:
+      - generic [ref=f3e9]:
+        - generic [ref=f3e10]:
+          - heading "Tus lotes" [level=1] [ref=f3e11]
+          - link "Cargar un lote" [ref=f3e12] [cursor=pointer]:
+            - /url: /lotes/nuevo
+        - list [ref=f3e13]:
+          - listitem [ref=f3e14]:
+            - link "Sin observaciones La Amarga 500,2 ha · Córdoba" [ref=f3e15] [cursor=pointer]:
+              - /url: /lotes/QQ9GWG68iAQr
+              - generic [ref=f3e16]: Sin observaciones
+              - generic [ref=f3e17]:
+                - generic [ref=f3e18]: La Amarga
+                - generic [ref=f3e19]: 500,2 ha · Córdoba
+          - listitem [ref=f3e20]:
+            - link "No cumple Pellegrini Norte 501,0 ha · Santiago del Estero" [ref=f3e21] [cursor=pointer]:
+              - /url: /lotes/jqhMptSNN61m
+              - generic [ref=f3e22]: No cumple
+              - generic [ref=f3e23]:
+                - generic [ref=f3e24]: Pellegrini Norte
+                - generic [ref=f3e25]: 501,0 ha · Santiago del Estero
+          - listitem [ref=f3e26]:
+            - link "Con observaciones La Amarga 500,2 ha · Córdoba" [ref=f3e27] [cursor=pointer]:
+              - /url: /lotes/zkDlPSOkMvH8
+              - generic [ref=f3e28]: Con observaciones
+              - generic [ref=f3e29]:
+                - generic [ref=f3e30]: La Amarga
+                - generic [ref=f3e31]: 500,2 ha · Córdoba
+          - listitem [ref=f3e32]:
+            - link "No cumple Pellegrini Norte 501,0 ha · Santiago del Estero" [ref=f3e33] [cursor=pointer]:
+              - /url: /lotes/iZuOyLoRQkq9
+              - generic [ref=f3e34]: No cumple
+              - generic [ref=f3e35]:
+                - generic [ref=f3e36]: Pellegrini Norte
+                - generic [ref=f3e37]: 501,0 ha · Santiago del Estero
+          - listitem [ref=f3e38]:
+            - link "Con observaciones La Amarga 500,2 ha · Córdoba" [ref=f3e39] [cursor=pointer]:
+              - /url: /lotes/4b81rVGer59o
+              - generic [ref=f3e40]: Con observaciones
+              - generic [ref=f3e41]:
+                - generic [ref=f3e42]: La Amarga
+                - generic [ref=f3e43]: 500,2 ha · Córdoba
+          - listitem [ref=f3e44]:
+            - link "No cumple Pellegrini Norte 501,0 ha · Santiago del Estero" [ref=f3e45] [cursor=pointer]:
+              - /url: /lotes/n7V0jNwHiHyN
+              - generic [ref=f3e46]: No cumple
+              - generic [ref=f3e47]:
+                - generic [ref=f3e48]: Pellegrini Norte
+                - generic [ref=f3e49]: 501,0 ha · Santiago del Estero
+          - listitem [ref=f3e50]:
+            - link "Sin verificar Pellegrini demo 501,0 ha · Sin determinar" [ref=f3e51] [cursor=pointer]:
+              - /url: /lotes/zkKexnb5BGyB
+              - generic [ref=f3e52]: Sin verificar
+              - generic [ref=f3e53]:
+                - generic [ref=f3e54]: Pellegrini demo
+                - generic [ref=f3e55]: 501,0 ha · Sin determinar
+          - listitem [ref=f3e56]:
+            - link "Sin verificar Pellegrini demo 501,0 ha · Sin determinar" [ref=f3e57] [cursor=pointer]:
+              - /url: /lotes/6LIkbRKLN8oc
+              - generic [ref=f3e58]: Sin verificar
+              - generic [ref=f3e59]:
+                - generic [ref=f3e60]: Pellegrini demo
+                - generic [ref=f3e61]: 501,0 ha · Sin determinar
+          - listitem [ref=f3e62]:
+            - link "Sin verificar Pellegrini demo 501,0 ha · Sin determinar" [ref=f3e63] [cursor=pointer]:
+              - /url: /lotes/0I-1_EI_uJlu
+              - generic [ref=f3e64]: Sin verificar
+              - generic [ref=f3e65]:
+                - generic [ref=f3e66]: Pellegrini demo
+                - generic [ref=f3e67]: 501,0 ha · Sin determinar
+  - button "Open Next.js Dev Tools" [ref=f3e73] [cursor=pointer]
+  - alert [ref=f3e77]

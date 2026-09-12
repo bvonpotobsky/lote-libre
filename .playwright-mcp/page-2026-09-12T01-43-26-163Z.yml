@@ -1,0 +1,54 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - banner [ref=f1e3]:
+      - link "Lote Limpio" [ref=f1e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f1e5]:
+        - generic [ref=f1e6]: Ana Gómez
+        - button "Salir" [ref=f1e7]
+    - main [ref=f1e8]:
+      - generic [ref=f1e9]:
+        - generic [ref=f1e10]: Cargando el mapa…
+        - complementary [ref=f1e12]:
+          - generic [ref=f1e13]:
+            - heading "Pellegrini Norte" [level=1] [ref=f1e14]
+            - paragraph [ref=f1e15]: 501,0 ha · Santiago del Estero · RENSPA 22.019.0.00471/AB
+            - paragraph [ref=f1e16]: "-25.85153, -63.98953"
+          - generic [ref=f1e17]:
+            - generic [ref=f1e18]:
+              - paragraph [ref=f1e19]: No cumple
+              - paragraph [ref=f1e20]: Se detectó pérdida de bosque posterior a la fecha de corte dentro del lote.
+              - paragraph [ref=f1e21]: Verificado el 11/09/2026
+            - generic [ref=f1e22]:
+              - generic [ref=f1e23]:
+                - paragraph [ref=f1e24]: Pérdida de bosque posterior al 31/12/2020
+                - paragraph [ref=f1e25]: 100 %
+                - paragraph [ref=f1e26]: 501,0 ha dentro del lote, detectadas desde 2023
+              - generic [ref=f1e27]:
+                - paragraph [ref=f1e28]: Ordenamiento de Bosques Nativos
+                - paragraph [ref=f1e29]:
+                  - text: Categoría II
+                  - generic [ref=f1e31]: 100 % del lote
+                - paragraph [ref=f1e32]: Uso sostenible. Sin desmonte.
+            - generic [ref=f1e33]:
+              - heading "Por qué" [level=2] [ref=f1e34]
+              - list [ref=f1e35]:
+                - listitem [ref=f1e36]: Se detectó pérdida de cobertura arbórea dentro del lote posterior al 31/12/2020.
+            - generic [ref=f1e37]:
+              - heading "Fuentes consultadas" [level=2] [ref=f1e38]
+              - list [ref=f1e39]:
+                - listitem [ref=f1e40]:
+                  - paragraph [ref=f1e41]: Pérdida de bosque nativo post-2020 — santiago-del-estero (UMSEF / Monitoreo de Superficie de Bosque Nativo)
+                  - paragraph [ref=f1e42]: Vigencia 1998-2024 (filtrado a periodo >= 2021) · consultada el 11/09/2026
+                  - paragraph [ref=f1e43]: La capa no incluye ningún atributo de categoría OTBN; la categoría debe cruzarse espacialmente con las capas otbn/*.
+                - listitem [ref=f1e44]:
+                  - paragraph [ref=f1e45]: OTBN Santiago del Estero — Ordenamiento Territorial de Bosques Nativos (Ley 26.331, Ley provincial 6942 y Decreto 3133)
+                  - paragraph [ref=f1e46]: Vigencia 2015 · consultada el 11/09/2026
+                  - paragraph [ref=f1e47]: "El shapefile incluye el atributo Clase con dos valores: 'Bosque Nativo' y 'Bosque a restaurar'. Ambos se conservan y se categorizan por Cat_cons. La simplificación necesaria para respetar el presupuesto de 5 MB elimina ~7% de la superficie de Categoría III (parches pequeños y dispersos); esas zonas aparecen como 'sin cobertura OTBN' en lugar de 'verde'."
+          - generic [ref=f1e48]:
+            - heading "Comparación satelital" [level=2] [ref=f1e49]
+            - generic [ref=f1e50]: Buscando las ventanas más despejadas…
+          - link "Descargar el documento" [ref=f1e51] [cursor=pointer]:
+            - /url: /api/lotes/k97NAhK-Fn_y/document
+  - button "Open Next.js Dev Tools" [ref=f1e57] [cursor=pointer]
+  - alert [ref=f1e61]

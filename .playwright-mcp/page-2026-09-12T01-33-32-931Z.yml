@@ -1,0 +1,34 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - paragraph [ref=e5]: Lote Limpio
+        - heading "Demostrá que tu lote no viene de tierra desmontada." [level=1] [ref=e6]
+        - paragraph [ref=e7]: Europa le pide al importador, el importador al exportador, el exportador al acopio y el acopio a vos. Cargá el lote, verificalo contra las capas oficiales y descargá el documento para entregar.
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - paragraph [ref=e10]: Sin observaciones
+          - paragraph [ref=e11]: Sin pérdida de bosque posterior al 31/12/2020.
+        - listitem [ref=e12]:
+          - paragraph [ref=e13]: Con observaciones
+          - paragraph [ref=e14]: Categoría protegida del OTBN, o superposición mínima.
+        - listitem [ref=e15]:
+          - paragraph [ref=e16]: No cumple
+          - paragraph [ref=e17]: Desmonte detectado dentro del lote después de la fecha de corte.
+      - paragraph [ref=e18]: "Fuentes: Monitoreo de Superficie de Bosque Nativo e Inventario de Bosques Nativos (Ley 26.331) del Ministerio de Ambiente, e imágenes Sentinel-2 de Copernicus."
+    - generic [ref=e20]:
+      - heading "Entrá a tu cuenta" [level=2] [ref=e21]
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: Email
+          - textbox "Email" [ref=e25]:
+            - /placeholder: tu@campo.com.ar
+        - generic [ref=e26]:
+          - generic [ref=e27]: Contraseña
+          - textbox "Contraseña" [ref=e28]
+        - button "Entrar" [ref=e29]
+      - paragraph [ref=e30]:
+        - text: ¿Todavía no tenés cuenta?
+        - link "Creá una" [ref=e31] [cursor=pointer]:
+          - /url: /crear-cuenta
+  - alert [ref=e32]

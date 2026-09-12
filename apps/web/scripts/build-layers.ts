@@ -56,6 +56,12 @@ interface OtbnProvince {
    * sizes and area retention.
    */
   simplifyPercent: number;
+  /**
+   * Share of the source area the simplified output still covers, measured once
+   * on a Lambert azimuthal equal-area projection at the configured
+   * simplifyPercent. Recompute if simplifyPercent changes.
+   */
+  areaRetained: string;
   label: string;
   vintage: string;
   vintageDate: string;
@@ -68,6 +74,7 @@ const OTBN_PROVINCES: OtbnProvince[] = [
     slug: "cordoba",
     archive: "CD_2010_OTBN",
     simplifyPercent: 30,
+    areaRetained: "99.9%",
     label:
       "OTBN Córdoba — Ordenamiento Territorial de Bosques Nativos (Ley 26.331, Ley provincial 9814)",
     vintage: "2010",
@@ -80,6 +87,7 @@ const OTBN_PROVINCES: OtbnProvince[] = [
     slug: "chaco",
     archive: "CH_2009_OTBN",
     simplifyPercent: 3,
+    areaRetained: "98.3% (Categoría III 94.0%: desaparecen los parches más pequeños y dispersos)",
     label:
       "OTBN Chaco — Ordenamiento Territorial de Bosques Nativos (Ley 26.331, Ley provincial 6409)",
     vintage: "2009",
@@ -92,6 +100,7 @@ const OTBN_PROVINCES: OtbnProvince[] = [
     slug: "santiago-del-estero",
     archive: "SE_2015_OTBN",
     simplifyPercent: 0.7,
+    areaRetained: "98.9% (Categoría III 92.6%: desaparecen los parches más pequeños y dispersos)",
     label:
       "OTBN Santiago del Estero — Ordenamiento Territorial de Bosques Nativos (Ley 26.331, Ley provincial 6942 y Decreto 3133)",
     vintage: "2015",
@@ -530,24 +539,30 @@ interface LossStats {
   outBytes: number;
 }
 
-async function buildForestLoss(
-  slug: ProvinceSlug,
-  periodsByLayer: Map<string, string[]>,
-  stageDir: string,
-): Promise<LossStats> {
+async function buildForestLoss(slug: ProvinceSlug, stageDir: string): Promise<LossStats> {
   const parts: string[] = [];
   const sourceLayers: string[] = [];
+  const jurisdiction = JURISDICTION[slug];
 
   for (const layer of LOSS_LAYERS) {
-    const periods = periodsByLayer.get(layer)!;
+    const periods = await discoverLossPeriods(layer, jurisdiction, stageDir);
+    if (periods.length === 0) continue;
+    log(`${slug} / ${layer}: post-2020 periods ${periods.join(", ")}`);
+
     const inList = periods.map((p) => `'${p}'`).join(",");
-    const cql = `jurisdic='${JURISDICTION[slug]}' AND periodo IN (${inList})`;
+    const cql = `jurisdic='${jurisdiction}' AND periodo IN (${inList})`;
+
+    // Cross-check the geometry fetch against the server's own count.
+    const expected = await wfsHits(layer, cql);
     const dest = path.join(stageDir, `loss.${slug}.${layer.split(":")[1]}.json`);
     const n = await fetchWfsGeoJson(
       AMBIENTE_WFS,
       { typeNames: layer, CQL_FILTER: cql, sortBy: "periodo" },
       dest,
     );
+    if (n !== expected) {
+      fail(`${layer}/${jurisdiction}: fetched ${n} features but resultType=hits reported ${expected}`);
+    }
     if (n > 0) {
       parts.push(dest);
       sourceLayers.push(`${layer} (${n} features)`);
@@ -702,17 +717,8 @@ async function main(): Promise<void> {
     }
 
     step(`Forest loss — UMSEF WFS, periodo >= ${MIN_LOSS_YEAR}`);
-    const periodsByLayer = new Map<string, string[]>();
-    for (const layer of LOSS_LAYERS) {
-      const periods = await discoverLossPeriods(layer);
-      periodsByLayer.set(layer, periods);
-      log(`${layer}: post-2020 periods ${periods.join(", ")}`);
-    }
     for (const province of OTBN_PROVINCES) {
-      lossStats.set(
-        province.slug,
-        await buildForestLoss(province.slug, periodsByLayer, stageDir),
-      );
+      lossStats.set(province.slug, await buildForestLoss(province.slug, stageDir));
     }
 
     step("Provincial boundaries — IGN");
@@ -756,6 +762,7 @@ function writeManifest(
       categoryCounts: s.categoryCounts,
       outputFeatureCount: s.outputFeatureCount,
       simplification: `mapshaper -dissolve2 categoria, re-import, -simplify visvalingam weighted ${province.simplifyPercent}% keep-shapes, precision 0.0001`,
+      areaRetained: province.areaRetained,
       caveat: province.caveat,
     };
   }

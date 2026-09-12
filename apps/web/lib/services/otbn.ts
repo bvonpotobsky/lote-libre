@@ -1,4 +1,9 @@
-import type { OtbnCategory, SourceRef } from "@/lib/db/schema"
+import type {
+  OtbnBucket,
+  OtbnCategory,
+  OtbnShare,
+  SourceRef,
+} from "@/lib/db/schema"
 import { loadLayer, loadSourceManifest, overlapByKey } from "@/lib/geo/layers"
 import { dominantOtbnCategory } from "./verdict"
 
@@ -9,6 +14,58 @@ export type OtbnResult = {
   /** Share of the lote in that category, 0-100. */
   pct: number
   source: SourceRef | null
+}
+
+/** Print order: most restrictive first, unzoned last. */
+const BUCKET_ORDER: readonly OtbnBucket[] = [
+  "rojo",
+  "amarillo",
+  "verde",
+  "fuera_de_otbn",
+]
+
+/**
+ * How the lote's surface divides across the OTBN, in hectares.
+ *
+ * `dominantOtbnCategory` answers "which restriction governs this lote", which
+ * is what the verdict needs. This answers "how much of it is under each one",
+ * which is what prices it: Categoría I cannot be cleared at all, so a field
+ * that is 40 % Categoría I has a permanent ceiling on its productive surface.
+ * Both come from the same intersection; only the first was being kept.
+ */
+export function buildOtbnBreakdown(
+  hectaresByKey: ReadonlyMap<string, number>,
+  loteAreaHa: number,
+): OtbnShare[] {
+  if (loteAreaHa <= 0) return []
+
+  const byBucket = new Map<OtbnBucket, number>()
+  let zoned = 0
+
+  for (const [key, hectares] of hectaresByKey) {
+    if (!CATEGORIES.has(key as OtbnCategory)) continue
+    const bucket = key as OtbnBucket
+    byBucket.set(bucket, (byBucket.get(bucket) ?? 0) + hectares)
+    zoned += hectares
+  }
+
+  // Overlapping polygons in a published layer can total more than the lote.
+  // Clamp rather than rescale: rescaling would move hectares between categories
+  // the layer never claimed, which is inventing data to make a sum look tidy.
+  byBucket.set("fuera_de_otbn", Math.max(0, loteAreaHa - zoned))
+
+  return BUCKET_ORDER.flatMap((bucket) => {
+    const hectares = byBucket.get(bucket) ?? 0
+    if (hectares <= 0) return []
+
+    return [
+      {
+        bucket,
+        hectares: Math.round(hectares),
+        pct: Number.parseFloat(((hectares / loteAreaHa) * 100).toFixed(2)),
+      },
+    ]
+  })
 }
 
 /**

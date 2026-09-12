@@ -37,6 +37,24 @@ export type OtbnCategory =
   | "fuera_de_otbn"
   | "sin_cobertura"
 
+/**
+ * One slice of a lote's surface in the aptitude breakdown.
+ *
+ * `fuera_de_otbn` is a bucket here, not an absence: the province did not
+ * classify that land as native forest, which is positive information and, in
+ * Córdoba — which zones no Categoría III at all — the only bucket a buyer can
+ * actually plant. `sin_cobertura` never appears: we do not know is not a share.
+ */
+export type OtbnBucket = "rojo" | "amarillo" | "verde" | "fuera_de_otbn"
+
+export type OtbnShare = {
+  bucket: OtbnBucket
+  /** Whole hectares. The layers are 1:250 000; a decimal would be a lie. */
+  hectares: number
+  /** Share of the lote, 0-100, two decimals. */
+  pct: number
+}
+
 export type VerificationStatus = "pending" | "ready" | "failed"
 
 export type LoteSource = "draw" | "kml" | "geojson"

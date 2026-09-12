@@ -32,6 +32,12 @@ export type LoteSummary = {
   /** Null once the polygon has been edited: a verdict about an older shape is not a verdict about this one. */
   verdict: Verdict | null
   verificationStatus: VerificationStatus | null
+  /**
+   * Why the last attempt failed, when it did. The list needs it to keep an
+   * uncovered province apart from a retryable failure: telling a producer in a
+   * province we have no layer for to try again is advice that cannot work.
+   */
+  failureCode: string | null
   verifiedAt: string | null
   /** True when a verdict exists but was computed from a polygon that has since changed. */
   verificationStale: boolean
@@ -67,6 +73,7 @@ function toSummary(
     renspa: lote.renspa,
     verdict: stale ? null : (verification?.verdict ?? null),
     verificationStatus: stale ? null : (verification?.status ?? null),
+    failureCode: stale ? null : (verification?.failureCode ?? null),
     verifiedAt: verification?.createdAt.toISOString() ?? null,
     verificationStale: stale,
     updatedAt: lote.updatedAt.toISOString(),

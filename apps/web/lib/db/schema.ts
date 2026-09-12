@@ -260,6 +260,15 @@ export const loteVerifications = pgTable(
     otbnCategory: text("otbn_category").$type<OtbnCategory>(),
     /** Share of the lote's area in the dominant OTBN category, 0-100. */
     otbnPct: doublePrecision("otbn_pct"),
+    /**
+     * How the lote's surface divides across the OTBN, in hectares.
+     *
+     * Nullable, and nullable on purpose: rows written before this column exists
+     * never had the breakdown computed, and backfilling would mean re-running
+     * the intersection against today's layers while claiming the old
+     * verification date. A null here means "not measured", which is true.
+     */
+    otbnBreakdown: jsonb("otbn_breakdown").$type<OtbnShare[]>(),
 
     sources: jsonb("sources").notNull().$type<SourceRef[]>().default([]),
 

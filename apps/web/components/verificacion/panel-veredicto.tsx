@@ -55,7 +55,14 @@ function Motivos({
   )
 }
 
-export function PanelVeredicto({
+/**
+ * The headline both axes answer to.
+ *
+ * Split out of the panel so the aptitude section can sit between it and the
+ * export result, in the order the document prints them. Nothing else about the
+ * panel moves: the OTBN disclosure below stays where it is.
+ */
+export function BadgeVeredicto({
   verificacion,
 }: {
   verificacion: LoteVerification
@@ -63,6 +70,25 @@ export function PanelVeredicto({
   if (verificacion.status !== "ready" || !verificacion.verdict) return null
 
   const ui = VERDICT_UI[verificacion.verdict]
+
+  return (
+    <div className={`${ui.bg} ${ui.texto} rounded-lg px-5 py-4`}>
+      <p className="text-2xl font-bold tracking-tight">{ui.titulo}</p>
+      <p className="mt-1 text-sm leading-relaxed opacity-95">{ui.resumen}</p>
+      <p className="mt-3 text-xs opacity-90">
+        Verificado el {formatFecha(verificacion.createdAt)}
+      </p>
+    </div>
+  )
+}
+
+export function PanelVeredicto({
+  verificacion,
+}: {
+  verificacion: LoteVerification
+}) {
+  if (verificacion.status !== "ready" || !verificacion.verdict) return null
+
   const otbn = verificacion.otbnCategory
     ? OTBN_UI[verificacion.otbnCategory]
     : null
@@ -70,11 +96,10 @@ export function PanelVeredicto({
 
   return (
     <section className="grid gap-5">
-      <div className={`${ui.bg} ${ui.texto} rounded-lg px-5 py-4`}>
-        <p className="text-2xl font-bold tracking-tight">{ui.titulo}</p>
-        <p className="mt-1 text-sm leading-relaxed opacity-95">{ui.resumen}</p>
-        <p className="mt-3 text-xs opacity-90">
-          Verificado el {formatFecha(verificacion.createdAt)}
+      <div>
+        <h2 className="font-semibold">Qué se puede vender</h2>
+        <p className="text-ink-soft mt-1 text-sm leading-relaxed">
+          Reglamento (UE) 2023/1115, exigible desde el 30/12/2026.
         </p>
       </div>
 

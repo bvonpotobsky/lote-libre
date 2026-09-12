@@ -8,7 +8,11 @@ import { polygon as turfPolygon } from "@turf/helpers"
 import { Comparador, type VentanaImagen } from "@/components/mapa/comparador"
 import { Mapa } from "@/components/mapa/mapa"
 import { FuentesConsultadas } from "@/components/verificacion/fuentes-consultadas"
-import { PanelVeredicto } from "@/components/verificacion/panel-veredicto"
+import { PanelAptitud } from "@/components/verificacion/panel-aptitud"
+import {
+  BadgeVeredicto,
+  PanelVeredicto,
+} from "@/components/verificacion/panel-veredicto"
 import type { Lote, LoteVerification } from "@/lib/db/schema"
 import { isVerificationCurrent } from "@/lib/lotes/freshness"
 import { formatHa, nombreProvincia } from "@/lib/ui/verdict"
@@ -306,7 +310,13 @@ export function DetalleLote({
           </div>
         ) : null}
 
-        {veredicto ? <PanelVeredicto verificacion={veredicto} /> : null}
+        {veredicto ? (
+          <>
+            <BadgeVeredicto verificacion={veredicto} />
+            <PanelAptitud verificacion={veredicto} areaHa={lote.areaHa} />
+            <PanelVeredicto verificacion={veredicto} />
+          </>
+        ) : null}
 
         {fallo ? (
           <div className="border-l-4 border-amarillo bg-white py-3 pl-3">

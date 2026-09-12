@@ -17,6 +17,16 @@ export const ANIO_IMAGEN = 2026
 export const ATRIBUCION =
   "Contiene datos modificados de Copernicus Sentinel (2026)"
 
+export const VENTANA_REFERENCIA = {
+  desde: "2020-06-15",
+  hasta: "2020-09-10",
+} as const
+
+export const ANIO_REFERENCIA = 2020
+
+export const ATRIBUCION_EVIDENCIA =
+  "Contiene datos modificados de Copernicus Sentinel (2020, 2026)"
+
 export const LOTE_PATH = "M569.4 691.3L870.6 691.3L870.6 388.6L569.4 388.6Z"
 
 export type CategoriaOtbn = "rojo" | "amarillo" | "verde"

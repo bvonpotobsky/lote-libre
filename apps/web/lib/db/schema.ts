@@ -209,6 +209,12 @@ export const loteVerifications = sqliteTable(
       .$type<SourceRef[]>()
       .default(sql`'[]'`),
 
+    /** Machine-readable evidence behind the verdict; rendered in the UI and PDF. */
+    reasons: text("reasons", { mode: "json" })
+      .notNull()
+      .$type<string[]>()
+      .default(sql`'[]'`),
+
     /** Set when status is "failed". Drives the retry copy shown to the user. */
     failureCode: text("failure_code"),
 
@@ -216,8 +222,13 @@ export const loteVerifications = sqliteTable(
      * SHA-256 over the canonical document payload — NOT over the PDF bytes.
      * PDF bytes embed a creation timestamp, so their hash is not reproducible
      * and therefore not verifiable by anyone downstream.
+     *
+     * Written the first time the document is generated, alongside the exact
+     * payload it was computed from. Storing the payload is what makes the hash
+     * checkable later: anyone can re-serialize it and re-hash.
      */
     documentHash: text("document_hash"),
+    documentPayload: text("document_payload", { mode: "json" }),
 
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()

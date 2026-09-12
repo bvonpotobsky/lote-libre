@@ -1,0 +1,127 @@
+{
+  "generatedAt": "2026-09-11",
+  "crs": "EPSG:4326 (WGS 84, lon/lat axis order)",
+  "categoryMapping": {
+    "I": "rojo",
+    "II": "amarillo",
+    "III": "verde"
+  },
+  "otbn": {
+    "cordoba": {
+      "label": "OTBN Córdoba — Ordenamiento Territorial de Bosques Nativos (Ley 26.331, Ley provincial 9814)",
+      "sourceUrl": "https://geo.ambiente.gob.ar/documentos/sinia/bosque_OTBN/CD_2010_OTBN.rar",
+      "publisher": "Dirección Nacional de Bosques / MAyDS — IDE Ambiental / SINIA",
+      "vintage": "2010",
+      "vintageDate": "2010-08-05",
+      "legalInstrument": "Ley provincial 9814",
+      "license": "Creative Commons — licencia libre (AccessConstraints declarado por el servicio WFS de geo.ambiente.gob.ar; Fees: NONE)",
+      "downloadedAt": "2026-09-11",
+      "categoryField": "Cat_cons",
+      "featureCount": 3626,
+      "categoryCounts": { "I": 2702, "II": 924, "III": 0 },
+      "outputFeatureCount": 2,
+      "simplification": "mapshaper -dissolve2 categoria, re-import, -simplify visvalingam weighted 30% keep-shapes, precision 0.0001",
+      "areaRetained": "99.8%",
+      "caveat": "Córdoba OTBN: contains no Categoría III areas at all. Los polígonos del OTBN de Córdoba fueron digitalizados a partir de un mapa JPG, por lo que la precisión de los límites es limitada: cualquier intersección cercana a un límite es indicativa, no legalmente dispositiva."
+    },
+    "chaco": {
+      "label": "OTBN Chaco — Ordenamiento Territorial de Bosques Nativos (Ley 26.331, Ley provincial 6409)",
+      "sourceUrl": "https://geo.ambiente.gob.ar/documentos/sinia/bosque_OTBN/CH_2009_OTBN.rar",
+      "publisher": "Dirección Nacional de Bosques / MAyDS — IDE Ambiental / SINIA",
+      "vintage": "2009",
+      "vintageDate": "2009-09-24",
+      "legalInstrument": "Ley provincial 6409",
+      "license": "Creative Commons — licencia libre (AccessConstraints declarado por el servicio WFS de geo.ambiente.gob.ar; Fees: NONE)",
+      "downloadedAt": "2026-09-11",
+      "categoryField": "CAT_CONS",
+      "featureCount": 42398,
+      "categoryCounts": { "I": 185, "II": 17034, "III": 25179 },
+      "outputFeatureCount": 3,
+      "simplification": "mapshaper -dissolve2 categoria, re-import, -simplify visvalingam weighted 3% keep-shapes, precision 0.0001",
+      "areaRetained": "98.3% (Categoría III 94.0%: se pierden los parches más pequeños y dispersos)",
+      "caveat": "Chaco OTBN: published layer is vintage 2009. The 2024 re-zoning (Ley 4005-R) is legally in force since STJ Sentencia 19/2026 but is not published as geodata anywhere. Además, los polígonos de la capa de Chaco zonifican TERRITORIO, no sólo bosque: sus superficies superan en ~38% la cifra oficial de hectáreas. Sirve para consultar la categoría, pero no es utilizable para estadísticas de superficie."
+    },
+    "santiago-del-estero": {
+      "label": "OTBN Santiago del Estero — Ordenamiento Territorial de Bosques Nativos (Ley 26.331, Ley provincial 6942 y Decreto 3133)",
+      "sourceUrl": "https://geo.ambiente.gob.ar/documentos/sinia/bosque_OTBN/SE_2015_OTBN.rar",
+      "publisher": "Dirección Nacional de Bosques / MAyDS — IDE Ambiental / SINIA",
+      "vintage": "2015",
+      "vintageDate": "2015-12-23",
+      "legalInstrument": "Ley provincial 6942 + Decreto 3133",
+      "license": "Creative Commons — licencia libre (AccessConstraints declarado por el servicio WFS de geo.ambiente.gob.ar; Fees: NONE)",
+      "downloadedAt": "2026-09-11",
+      "categoryField": "Cat_cons",
+      "featureCount": 23347,
+      "categoryCounts": { "I": 360, "II": 15441, "III": 7546 },
+      "outputFeatureCount": 3,
+      "simplification": "mapshaper -dissolve2 categoria, re-import, -simplify visvalingam weighted 0.7% keep-shapes, precision 0.0001",
+      "areaRetained": "98.9% (Categoría III 92.6%: se pierden los parches más pequeños y dispersos)",
+      "caveat": "El shapefile incluye el atributo Clase con dos valores: 'Bosque Nativo' (12.091 polígonos) y 'Bosque a restaurar' (11.256 polígonos). Ambos se conservan y se categorizan por Cat_cons. La simplificación necesaria para respetar el presupuesto de 5 MB elimina ~7% de la superficie de Categoría III (parches pequeños y dispersos); esas zonas aparecen como 'sin cobertura OTBN' en lugar de 'verde'."
+    }
+  },
+  "forestLoss": {
+    "cordoba": {
+      "label": "Pérdida de bosque nativo post-2020 — Córdoba (UMSEF / Monitoreo de Superficie de Bosque Nativo)",
+      "sourceUrl": "https://geo.ambiente.gob.ar/geoserver/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=bosques:monitoreo_pch_1998_2024",
+      "sourceLayers": [
+        "bosques:monitoreo_pch_1998_2024 (Parque Chaqueño, 620 features)",
+        "bosques:monitoreo_esp_perdida_1998_2024 (Espinal, 193 features)"
+      ],
+      "publisher": "UMSEF — Unidad de Manejo del Sistema de Evaluación Forestal, Dirección Nacional de Bosques / MAyDS",
+      "vintage": "1998-2024 (filtrado a periodo >= 2021)",
+      "license": "Creative Commons — licencia libre (AccessConstraints declarado por el servicio WFS de geo.ambiente.gob.ar; Fees: NONE)",
+      "downloadedAt": "2026-09-11",
+      "filter": "jurisdic='CORDOBA' AND periodo IN ('2021','2022','2023','2024')",
+      "properties": ["periodo", "dts", "dte", "infobs"],
+      "featureCount": 813,
+      "periodCounts": { "2021": 198, "2022": 318, "2023": 130, "2024": 167 },
+      "simplification": "mapshaper -simplify visvalingam weighted 70% keep-shapes, precision 0.00001",
+      "areaRetained": "99.96%",
+      "caveat": "La capa no incluye ningún atributo de categoría OTBN; la categoría debe cruzarse espacialmente con las capas otbn/*. Córdoba requiere dos regiones forestales (Parque Chaqueño y Espinal), que se fusionan en un único archivo."
+    },
+    "chaco": {
+      "label": "Pérdida de bosque nativo post-2020 — Chaco (UMSEF / Monitoreo de Superficie de Bosque Nativo)",
+      "sourceUrl": "https://geo.ambiente.gob.ar/geoserver/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=bosques:monitoreo_pch_1998_2024",
+      "sourceLayers": ["bosques:monitoreo_pch_1998_2024 (Parque Chaqueño)"],
+      "publisher": "UMSEF — Unidad de Manejo del Sistema de Evaluación Forestal, Dirección Nacional de Bosques / MAyDS",
+      "vintage": "1998-2024 (filtrado a periodo >= 2021)",
+      "license": "Creative Commons — licencia libre (AccessConstraints declarado por el servicio WFS de geo.ambiente.gob.ar; Fees: NONE)",
+      "downloadedAt": "2026-09-11",
+      "filter": "jurisdic='CHACO' AND periodo IN ('2021','2022','2023','2024')",
+      "properties": ["periodo", "dts", "dte", "infobs"],
+      "featureCount": 3508,
+      "periodCounts": { "2021": 756, "2022": 1001, "2023": 931, "2024": 820 },
+      "simplification": "mapshaper -simplify visvalingam weighted 70% keep-shapes, precision 0.00001",
+      "areaRetained": "100.0%",
+      "caveat": "La capa no incluye ningún atributo de categoría OTBN; la categoría debe cruzarse espacialmente con las capas otbn/*."
+    },
+    "santiago-del-estero": {
+      "label": "Pérdida de bosque nativo post-2020 — Santiago del Estero (UMSEF / Monitoreo de Superficie de Bosque Nativo)",
+      "sourceUrl": "https://geo.ambiente.gob.ar/geoserver/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=bosques:monitoreo_pch_1998_2024",
+      "sourceLayers": ["bosques:monitoreo_pch_1998_2024 (Parque Chaqueño)"],
+      "publisher": "UMSEF — Unidad de Manejo del Sistema de Evaluación Forestal, Dirección Nacional de Bosques / MAyDS",
+      "vintage": "1998-2024 (filtrado a periodo >= 2021)",
+      "license": "Creative Commons — licencia libre (AccessConstraints declarado por el servicio WFS de geo.ambiente.gob.ar; Fees: NONE)",
+      "downloadedAt": "2026-09-11",
+      "filter": "jurisdic='SANTIAGO DEL ESTERO' AND periodo IN ('2021','2022','2023','2024')",
+      "properties": ["periodo", "dts", "dte", "infobs"],
+      "featureCount": 3712,
+      "periodCounts": { "2021": 1274, "2022": 1025, "2023": 709, "2024": 704 },
+      "simplification": "mapshaper -simplify visvalingam weighted 70% keep-shapes, precision 0.00001",
+      "areaRetained": "100.0%",
+      "caveat": "La capa no incluye ningún atributo de categoría OTBN; la categoría debe cruzarse espacialmente con las capas otbn/*."
+    }
+  },
+  "provincias": {
+    "label": "Límites provinciales de la República Argentina",
+    "sourceUrl": "https://wms.ign.gob.ar/geoserver/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=ign:provincia",
+    "publisher": "Instituto Geográfico Nacional (IGN)",
+    "vintage": "2024",
+    "license": "Uso libre — Artículo 2, Ley 27.275 de derecho de acceso a la información pública (AccessConstraints declarado por el servicio WFS del IGN)",
+    "downloadedAt": "2026-09-11",
+    "properties": ["nombre", "slug"],
+    "featureCount": 24,
+    "simplification": "mapshaper -simplify visvalingam weighted 1% keep-shapes, precision 0.0001",
+    "caveat": "Se usa únicamente para resolver la provincia de un lote por point-in-polygon y para descartar polígonos fuera de Argentina; está fuertemente simplificado y no sirve como límite legal. Incluye la Antártida y las Islas del Atlántico Sur dentro de 'Tierra del Fuego, Antártida e Islas del Atlántico Sur', por lo que el bounding box del archivo llega hasta latitud -90."
+  }
+}

@@ -166,3 +166,25 @@ export async function getOrCreateImage(
 
   return { meta: toMeta(row!), filePath }
 }
+
+/**
+ * Reads whatever imagery is already cached, without contacting Copernicus.
+ *
+ * Generating the document must not block on a satellite request: the window and
+ * its cloud cover are evidence about images the producer has already seen, and
+ * a lote with no imagery yet still gets a valid document.
+ */
+export async function readCachedImagery(
+  geometryHash: string,
+  layer: ImageLayer = "trueColor",
+): Promise<Record<ImagePeriod, ImageryMeta | null>> {
+  const periods: ImagePeriod[] = ["reference", "current"]
+  const entries = await Promise.all(
+    periods.map(async (period) => {
+      const row = await findCached(geometryHash, period, layer)
+      return [period, row ? toMeta(row) : null] as const
+    }),
+  )
+
+  return Object.fromEntries(entries) as Record<ImagePeriod, ImageryMeta | null>
+}

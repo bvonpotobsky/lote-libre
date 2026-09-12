@@ -36,6 +36,16 @@ export const ERRORS = {
     message: "Los datos que mandaste no son válidos.",
     hint: "Revisá el nombre y la geometría del lote.",
   },
+  INVALID_CUIT: {
+    status: 422,
+    message: "El CUIT no es válido.",
+    hint: "Ingresá los 11 dígitos del CUIT, con o sin guiones.",
+  },
+  MISSING_CUIT: {
+    status: 422,
+    message: "Todavía no cargaste tu CUIT.",
+    hint: "Completalo en tu perfil antes de iniciar la verificación.",
+  },
 
   /* --- Geometry ---------------------------------------------------------- */
   GEOMETRY_NOT_POLYGON: {

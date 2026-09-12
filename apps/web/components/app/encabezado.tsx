@@ -6,7 +6,7 @@ import { useState } from "react"
 
 import { authClient } from "@/lib/auth/client"
 
-export function Encabezado({ nombre }: { nombre: string }) {
+export function Encabezado({ nombre, cuit }: { nombre: string; cuit: string | null }) {
   const router = useRouter()
   const [saliendo, setSaliendo] = useState(false)
 
@@ -30,7 +30,13 @@ export function Encabezado({ nombre }: { nombre: string }) {
         Lote Limpio
       </Link>
       <div className="flex items-center gap-4">
-        <span className="text-ink-soft hidden text-sm sm:inline">{nombre}</span>
+        <Link href="/perfil" className="text-ink-soft block min-w-0 text-left text-xs sm:text-sm">
+          <span className="block font-medium text-ink">{nombre}</span>
+          <span>{cuit ? `CUIT ${cuit}` : "Sin CUIT cargado"}</span>
+        </Link>
+        <Link href="/verificacion-productor" className="text-ink focus-ink text-right text-xs font-semibold underline underline-offset-4 sm:text-sm">
+          Verificar productor
+        </Link>
         <button
           type="button"
           onClick={salir}

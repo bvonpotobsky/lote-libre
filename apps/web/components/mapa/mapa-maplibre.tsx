@@ -71,7 +71,10 @@ import {
   verdictColorExpression,
   type MapLote,
 } from "@/lib/geo/map-style"
+import type { Camara } from "@/lib/geo/zonas"
 import { VERDICT_UI } from "@/lib/ui/verdict"
+
+import { BuscadorZona } from "./buscador-zona"
 
 /**
  * MapLibre 6 requires this under a bundler: it cannot resolve its own worker
@@ -124,6 +127,17 @@ export type MapaProps = {
    * detail screen shows one, so the name cannot be hard-coded here.
    */
   etiqueta?: string
+  /**
+   * Shows the zone search over the top-left corner. Opt-in, and only
+   * `/lotes/nuevo` turns it on.
+   *
+   * That is an architectural fact rather than caution. On `/lotes` and
+   * `/lotes/[id]` the camera is driven by data — `seleccionadoId` frames
+   * whichever lote the list picked — and a second camera driver would fight the
+   * first. On `/lotes/nuevo` nothing drives it: `pintar` only re-frames while
+   * `modo === "ver"`. The search is safe there, and there only.
+   */
+  conBuscador?: boolean
   className?: string
 }
 
@@ -173,6 +187,7 @@ export default function MapaMapLibre({
   editandoId = null,
   onGeometria,
   etiqueta = "Mapa",
+  conBuscador = false,
   className,
 }: MapaProps) {
   const contenedor = useRef<HTMLDivElement>(null)
@@ -729,6 +744,23 @@ export default function MapaMapLibre({
     else mapa.zoomOut(opciones)
   }
 
+  /** Fly to wherever the buscador pointed, holding still for anyone who asked. */
+  function irA({ centro, zoom }: Camara) {
+    const mapa = mapaRef.current
+    if (!mapa) return
+    const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    /*
+     * `easeTo`, not `flyTo`. A flyTo's parabolic arc across the country from
+     * zoom 5 to zoom 12 is a two-to-four second swoop that requests tiles along
+     * the whole path, which on a rural link is a grey smear for most of the
+     * flight. The 800 ms reuses the one duration already in this file, so the
+     * search adds no new motion vocabulary; the guard is the same one
+     * `acercar` uses. Never `essential: true` — that runs the animation in
+     * spite of the producer's own preference, which is backwards.
+     */
+    mapa.easeTo({ center: centro, zoom, duration: quieto ? 0 : 800 })
+  }
+
   return (
     /*
      * `isolate` is kept from the Leaflet original. MapLibre has no pane
@@ -754,6 +786,20 @@ export default function MapaMapLibre({
           role="application"
           aria-label={etiqueta}
         />
+
+        {/*
+         * Before the zoom stack on purpose: DOM order is tab order, and the
+         * search field is the primary action on the screen that shows it. The
+         * two never overlap — one is pinned left, the other right, and the
+         * field's own `right-20` is what keeps the gap.
+         *
+         * A sibling of the engine's container rather than a child of it, which
+         * is what makes `stopPropagation` unnecessary anywhere in the widget:
+         * a pointerdown on the field cannot reach MapLibre's handlers, and a
+         * tap in the dropdown cannot reach Terra Draw. The zoom buttons already
+         * rely on this.
+         */}
+        {conBuscador ? <BuscadorZona onIr={irA} /> : null}
 
         {/*
          * Top right, not the bottom corner a GIS console would use. On the

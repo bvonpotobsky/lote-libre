@@ -663,6 +663,31 @@ zoom alejado un campo mide dos o tres píxeles y no hay dedo que lo acierte. Es 
 `<button>` real con `aria-label`, o un `div` inerte con `pointer-events-none`
 cuando no es navegable.
 
+El buscador de zona es el único elemento de la esquina superior izquierda, y
+espeja la torre de zoom de la opuesta: misma caja blanca, mismo borde de 1 px en
+`line`, mismo `overflow-hidden` para que la lista se pegue al campo con el mismo
+pelo que separa los dos botones de zoom. **Sin sombra** — la profundidad acá es el
+borde, y las tres sombras del sistema siguen siendo tres. Sus filas son `tap`
+completo y no `tap-compacto`: el eje escaso del desplegable es el vertical, y
+elegir la fila correcta es la acción que mueve la tarea adelante, así que no
+califica para la excepción compacta. La fila activa se pinta en `field`, que es el
+mismo estado transitorio que ya usa la lista de lotes en `hover` y `focus-visible`;
+la prohibición de `field` es sobre superficies decorativas, no sobre estados de
+interacción. Su alto máximo se ata a la caja del mapa con `calc(100% - …)` y nunca
+a un número de píxeles: en `/lotes/nuevo` el mapa pisa `min-h-[42svh]`, y un
+`max-h` fijo desborda por abajo, donde el formulario —posterior en el DOM y sin
+z-index— lo tapa.
+
+El buscador es opt-in vía `conBuscador`, y sólo `/lotes/nuevo` lo prende. No es
+cautela: en `/lotes` y `/lotes/[id]` la cámara la maneja el dato —
+`seleccionadoId` encuadra el lote que eligió la lista — y un segundo conductor de
+cámara pelearía con el primero. Tampoco deja un marcador en el lugar encontrado:
+sería la cuarta clase de marca sobre la imagen, la Regla del Halo Oscuro le
+exigiría oscuro debajo, y Terra Draw está en modo polígono desde que carga la
+página, así que el próximo toque es el primer vértice y un marcador —que sí es un
+elemento adentro del contenedor del mapa— se lo comería. El vuelo de cámara es el
+feedback.
+
 ### Comparador
 
 Marco cuadrado con borde de 1 px sobre fondo negro, dos imágenes superpuestas y
@@ -837,6 +862,10 @@ mal es el PNG: se regenera, no se mueve el SVG.
 - **Don't** agregar sombras de elevación. El sistema tiene tres sombras y las
   tres resuelven un problema físico: flotar sobre el mapa, leerse sobre satélite,
   o hacer de borde sin sumar ancho.
+- **Don't** pasar `essential: true` a una animación de cámara de MapLibre. Hace
+  que corra a pesar de `prefers-reduced-motion`, que es exactamente al revés de
+  lo que pide la preferencia. El vuelo de 800 ms ya se acorta a 0 cuando alguien
+  la tiene puesta.
 - **Don't** introducir una segunda familia tipográfica ni un tercer peso. Archivo,
   600 y 700.
 - **Don't** escribir en mayúsculas sostenidas ni abrir el tracking. No existe en

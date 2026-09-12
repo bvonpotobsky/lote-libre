@@ -768,10 +768,12 @@ una tercera superficie, y una sola: la tinta, enumerada abajo.
    opacidad, sólo sobre secciones de papel. Nunca sobre controles, sobre la
    imagen satelital ni sobre la hoja del documento. Es un archivo estático,
    no un canvas.
-4. **Escala display.** H1 en `clamp(2.75rem, 1.4rem + 5.6vw, 7rem)`, interlineado
-   1,02, tracking −0,04 em y `padding-block: 0.06em` para que los acentos no se
-   recorten; H2 de 32 a 64 px. Es la segunda aparición del tamaño Display, con
-   la misma justificación que la primera: el producto se está presentando.
+4. **Escala display.** H1 en `clamp(2.75rem, 1.2rem + 5.2vw, 6.25rem)`, tope
+   elegido para que "Un campo no vale lo que mide." entre en dos líneas dentro
+   del hero de seis columnas desde los 1024 px; interlineado 1,02, tracking
+   −0,04 em y `padding-block: 0.06em` para que los acentos no se recorten; H2
+   de 32 a 64 px. Es la segunda aparición del tamaño Display, con la misma
+   justificación que la primera: el producto se está presentando.
 5. **Un icono en un botón.** La flecha del CTA principal es un SVG inline con
    `aria-hidden`, no un glifo pegado al texto. Es la única excepción a la regla
    de botones sin iconos.
@@ -803,6 +805,19 @@ una tercera superficie, y una sola: la tinta, enumerada abajo.
    cualquier valor distinto de `list-item` lo borra— y llega a 3,25 rem con
    padding, no con `flex`. La licencia se imprime adentro, nunca como insignia:
    las capas del MAyDS publican una defectuosa y una insignia leería como aval.
+10. **Resultados en dos ejes, nunca fusionados.** La sección muestra dos
+    subsecciones bajo un único `<h2>`: «Qué se puede hacer» (aptitud, reparto de
+    hectáreas en filas idénticas a las de `PanelAptitud`) arriba, «Qué se puede
+    vender» (exportabilidad, el semáforo de tres filas ya existente) abajo. El
+    reparto de aptitud que muestra es un lote enteramente inventado
+    (`lib/landing/aptitud-ejemplo.ts`, 312 ha) y lleva el rótulo obligatorio
+    «Ejemplo ilustrativo sobre un lote ficticio de …» en el mismo párrafo que
+    las hectáreas. **Ninguna hectárea de esta sección sale de**
+    `lib/landing/ejemplo-capas.generated.ts`: ese módulo describe el encuadre
+    satelital real de Pellegrini Norte, y la Regla del Ejemplo Rotulado ya
+    prohíbe atribuirle un resultado — publicar el reparto real de un
+    departamento real es exactamente el resultado que esa regla veta, y nadie
+    fuera del producto lo leería como ilustrativo.
 
 ### Named Rules
 

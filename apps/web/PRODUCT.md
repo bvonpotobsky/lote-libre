@@ -18,6 +18,13 @@ sola mano libre, el pulgar posiblemente enguantado, a veces en un vehículo en
 movimiento. Frecuencia baja — una o dos veces por campaña, cuando el acopio se lo
 pide. La interfaz es sólo clara (no hay modo oscuro montado) por esa escena.
 
+**Usuario primario, segundo: el comprador o arrendatario.** Evalúa lotes
+candidatos antes de una operación —compra, alquiler o cotización— con las mismas
+herramientas de carga que el productor: dibujo sobre el mapa o importación de
+`.kml` / `.geojson`. El aislamiento por `userId` no cambia por esto: cada usuario
+ve solo los lotes que cargó, sin excepción por rol. RENSPA ya es opcional, así
+que evaluar un lote que todavía no es propio no queda bloqueado.
+
 **Audiencia del output, no usuario de la app: el acopio o exportador.** Es quien
 exige el papel antes de comprar y quien tiene que poder defender el resultado río
 arriba, hacia el operador europeo. No se loguea, no carga lotes y no audita
@@ -29,9 +36,21 @@ reales verificados.
 
 ## Product Purpose
 
-Que un productor pueda dibujar o importar el contorno de un lote, verificarlo
-contra las capas oficiales de bosque nativo, y descargar un documento de debida
-diligencia con una huella verificable para entregárselo al acopio.
+**Un campo no vale lo que mide. Vale lo que la ley te deja hacer con él.**
+
+Dos techos legales sobre el mismo suelo, derivados de las dos capas que el
+producto ya calcula:
+
+- **Qué se puede hacer** con esta tierra — aptitud legal, OTBN (Ley 26.331),
+  Argentina, vigente hoy.
+- **Qué se puede vender** desde esta tierra — exportabilidad, Reglamento (UE)
+  2023/1115, Unión Europea, exigible desde el 30/12/2026.
+
+Los dos ejes nunca se fusionan en una escala: responden preguntas distintas y no
+comparten unidad. Un productor o un comprador dibuja o importa el contorno de un
+lote, lo verifica contra las capas oficiales, y descarga un documento de debida
+diligencia con una huella verificable — para entregárselo al acopio, o para
+decidir antes de firmar una operación.
 
 El Reglamento (UE) 2023/1115 exige demostrar que la mercadería no proviene de
 tierra deforestada después del **31/12/2020**. La exigencia baja en cadena hasta
@@ -52,6 +71,11 @@ Constantes regulatorias confirmadas:
 
 ## Positioning
 
+Dos ejes legales, nunca fusionados en una escala: la aptitud (OTBN, qué se puede
+hacer con la tierra) responde una pregunta distinta de la exportabilidad (EUDR,
+qué se puede vender desde ella), y no comparten unidad — hectáreas repartidas
+contra un semáforo de tres estados.
+
 **El veredicto no sale de las imágenes satelitales.** Sale de dos capas oficiales
 ya calculadas —pérdida de bosque nativo de UMSEF posterior a 2020, y la categoría
 del OTBN provincial— y esa distinción es el producto entero. Las imágenes son
@@ -61,7 +85,7 @@ Dos fotos no distinguen una cosecha de un topado: un lote agrícola pasa de NDVI
 0,8 a 0,15 todos los años. UMSEF y Hansen sí, porque usan series temporales
 largas y validadas.
 
-Tres afirmaciones que un producto vecino no podría copiar sin rehacer su
+Cuatro afirmaciones que un producto vecino no podría copiar sin rehacer su
 mecanismo:
 
 1. **Verde exige evidencia positiva de las dos capas.** La ausencia de dato nunca
@@ -77,6 +101,12 @@ mecanismo:
    verificar.
 3. **La incertidumbre se imprime, no se esconde.** Cada fuente lleva un `caveat`
    que la UI muestra en ámbar y el PDF imprime.
+4. **El reparto de aptitud sale de la misma intersección que el veredicto.**
+   `buildOtbnBreakdown` no vuelve a medir nada: reutiliza las hectáreas por
+   categoría que `lookupOtbn` ya calculaba para elegir el color del semáforo. Se
+   informa en hectáreas enteras —un decimal sobre una capa 1:250 000 es una
+   mentira de precisión— y cada balde viaja con su caveat pegado, nunca como un
+   total único de "hectáreas transformables".
 
 ## Operating Context
 
@@ -118,6 +148,11 @@ mecanismo:
   un moño es ruido: no-polígono → fuera de Argentina continental → auto-
   intersección → menor a 0,5 ha → mayor a 100 000 ha.
 - Verificación contra UMSEF (pérdida posterior a 2020) y OTBN provincial.
+- **Reparto de superficie por categoría del OTBN** (aptitud legal): la misma
+  intersección que decide el semáforo, ensanchada en cuatro baldes —Categoría
+  I, II, III y `fuera_de_otbn`—, en hectáreas enteras. Persistido con la
+  verificación (`otbn_breakdown`, columna jsonb nullable) y mostrado en
+  `/lotes/:id` y en el PDF, antes de la sección de exportación.
 - Semáforo de tres estados con motivos legibles por máquina y por persona.
 - Geometría editable: al cambiar, el veredicto anterior **se retiene, no se
   anota**, y lo obsoleto se deriva comparando huellas de geometría, nunca se
@@ -152,6 +187,12 @@ acopio necesita ver.
   establecimiento, no por lote.
 - **veredicto** — `"verde" | "amarillo" | "rojo"`. Etiquetas de interfaz:
   "Sin observaciones" / "Con observaciones" / "No cumple".
+- **exportabilidad** — nombre de presentación del veredicto EUDR existente. Los
+  identificadores del código (`verdict`, `VerdictReason`, `verdict.ts`) no
+  cambian.
+- **aptitud legal** — el reparto de la superficie del lote entre las cuatro
+  categorías del OTBN (`OtbnShare[]`, campo `otbnBreakdown` /
+  `otbn_breakdown`). Los identificadores del código no cambian.
 - **OTBN** — Ordenamiento Territorial de Bosques Nativos (Ley 26.331).
   Categorías: `"rojo" | "amarillo" | "verde" | "fuera_de_otbn" | "sin_cobertura"`.
   El campo de origen es `cat_cons`, con literales `I`/`II`/`III` idénticos en las
@@ -197,6 +238,13 @@ Otros enums literales: `VerificationStatus = "pending" | "ready" | "failed"`,
 - Xweather degrada en silencio a `fallback` sin bloquear nada.
 - El mapa monta MapLibre imperativamente y necesita que el worker esté copiado a
   `public/`; si no, toda fuente GeoJSON se cuelga sin error.
+- **La aptitud legal no es un semáforo.** Se presenta como reparto de
+  hectáreas, nunca colapsada a un color único: eso repetiría el error que este
+  eje deshace y violaría la misma Regla de la Palabra que rige el veredicto
+  EUDR.
+- **El cuarto balde (`fuera_de_otbn`) es obligatorio, no opcional.** Córdoba no
+  zonifica ninguna Categoría III: sin ese balde, todo lote cordobés informaría
+  cero hectáreas aprovechables, que es falso.
 
 **Deliberadamente fuera de alcance** (decisiones, no faltantes)
 
@@ -209,7 +257,7 @@ Otros enums literales: `VerificationStatus = "pending" | "ready" | "failed"`,
   de un servidor del Estado).
 - Equipos, roles, notificaciones, panel de administración, exportación a Excel.
 - Verificación de correo (no hay proveedor de correo en el alcance).
-- Tests automatizados de interfaz. Los 71 tests cubren la lógica pura.
+- Tests automatizados de interfaz. Los tests unitarios cubren la lógica pura.
 - Provincias fuera de las tres cubiertas.
 - El XLSX de VISEC y el cuestionario de 22 preguntas del legajo.
 
@@ -263,8 +311,9 @@ Otros enums literales: `VerificationStatus = "pending" | "ready" | "failed"`,
   Estero, bosque chaqueño seco cerrado en 2020, desmontado para agricultura en
   2023 → rojo esperado) y **La Amarga** (Córdoba, agrícola de larga data, pérdida
   cero → control limpio).
-- 71 tests unitarios sobre lógica pura: veredicto, geometría, intersección de
-  capas, selección de ventana despejada y reproducibilidad del hash.
+- Más de 400 tests unitarios sobre lógica pura: veredicto, geometría,
+  intersección de capas, reparto de aptitud, selección de ventana despejada y
+  reproducibilidad del hash (`pnpm --filter web test` para el número exacto).
 
 **Advertencias declaradas que ningún trabajo futuro puede ocultar**
 
@@ -301,6 +350,10 @@ una superficie futura.
 5. **El límite de tenencia es el productor individual, y se hace cumplir en la
    capa de datos**, no en el handler: toda consulta filtra por `userId` para que
    ningún endpoint pueda olvidarse.
+6. **Una superficie informada viaja con la escala de la capa que la produjo.**
+   Un reparto sobre una capa 1:250 000 se informa en hectáreas enteras y con su
+   caveat pegado, nunca como un total único de "hectáreas transformables": la
+   precisión que se muestra no puede superar la que la fuente puede sostener.
 
 ## Accessibility & Inclusion
 

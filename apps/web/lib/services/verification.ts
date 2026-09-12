@@ -22,18 +22,16 @@ import { decideVerdict } from "./verdict"
  */
 export async function runVerification(
   userId: string,
-  lote: Lote,
+  lote: Lote
 ): Promise<LoteVerification> {
   const forestLoss = await lookupForestLoss(
     lote.geometry,
     lote.areaHa,
-    lote.provincia,
+    lote.provincia
   )
 
   if (forestLoss.status === "not_covered") {
-    return persist({
-      userId,
-      loteId: lote.id,
+    return persist(userId, lote, {
       status: "failed",
       failureCode: "PROVINCE_NOT_COVERED",
       sources: [],
@@ -43,11 +41,9 @@ export async function runVerification(
 
   if (forestLoss.status === "unavailable") {
     console.warn(
-      `[verification] forest loss unavailable for lote ${lote.id}: ${forestLoss.reason}`,
+      `[verification] forest loss unavailable for lote ${lote.id}: ${forestLoss.reason}`
     )
-    return persist({
-      userId,
-      loteId: lote.id,
+    return persist(userId, lote, {
       status: "failed",
       failureCode: "FOREST_LOSS_UNAVAILABLE",
       sources: [],
@@ -62,12 +58,10 @@ export async function runVerification(
   })
 
   const sources = [forestLoss.source, otbn.source].filter(
-    (source): source is SourceRef => source !== null,
+    (source): source is SourceRef => source !== null
   )
 
-  return persist({
-    userId,
-    loteId: lote.id,
+  return persist(userId, lote, {
     status: "ready",
     verdict,
     reasons,
@@ -82,13 +76,33 @@ export async function runVerification(
 
 type PersistInput = Omit<
   typeof loteVerifications.$inferInsert,
-  "id" | "createdAt"
+  "id" | "createdAt" | "loteId" | "userId" | "geometryHash"
 >
 
-async function persist(values: PersistInput): Promise<LoteVerification> {
+/**
+ * Records an outcome against the exact geometry it was computed from.
+ *
+ * Takes the whole lote rather than its id so `geometryHash` cannot be forgotten
+ * at a call site — the same reasoning that puts ownership in the data layer:
+ * an invariant nobody has to remember is an invariant that holds. It is stamped
+ * on failures too, because a failure is also about one specific polygon:
+ * PROVINCE_NOT_COVERED depends on the centroid, which moves when the lote is
+ * edited.
+ */
+async function persist(
+  userId: string,
+  lote: Lote,
+  values: PersistInput
+): Promise<LoteVerification> {
   const [row] = await db
     .insert(loteVerifications)
-    .values({ id: nanoid(12), ...values })
+    .values({
+      id: nanoid(12),
+      userId,
+      loteId: lote.id,
+      geometryHash: lote.geometryHash,
+      ...values,
+    })
     .returning()
 
   return row!

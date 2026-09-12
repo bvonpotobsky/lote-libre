@@ -1,0 +1,1 @@
+ALTER TABLE "lote_verifications" ADD COLUMN "geometry_hash" text;

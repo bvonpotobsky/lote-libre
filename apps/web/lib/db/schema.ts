@@ -210,6 +210,26 @@ export const loteVerifications = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
 
+    /**
+     * SHA-256 of the geometry this verdict was actually computed against.
+     *
+     * Without it a verification is tied to the lote and nothing else, so
+     * editing the polygon leaves a verdict that is silently wrong — still
+     * shown, still green, and impossible for the app to detect. Staleness is
+     * DERIVED by comparing this against `lotes.geometry_hash` at read time
+     * rather than stored as a flag, because a flag can drift out of sync with
+     * the thing it describes and a comparison cannot.
+     *
+     * NOT NULL, with the rows that predate the column backfilled from their
+     * lote. That backfill is sound precisely once: until this migration,
+     * geometry was write-once, so every stored verdict provably described the
+     * polygon still on file. Leaving the column nullable instead would have
+     * meant deciding what a null means — and either answer is wrong now, since
+     * "still valid" lies about an edited lote and "stale" would force everyone
+     * to re-verify a polygon nobody touched.
+     */
+    geometryHash: text("geometry_hash").notNull(),
+
     status: text("status").notNull().$type<VerificationStatus>(),
     verdict: text("verdict").$type<Verdict>(),
 

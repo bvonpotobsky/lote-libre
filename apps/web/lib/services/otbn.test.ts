@@ -64,6 +64,21 @@ describe("buildOtbnBreakdown", () => {
     expect(result[0]).toEqual({ bucket: "rojo", hectares: 0, pct: 0.08 })
   })
 
+  it("drops a remainder that is only a rounding artefact", () => {
+    // `loteAreaHa` arrives rounded while the zoned areas do not, so a fully
+    // zoned lote leaves a few millionths of a hectare behind. Printing that as
+    // "Fuera del OTBN" would claim unzoned land on a lote that has none.
+    const result = buildOtbnBreakdown(
+      new Map([
+        ["verde", 333.81456824111524],
+        ["rojo", 111.27152274702925],
+      ]),
+      445.0861,
+    )
+
+    expect(result.map((share) => share.bucket)).toEqual(["rojo", "verde"])
+  })
+
   it("ignores keys the OTBN layer does not define", () => {
     const result = buildOtbnBreakdown(new Map([["celeste", 100]]), 500)
     expect(result).toEqual([

@@ -158,8 +158,7 @@ describe("lookupOtbn", () => {
 
     return lookupOtbn(LOTE, LOTE_HA, PROVINCE).then((result) => {
       const buckets = result.breakdown.map((share) => share.bucket)
-      expect(buckets).toContain("rojo")
-      expect(buckets).toContain("verde")
+      expect(buckets).toEqual(["rojo", "verde"])
       expect(
         result.breakdown.reduce((total, share) => total + share.pct, 0),
       ).toBeGreaterThan(99)

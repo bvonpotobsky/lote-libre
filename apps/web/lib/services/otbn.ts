@@ -27,6 +27,19 @@ const BUCKET_ORDER: readonly OtbnBucket[] = [
 ]
 
 /**
+ * Below this, a bucket is arithmetic rather than territory.
+ *
+ * The zoned totals come from unrounded intersection areas while `loteAreaHa`
+ * arrives rounded (`measure()` in lib/geo/metrics.ts rounds to six decimals),
+ * so the derived remainder carries a rounding artifact of roughly 1e-5 ha. The
+ * OTBN layers are 1:250 000 — one millimetre on that map is 250 m on the
+ * ground — so 100 m² is orders of magnitude below anything the source can
+ * resolve. Emitting it would print "Fuera del OTBN" on a lote that is entirely
+ * zoned.
+ */
+const MIN_BUCKET_HA = 0.01
+
+/**
  * How the lote's surface divides across the OTBN, in hectares.
  *
  * `dominantOtbnCategory` answers "which restriction governs this lote", which
@@ -58,7 +71,7 @@ export function buildOtbnBreakdown(
 
   return BUCKET_ORDER.flatMap((bucket) => {
     const hectares = byBucket.get(bucket) ?? 0
-    if (hectares <= 0) return []
+    if (hectares < MIN_BUCKET_HA) return []
 
     return [
       {

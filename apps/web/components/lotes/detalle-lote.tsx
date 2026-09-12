@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import area from "@turf/area"
-import bbox from "@turf/bbox"
 import { polygon as turfPolygon } from "@turf/helpers"
 
 import { Comparador, type VentanaImagen } from "@/components/mapa/comparador"
@@ -19,7 +18,7 @@ import {
   ProgresoVerificacion,
 } from "@/components/verificacion/progreso-verificacion"
 import type { Lote, LoteVerification } from "@/lib/db/schema"
-import { metricAspect } from "@/lib/geo/raster"
+import { contornoDeLote, encuadreDeLote } from "@/lib/geo/encuadre"
 import { isVerificationCurrent } from "@/lib/lotes/freshness"
 import type { ImageLayer } from "@/lib/services/imagery"
 import { otherLayer, toggleLabel } from "@/lib/ui/imagery"
@@ -226,23 +225,22 @@ export function DetalleLote({
   const imagenesActuales = cargada ? imagenes[capa]!.datos : null
   const imagenesFallaron = hashQueFallo === lote.geometryHash
 
-  /* The placeholder holds the shape the images will arrive in, so nothing
-     jumps when they land. */
-  const proporcionLote = useMemo(() => {
+  /* The same frame the server asked Copernicus for, derived here rather than
+     sent over the wire: a second copy is a second thing that can disagree with
+     the box that was actually billed. It carries the placeholder's shape too,
+     so nothing jumps when the images land. */
+  const encuadre = useMemo(() => {
     try {
-      const [minLon, minLat, maxLon, maxLat] = bbox(
-        turfPolygon(lote.geometry.coordinates),
-      )
-      return metricAspect({
-        minLon: minLon!,
-        minLat: minLat!,
-        maxLon: maxLon!,
-        maxLat: maxLat!,
-      })
+      const marco = encuadreDeLote(lote.geometry)
+      return { ...marco, contorno: contornoDeLote(marco, lote.geometry) }
     } catch {
-      return 1
+      return null
     }
   }, [lote.geometry])
+
+  const proporcionLote = encuadre
+    ? encuadre.vista.ancho / encuadre.vista.alto
+    : 1
 
   const lista = verificacion?.status === "ready" && !vencida
   const fallo = verificacion?.status === "failed" && !vencida
@@ -456,11 +454,14 @@ export function DetalleLote({
             </button>
           </div>
           {imagenesActuales?.reference.status === "ready" &&
-          imagenesActuales.current.status === "ready" ? (
+          imagenesActuales.current.status === "ready" &&
+          encuadre ? (
             <Comparador
               referencia={imagenesActuales.reference}
               actual={imagenesActuales.current}
               capa={capa}
+              encuadre={encuadre}
+              contorno={encuadre.contorno}
             />
           ) : imagenesFallaron ? (
             <p className="text-sm leading-relaxed text-ink-soft">

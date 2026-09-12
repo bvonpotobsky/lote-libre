@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  FRAME_NOTE,
   HOLES_NOTE,
   LAYER_LEGEND,
   SEASONAL_NOTE,
@@ -100,5 +101,25 @@ describe("the standing notes", () => {
 
   it("explains that a hole is missing image, not bare ground", () => {
     expect(HOLES_NOTE).toMatch(/no son suelo/i)
+  })
+
+  it("no longer calls the holes black", () => {
+    // They were only ever black because the container was, and most of that
+    // black was not a hole at all: it was the country outside the polygon,
+    // which the frame now shows on purpose.
+    expect(HOLES_NOTE).not.toMatch(/negro/i)
+  })
+
+  it("names the outline, so the reader can find their own field", () => {
+    // The frame carries the neighbours too. Without this line a producer has
+    // no way to tell which of the fields on screen is theirs.
+    expect(FRAME_NOTE).toMatch(/contorno/i)
+    expect(FRAME_NOTE).toMatch(/vecino/i)
+  })
+
+  it("says the surroundings are comparable, not decoration", () => {
+    // Neighbours are only a yardstick if they came from the same window and
+    // the same colour treatment, and the note has to say so.
+    expect(FRAME_NOTE).toMatch(/comparar/i)
   })
 })

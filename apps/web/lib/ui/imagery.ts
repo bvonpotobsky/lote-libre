@@ -18,8 +18,11 @@ export const toggleLabel = (current: ImageLayer): string =>
 export const SEASONAL_NOTE =
   "Las dos ventanas caen en la misma época del año, así que la diferencia de color no es estacional. Aun así, el veredicto no sale de estas imágenes: sale de las capas oficiales citadas arriba."
 
+export const FRAME_NOTE =
+  "El recuadro pasa un poco del lote: el contorno marca el límite. Lo de alrededor es campo vecino, y viene de la misma ventana y del mismo tratamiento de color, así que sirve para comparar."
+
 export const HOLES_NOTE =
-  "Los huecos negros son píxeles que quedaron nublados en todas las pasadas de la ventana. No son suelo: son falta de imagen."
+  "Si ves huecos de color liso, son píxeles que quedaron nublados en todas las pasadas de la ventana. No son suelo: son falta de imagen."
 
 /**
  * How much of the lote the image actually shows.
@@ -28,6 +31,11 @@ export const HOLES_NOTE =
  * back painted rather than left transparent by the cloud mask — so it goes
  * above the Xweather line, which is weather at the centroid and knows nothing
  * about the picture.
+ *
+ * Since the frame took in the neighbouring fields, the figure is counted pixel
+ * by pixel inside the polygon (lib/geo/mascara.ts) rather than estimated from
+ * the polygon's share of its own bounding box. The wording did not have to
+ * change: the measurement moved towards the promise it was already making.
  */
 export function clearLine(ratio: number | null): string | null {
   if (ratio === null) return null

@@ -1,11 +1,11 @@
 import { EstadoVacio } from "@/components/lotes/estado-vacio"
-import { ListaLotes } from "@/components/lotes/lista-lotes"
+import { VistaLotes } from "@/components/lotes/vista-lotes"
 import { requireUser } from "@/lib/auth/guard"
-import { listLotes } from "@/lib/lotes/service"
+import { listLotesConGeometria } from "@/lib/lotes/service"
 
 export default async function InicioPage() {
   const user = await requireUser()
-  const lotes = await listLotes(user.id)
+  const lotes = await listLotesConGeometria(user.id)
 
-  return lotes.length === 0 ? <EstadoVacio /> : <ListaLotes lotes={lotes} />
+  return lotes.length === 0 ? <EstadoVacio /> : <VistaLotes lotes={lotes} />
 }

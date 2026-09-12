@@ -86,7 +86,8 @@ async function latestVerifications(
   return latest
 }
 
-export async function listLotes(userId: string): Promise<LoteSummary[]> {
+/** The one read both list shapes below are built from. */
+async function loadLotes(userId: string) {
   const rows = await db
     .select()
     .from(lotes)
@@ -98,7 +99,31 @@ export async function listLotes(userId: string): Promise<LoteSummary[]> {
     rows.map((row) => row.id),
   )
 
+  return { rows, latest }
+}
+
+export async function listLotes(userId: string): Promise<LoteSummary[]> {
+  const { rows, latest } = await loadLotes(userId)
   return rows.map((row) => toSummary(row, latest.get(row.id)))
+}
+
+/**
+ * The summary plus the geometry, for screens that draw the lotes on a map.
+ *
+ * `LoteSummary` omits `geometry` deliberately — it is the heaviest column in the
+ * row and the text list has no use for it. A map does, so it asks for it here
+ * rather than widening the shape every other caller pays for.
+ */
+export type LoteConGeometria = LoteSummary & { geometry: GeoJSON.Polygon }
+
+export async function listLotesConGeometria(
+  userId: string,
+): Promise<LoteConGeometria[]> {
+  const { rows, latest } = await loadLotes(userId)
+  return rows.map((row) => ({
+    ...toSummary(row, latest.get(row.id)),
+    geometry: row.geometry,
+  }))
 }
 
 export async function findLote(

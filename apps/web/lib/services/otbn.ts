@@ -14,6 +14,8 @@ export type OtbnResult = {
   /** Share of the lote in that category, 0-100. */
   pct: number
   source: SourceRef | null
+  /** Empty when the province has no layer: we do not know is not a share. */
+  breakdown: OtbnShare[]
 }
 
 /** Print order: most restrictive first, unzoned last. */
@@ -88,7 +90,7 @@ export async function lookupOtbn(
 ): Promise<OtbnResult> {
   const layer = await loadLayer(`otbn/${provincia}.geojson`)
   if (!layer || loteAreaHa <= 0) {
-    return { category: "sin_cobertura", pct: 0, source: null }
+    return { category: "sin_cobertura", pct: 0, source: null, breakdown: [] }
   }
 
   const { hectaresByKey } = overlapByKey(lote, layer, (props) => {
@@ -108,7 +110,12 @@ export async function lookupOtbn(
   // That is an answer, not a gap, and it must not read as "we do not know".
   const resolved = category === "sin_cobertura" ? "fuera_de_otbn" : category
 
-  return { category: resolved, pct, source: await describeSource(provincia) }
+  return {
+    category: resolved,
+    pct,
+    source: await describeSource(provincia),
+    breakdown: buildOtbnBreakdown(hectaresByKey, loteAreaHa),
+  }
 }
 
 async function describeSource(provincia: string): Promise<SourceRef | null> {

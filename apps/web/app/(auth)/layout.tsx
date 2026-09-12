@@ -2,27 +2,11 @@ import { redirect } from "next/navigation"
 
 import { Marca } from "@/components/marca/marca"
 import { getCurrentUser } from "@/lib/auth/guard"
+import type { Verdict } from "@/lib/db/schema"
+import { VERDICT_TRAZO, VERDICT_UI } from "@/lib/ui/verdict"
 
-const SEMAFORO = [
-  {
-    color: "bg-verde",
-    texto: "text-white",
-    titulo: "Sin observaciones",
-    detalle: "Sin pérdida de bosque posterior al 31/12/2020.",
-  },
-  {
-    color: "bg-amarillo",
-    texto: "text-ink",
-    titulo: "Con observaciones",
-    detalle: "Categoría protegida del OTBN, o superposición mínima.",
-  },
-  {
-    color: "bg-rojo",
-    texto: "text-white",
-    titulo: "No cumple",
-    detalle: "Desmonte detectado dentro del lote después de la fecha de corte.",
-  },
-]
+/** The order the product argues them: clean, then qualified, then not. */
+const VEREDICTOS: Verdict[] = ["verde", "amarillo", "rojo"]
 
 export default async function AuthLayout({
   children,
@@ -35,36 +19,74 @@ export default async function AuthLayout({
 
   return (
     <div className="min-h-svh lg:grid lg:grid-cols-[1fr_28rem]">
-      <section className="flex flex-col justify-center gap-8 px-6 py-10 lg:px-14 lg:py-14">
-        <div className="max-w-xl">
-          <Marca className="h-5 w-auto" prioritaria />
-          <h1 className="mt-3 text-3xl leading-[1.1] font-bold tracking-tight text-balance sm:text-4xl lg:text-5xl">
-            Demostrá que tu lote no viene de tierra desmontada.
-          </h1>
-          <p className="text-ink-soft mt-4 max-w-prose leading-relaxed">
-            Europa le pide al importador, el importador al exportador, el
-            exportador al acopio y el acopio a vos. Cargá el lote, verificalo
-            contra las capas oficiales y descargá el documento para entregar.
+      <section className="flex flex-col justify-center px-6 py-10 lg:px-14 lg:py-14">
+        <div className="flex max-w-xl flex-col gap-10">
+          <div className="flex flex-col gap-4">
+            {/* `self-start` or the flex column stretches the lockup to the
+                column width and `h-5` squashes it. */}
+            <Marca className="h-5 w-auto self-start" prioritaria />
+            <h1 className="text-3xl leading-[1.1] font-bold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+              Sabé qué se puede hacer con tu campo, y qué se puede vender desde
+              él.
+            </h1>
+            <p className="max-w-prose leading-relaxed text-ink-soft">
+              El Ordenamiento de Bosques Nativos dice cuántas hectáreas podés
+              usar; el reglamento europeo, si la mercadería entra. Dibujá el
+              lote sobre el satelital, verificalo contra las capas oficiales y
+              descargá el documento que te va a pedir el acopio.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <h2 className="font-semibold">Tres resultados posibles.</h2>
+
+            {/* The same three rows the landing shows, read from the same
+                source. Colour sits in a 24 px swatch instead of a full-bleed
+                block: beside a form, three saturated bands shout over it. */}
+            <ul className="border-b border-line">
+              {VEREDICTOS.map((clave) => {
+                const ui = VERDICT_UI[clave]
+                return (
+                  <li
+                    key={clave}
+                    className="grid grid-cols-[auto_1fr] gap-x-4 border-t border-line py-4"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`${ui.bg} ${ui.texto} mt-0.5 flex h-6 w-6 items-center justify-center rounded`}
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d={VERDICT_TRAZO[clave]} />
+                      </svg>
+                    </span>
+                    <div>
+                      <p className="font-bold">{ui.titulo}</p>
+                      <p className="mt-0.5 text-sm leading-relaxed text-ink-soft">
+                        {ui.resumen}
+                      </p>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+
+          <p className="max-w-prose text-xs leading-relaxed text-ink-soft">
+            Cubrimos Córdoba, Santiago del Estero y Chaco. Fuentes: Monitoreo de
+            Superficie de Bosque Nativo e Inventario de Bosques Nativos (Ley
+            26.331) del Ministerio de Ambiente, e imágenes Sentinel-2 de
+            Copernicus.
           </p>
         </div>
-
-        <ul className="grid max-w-xl gap-3">
-          {SEMAFORO.map((estado) => (
-            <li
-              key={estado.titulo}
-              className={`${estado.color} ${estado.texto} rounded-md px-4 py-3`}
-            >
-              <p className="font-bold">{estado.titulo}</p>
-              <p className="mt-0.5 text-sm opacity-90">{estado.detalle}</p>
-            </li>
-          ))}
-        </ul>
-
-        <p className="text-ink-soft mt-2 max-w-prose text-xs leading-relaxed">
-          Fuentes: Monitoreo de Superficie de Bosque Nativo e Inventario de
-          Bosques Nativos (Ley 26.331) del Ministerio de Ambiente, e imágenes
-          Sentinel-2 de Copernicus.
-        </p>
       </section>
 
       <section className="border-line bg-white px-6 py-10 lg:border-l lg:px-10 lg:py-14">

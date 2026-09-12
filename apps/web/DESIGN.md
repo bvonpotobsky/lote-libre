@@ -315,7 +315,9 @@ tiene pretensión editorial, y esa ausencia es la elección.
   secundarias — carga de lote, estado vacío.
 - **Subhead** (600, 1 rem, `line-height` 1.375): encabezados de sección y títulos
   de fila. No llevan clase de tamaño: heredan 1 rem y se distinguen sólo por el
-  peso. Es la jerarquía más usada del sistema y la más silenciosa.
+  peso. Es la jerarquía más usada del sistema y la más silenciosa. El encabezado
+  del semáforo en el panel de acceso es Subhead por la regla del renglón de
+  arriba: el formulario de al lado ya se lleva el Headline de esa vista.
 - **Readout** (600, 1,125 rem / 1,75 rem): el valor numérico de un dato —
   hectáreas, porcentaje de pérdida, categoría OTBN. Siempre debajo de su etiqueta,
   nunca al lado.
@@ -638,6 +640,23 @@ El encabezado vive **dentro** del `summary`, en `inline`. Dentro porque el aside
 tiene otros `h2` hermanos y perderlo rompe la navegación por encabezados;
 `inline` porque un box de bloque empujaría el texto debajo del marcador y lo
 dejaría solo en su línea.
+
+**Las tres presentaciones del veredicto.** El mismo resultado se dibuja de tres
+maneras, y ninguna reescribe el texto de las otras. El panel de la app lo pone a
+sangre, que es el bloque descripto arriba. La landing lo pone en filas separadas
+por filete de 1 px, con una muestra de 24 px y su símbolo a la izquierda, el
+título, el `resumen` y la explicación de `REASON_COPY` debajo. El panel de acceso
+usa esas mismas filas **sin** la explicación —muestra, título y `resumen`, nada
+más—: comparte la vista con un formulario, y ahí la explicación es ruido. Las
+tres leen `VERDICT_UI`; las dos que llevan símbolo leen `VERDICT_TRAZO`, de modo
+que el tilde de la landing y el del acceso son el mismo tilde. Si un veredicto
+cambia de palabras, cambia en un archivo.
+
+El bloque a sangre es del panel, no del sistema: existe porque ahí el veredicto
+es lo único que la pantalla tiene que decir. Al lado de un formulario, tres
+bandas saturadas le ganan la lectura al formulario, y el color pasa a la muestra
+de 24 px. El color sigue sin viajar solo —cada fila lleva sus palabras—, que es
+la regla que importa.
 
 ### Map Layer
 

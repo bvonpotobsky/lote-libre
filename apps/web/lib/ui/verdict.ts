@@ -35,6 +35,21 @@ export const VERDICT_UI: Record<
   },
 }
 
+/**
+ * The mark each verdict draws, on a 16-unit viewBox.
+ *
+ * It lives beside the words for the same reason the words exist: the swatch
+ * carries the colour, the glyph carries the shape, and neither is asked to
+ * mean anything on its own. Surfaces style their own `<svg>`; only the path
+ * is shared, so the tick in the landing and the tick in the app are the
+ * same tick.
+ */
+export const VERDICT_TRAZO: Record<Verdict, string> = {
+  verde: "M3.5 8.5l3 3 6-6",
+  amarillo: "M8 3.5v5.5M8 12.5h.01",
+  rojo: "M4.5 4.5l7 7M11.5 4.5l-7 7",
+}
+
 export const OTBN_UI: Record<
   OtbnCategory,
   { etiqueta: string; detalle: string; swatch: string }

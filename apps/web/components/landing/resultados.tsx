@@ -6,20 +6,18 @@ import { REASON_COPY } from "@/lib/services/verdict"
 // Both verdict modules import the DB schema as TYPES only; keep it that way,
 // or this marketing page starts requiring DATABASE_URL at build time.
 import { filasAptitud, hectareasTexto } from "@/lib/ui/aptitud"
-import { VERDICT_UI } from "@/lib/ui/verdict"
+import { VERDICT_TRAZO, VERDICT_UI } from "@/lib/ui/verdict"
+import type { Verdict } from "@/lib/db/schema"
 
 import { RevelarEnVista } from "./revelar-en-vista"
 
-type Simbolo = "check" | "alerta" | "cruz"
-
 type Fila = {
-  clave: string
+  clave: Verdict
   titulo: string
   resumen: string
   explicacion: string
   swatch: string
   texto: string
-  simbolo: Simbolo
 }
 
 const FILAS: Fila[] = [
@@ -30,7 +28,6 @@ const FILAS: Fila[] = [
     explicacion: REASON_COPY.NO_FINDINGS,
     swatch: "bg-verde",
     texto: "text-white",
-    simbolo: "check",
   },
   {
     clave: "amarillo",
@@ -40,7 +37,6 @@ const FILAS: Fila[] = [
       "Superposición mínima con pérdida de cobertura, Categoría I o II del OTBN, o provincia sin capa cargada.",
     swatch: "bg-amarillo",
     texto: "text-ink",
-    simbolo: "alerta",
   },
   {
     clave: "rojo",
@@ -49,15 +45,8 @@ const FILAS: Fila[] = [
     explicacion: REASON_COPY.FOREST_LOSS_AFTER_CUTOFF,
     swatch: "bg-rojo",
     texto: "text-white",
-    simbolo: "cruz",
   },
 ]
-
-const TRAZOS: Record<Simbolo, string> = {
-  check: "M3.5 8.5l3 3 6-6",
-  alerta: "M8 3.5v5.5M8 12.5h.01",
-  cruz: "M4.5 4.5l7 7M11.5 4.5l-7 7",
-}
 
 /**
  * The two axes, in the order the product argues them: what the land allows
@@ -72,9 +61,7 @@ export function Resultados() {
   return (
     <section id="resultados" className="landing__seccion landing__papel">
       <div className="landing__marco flex flex-col gap-10 lg:gap-14">
-        <h2 className="landing__h2">
-          Dos preguntas sobre el mismo suelo.
-        </h2>
+        <h2 className="landing__h2">Dos preguntas sobre el mismo suelo.</h2>
 
         <div className="flex flex-col gap-4">
           <div>
@@ -105,7 +92,7 @@ export function Resultados() {
                   <p className="text-lg font-bold tabular-nums">
                     {fila.hectareas}
                   </p>
-                  <p className="text-sm tabular-nums text-ink-soft">
+                  <p className="text-sm text-ink-soft tabular-nums">
                     {fila.porcentaje}
                   </p>
                 </div>
@@ -115,8 +102,8 @@ export function Resultados() {
 
           <p className="text-sm leading-relaxed text-ink-soft">
             Ejemplo ilustrativo sobre un lote ficticio de{" "}
-            {hectareasTexto(SUPERFICIE_EJEMPLO_HA)}. Las superficies que
-            informa la app se miden sobre las capas provinciales publicadas.
+            {hectareasTexto(SUPERFICIE_EJEMPLO_HA)}. Las superficies que informa
+            la app se miden sobre las capas provinciales publicadas.
           </p>
         </div>
 
@@ -151,7 +138,7 @@ export function Resultados() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d={TRAZOS[fila.simbolo]} />
+                  <path d={VERDICT_TRAZO[fila.clave]} />
                 </svg>
               </span>
               <p className="text-lg font-bold">{fila.titulo}</p>

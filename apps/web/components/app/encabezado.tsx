@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
+import { Marca } from "@/components/marca/marca"
 import { authClient } from "@/lib/auth/client"
 
 export function Encabezado({ nombre }: { nombre: string }) {
@@ -26,8 +27,8 @@ export function Encabezado({ nombre }: { nombre: string }) {
      * siblings.
      */
     <header className="border-line bg-paper sticky top-0 z-10 flex items-center justify-between gap-4 border-b px-4 py-3 sm:px-6">
-      <Link href="/lotes" className="font-bold tracking-tight">
-        Lote Limpio
+      <Link href="/lotes" className="inline-flex items-center">
+        <Marca className="h-5 w-auto" prioritaria />
       </Link>
       <div className="flex items-center gap-4">
         <span className="text-ink-soft hidden text-sm sm:inline">{nombre}</span>

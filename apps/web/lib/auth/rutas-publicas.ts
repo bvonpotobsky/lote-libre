@@ -9,6 +9,11 @@
  * and gets it silently. The Open Graph route is a prefix, not an exact
  * match, because Next serves it with a build hash appended
  * (/opengraph-image-<hash>).
+ *
+ * The icons fail the same way and are the easiest to miss: the matcher below
+ * excludes `favicon.ico` by name, but Next 16 emits the icon conventions as
+ * routes of their own, so `/icon.png` went through the guard and the landing
+ * answered a signed-out browser's icon request with a redirect to /ingresar.
  */
 export const RUTAS_PUBLICAS_EXACTAS = ["/", "/robots.txt"] as const
 
@@ -17,6 +22,8 @@ export const PREFIJOS_PUBLICOS = [
   "/crear-cuenta",
   "/landing/",
   "/opengraph-image",
+  "/icon.png",
+  "/apple-icon.png",
 ] as const
 
 export function esRutaPublica(pathname: string): boolean {

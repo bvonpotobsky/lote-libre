@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { Marca } from "@/components/marca/marca"
 import { ATRIBUCION } from "@/lib/landing/ejemplo-capas.generated"
 
 const ENLACE =
@@ -29,7 +30,7 @@ export function PieMarketing() {
     <footer className="border-t border-line">
       <div className="landing__marco grid gap-8 py-10 lg:grid-cols-12 lg:gap-8">
         <div className="flex flex-col gap-1 lg:col-span-4">
-          <p className="font-bold tracking-tight">Lote Limpio</p>
+          <Marca className="h-5 w-auto self-start" />
           <p className="text-sm text-ink-soft">
             Trazabilidad EUDR para soja y ganadería
           </p>

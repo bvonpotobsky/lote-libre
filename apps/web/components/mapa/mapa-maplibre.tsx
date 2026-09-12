@@ -62,6 +62,10 @@ import {
   ZOOM_MINIMO_DEPARTAMENTO,
 } from "@/lib/geo/limites"
 import {
+  ANCHO_BORDE_LOTE,
+  ANCHO_CASING_LOTE,
+  COLOR_CASING_LOTE,
+  DIFUMINADO_CASING_LOTE,
   boundsOf,
   toFeatureCollection,
   verdictColorExpression,
@@ -133,6 +137,7 @@ const CENTRO_INICIAL: [number, number] = [-63.5, -27.5]
 
 const FUENTE_LOTES = "lotes"
 const CAPA_RELLENO = "lotes-relleno"
+const CAPA_CASING = "lotes-casing"
 const CAPA_BORDE = "lotes-borde"
 
 const COLECCION_VACIA: GeoJSON.FeatureCollection = {
@@ -377,13 +382,26 @@ export default function MapaMapLibre({
           "fill-opacity": 0.25,
         },
       })
+      // Under the outline, never over it: `addLayer` paints in call order, and a
+      // casing on top would simply be a black outline. See COLOR_CASING_LOTE for
+      // why the outline needs one at all.
+      mapa.addLayer({
+        id: CAPA_CASING,
+        type: "line",
+        source: FUENTE_LOTES,
+        paint: {
+          "line-color": COLOR_CASING_LOTE,
+          "line-width": ANCHO_CASING_LOTE,
+          "line-blur": DIFUMINADO_CASING_LOTE,
+        },
+      })
       mapa.addLayer({
         id: CAPA_BORDE,
         type: "line",
         source: FUENTE_LOTES,
         paint: {
           "line-color": verdictColorExpression() as never,
-          "line-width": 3,
+          "line-width": ANCHO_BORDE_LOTE,
         },
       })
 

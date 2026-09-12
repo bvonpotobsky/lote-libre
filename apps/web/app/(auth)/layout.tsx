@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 
+import { Marca } from "@/components/marca/marca"
 import { getCurrentUser } from "@/lib/auth/guard"
 
 const SEMAFORO = [
@@ -36,7 +37,7 @@ export default async function AuthLayout({
     <div className="min-h-svh lg:grid lg:grid-cols-[1fr_28rem]">
       <section className="flex flex-col justify-center gap-8 px-6 py-10 lg:px-14 lg:py-14">
         <div className="max-w-xl">
-          <p className="text-ink-soft text-sm">Lote Limpio</p>
+          <Marca className="h-5 w-auto" prioritaria />
           <h1 className="mt-3 text-3xl leading-[1.1] font-bold tracking-tight text-balance sm:text-4xl lg:text-5xl">
             Demostrá que tu lote no viene de tierra desmontada.
           </h1>

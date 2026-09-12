@@ -200,13 +200,17 @@ export function DetalleLote({
 
       <aside className="flex w-full flex-col gap-6 border-t border-line bg-white p-4 sm:p-6 lg:w-[28rem] lg:overflow-y-auto lg:border-t-0 lg:border-l">
         {/*
-         * The action rides alongside the title rather than under it: those two
-         * lines it used to occupy are what pushed the verdict below the fold.
-         * `flex-wrap` is the escape hatch — a lote named in one very long word
-         * drops the button to its own line instead of crushing it.
+         * `min-w-0 flex-1` on the text block is what actually keeps the action
+         * in this row. A flex line is collected from each item's hypothetical
+         * main size, and for an auto-width item that is its max-content — the
+         * metadata laid out on one line, wider than the panel on its own. With
+         * a shrinkable basis the button fits and the text wraps instead. It
+         * wraps: nothing is truncated, the name of the lote is its identity.
+         * `flex-wrap` stays as the escape hatch for a name of one very long
+         * word, which no basis can shrink past.
          */}
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-          <div>
+          <div className="min-w-0 flex-1">
             <h1 className="text-2xl leading-tight font-bold tracking-tight">
               {lote.nombre}
             </h1>
@@ -223,7 +227,7 @@ export function DetalleLote({
             <button
               type="button"
               onClick={() => setEditando(true)}
-              className="flex tap focus-ink shrink-0 items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink"
+              className="flex tap-compacto focus-ink shrink-0 items-center justify-center rounded-md border-2 border-ink px-4 text-sm font-semibold text-ink"
             >
               Editar el contorno
             </button>

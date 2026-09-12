@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { Marca } from "@/components/marca/marca"
+
 import { BotonPrincipal } from "./boton-principal"
 
 const ANCLAS = [
@@ -12,8 +14,8 @@ const ENLACE =
   "focus-ink inline-flex min-h-11 items-center rounded-sm text-sm font-semibold underline decoration-1 underline-offset-4"
 
 /**
- * Compact sticky header on paper. Below `lg` it is the wordmark and
- * «Ingresá»; the primary action lives in the hero, already on screen.
+ * Compact sticky header on paper. Below `lg` it is the mark and «Ingresá»;
+ * the primary action lives in the hero, already on screen.
  */
 export function EncabezadoMarketing({ sesion }: { sesion: boolean }) {
   return (
@@ -21,9 +23,9 @@ export function EncabezadoMarketing({ sesion }: { sesion: boolean }) {
       <div className="landing__marco flex h-14 items-center justify-between gap-6">
         <Link
           href="/"
-          className="inline-flex min-h-11 items-center rounded-sm text-base font-bold tracking-tight focus-ink"
+          className="inline-flex min-h-11 items-center rounded-sm focus-ink"
         >
-          Lote Limpio
+          <Marca className="h-5 w-auto" prioritaria />
         </Link>
 
         <div className="flex items-center gap-5 lg:gap-7">

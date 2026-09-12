@@ -189,6 +189,15 @@ html {
   min-height: 3.25rem;
 }
 
+/* The one named exception to the 3.25rem target: an action that rides in the
+   same row as a heading, where the width of the row is the scarce resource and
+   the action is not the one that moves the task forward. 2.75rem is the manual
+   minimum rather than a new number — the system already spends it on the
+   comparator touch row. Never below it, and never as an `h-*` class. */
+@utility tap-compacto {
+  min-height: 2.75rem;
+}
+
 /* The focus ring is ours, not the browser's. Ink at full strength with a gap of
    paper around it: drawn on the element's own edge it would vanish into a solid
    ink button, and at partial opacity it would vanish into the sun. `outline`

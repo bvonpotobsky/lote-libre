@@ -66,7 +66,7 @@ export function PanelLotes({ lotes }: { lotes: LoteListado[] }) {
           </div>
           <Link
             href="/lotes/nuevo"
-            className="flex tap items-center justify-center rounded-md bg-ink px-4 font-semibold text-paper focus-ink"
+            className="flex tap-compacto shrink-0 items-center justify-center rounded-md bg-ink px-4 text-sm font-semibold text-paper focus-ink"
           >
             Cargar un lote
           </Link>
@@ -93,7 +93,7 @@ export function PanelLotes({ lotes }: { lotes: LoteListado[] }) {
             <button
               type="button"
               onClick={limpiar}
-              className="-mr-2 flex h-12 shrink-0 items-center px-2 text-sm font-semibold underline underline-offset-4 focus-ink"
+              className="-mr-2 flex tap-compacto shrink-0 items-center px-2 text-sm font-semibold underline underline-offset-4 focus-ink"
             >
               Quitar filtros
             </button>

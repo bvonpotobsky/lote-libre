@@ -11,13 +11,23 @@ export const contentType = "image/png"
 /**
  * Every entry point (`pnpm --filter web dev|build|start`, Railway included)
  * runs with apps/web as the working directory, so one static path is enough.
- * The file is read per request, not at module scope, and the tracer ships it
- * through outputFileTracingIncludes (next.config.ts).
+ * The files are read per request, not at module scope, and the tracer ships
+ * them through outputFileTracingIncludes (next.config.ts).
  */
 const RUTA_FUENTE = join(process.cwd(), "assets", "fonts", "Archivo-Bold.ttf")
+const RUTA_MARCA = join(process.cwd(), "public", "marca", "lote-limpio.png")
+
+/** The lockup's own ratio, so the card never squashes it. */
+const MARCA_ALTO = 48
+const MARCA_ANCHO = 216
 
 export default async function Image() {
-  const archivo = await readFile(RUTA_FUENTE)
+  const [archivo, lockup] = await Promise.all([
+    readFile(RUTA_FUENTE),
+    readFile(RUTA_MARCA),
+  ])
+  // satori has no filesystem: the bytes travel inline or not at all.
+  const marca = `data:image/png;base64,${lockup.toString("base64")}`
 
   return new ImageResponse(
     <div
@@ -42,7 +52,8 @@ export default async function Image() {
           width: 720,
         }}
       >
-        <div style={{ fontSize: 28, fontWeight: 700 }}>Lote Limpio</div>
+        {/* satori renders its own tree; next/image does not exist in here. */}
+        <img src={marca} width={MARCA_ANCHO} height={MARCA_ALTO} alt="" />
         <div
           style={{
             display: "flex",

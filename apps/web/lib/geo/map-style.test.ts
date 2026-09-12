@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  ANCHO_BORDE_LOTE,
+  ANCHO_CASING_LOTE,
   NO_VERDICT_COLOR,
   VERDICT_COLOR,
   boundsOf,
@@ -63,15 +65,31 @@ function evaluateMatch(expression: unknown[], input: string | null): unknown {
 }
 
 describe("verdictColor", () => {
-  it("gives each verdict the project's own token, not a generic traffic light", () => {
-    expect(verdictColor("verde")).toBe("#17663a")
+  it("paints each verdict in the on-imagery palette, not a generic traffic light", () => {
+    expect(verdictColor("verde")).toBe("#49de78")
     expect(verdictColor("amarillo")).toBe("#e0a106")
     expect(verdictColor("rojo")).toBe("#b3161c")
+  })
+
+  it("keeps the map green off the chrome token, which is the basemap's own colour", () => {
+    // `--color-verde` is #17663a, and satellite imagery of farmland runs right
+    // through its luminance — 1.23:1 against a green field. The chip keeps the
+    // token because white type needs it; the polygon cannot.
+    expect(verdictColor("verde")).not.toBe("#17663a")
   })
 
   it("falls back to the neutral colour when a lote was never verified", () => {
     expect(verdictColor(null)).toBe(NO_VERDICT_COLOR)
     expect(NO_VERDICT_COLOR).not.toBe(VERDICT_COLOR.verde)
+  })
+})
+
+describe("the lote casing", () => {
+  it("is wider than the stroke it sits under", () => {
+    // The only way this pair can break without anyone noticing: a casing as
+    // narrow as its stroke is hidden underneath it, and the outline silently
+    // goes back to being unreadable over bright soil.
+    expect(ANCHO_CASING_LOTE).toBeGreaterThan(ANCHO_BORDE_LOTE)
   })
 })
 

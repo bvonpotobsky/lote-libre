@@ -9,6 +9,7 @@ colors:
   ink: "#000000"
   ink-soft: "#4a524c"
   verde: "#17663a"
+  verde-mapa: "#49de78"
   amarillo: "#e0a106"
   rojo: "#b3161c"
   alerta: "#8a5a00"
@@ -223,8 +224,15 @@ Los tres colores del veredicto. No son una paleta de acento: son el resultado de
 una verificación, y su presencia en pantalla siempre significa un hecho.
 
 - **Verde Bosque** (`verde`): "Sin observaciones". Fondo de la fila indicadora,
-  del panel de veredicto, del marcador del mapa y del relleno del polígono al
-  25 % de opacidad. Siempre con texto blanco.
+  del panel de veredicto y del marcador del mapa. Siempre con texto blanco, que
+  sobre él da 7,4:1. **No pinta el polígono**: ver Verde de Mapa.
+- **Verde de Mapa** (`verde-mapa`): el mismo veredicto, pintado sobre fotografía.
+  Existe porque el Verde Bosque tiene luminancia relativa 0,100 y la imagen
+  satelital del Chaco va de 0,017 (monte cerrado) a 0,457 (suelo trabajado): el
+  token vive adentro del rango del fondo y encima comparte su tono, así que un
+  lote limpio daba 1,23:1 contra un cultivo. `#49de78` —`oklch(0.80 0.19 150)`—
+  sale por arriba de ese rango: 9,0:1 sobre monte, 6,0:1 sobre bosque, 3,3:1
+  sobre cultivo. Es de mapa y sólo de mapa: con texto blanco encima da 1,75:1.
 - **Ámbar Señal** (`amarillo`): "Con observaciones". El único de los tres que
   lleva texto tinta en vez de blanco, porque es demasiado claro para sostener
   blanco.
@@ -270,6 +278,14 @@ cumple"— en la lista, en el marcador del mapa y en el PDF.
 **La Regla del Ámbar Prestado.** `amarillo` (#e0a106) sólo existe como fondo.
 Como texto sobre blanco es ilegible, y su contraparte es `alerta` (#8a5a00).
 Nunca escribas texto en #e0a106.
+
+**La Regla del Verde Prestado.** El basemap ya es verde. Un verde nuestro sobre
+la imagen satelital tiene que ser un verde que la tierra no tenga: el Verde
+Bosque es correcto sobre papel y desaparece sobre monte. Por eso el veredicto
+verde tiene dos valores —`verde` para el chrome, `verde-mapa` para el polígono—
+y por eso ámbar y rojo tienen uno solo: sus tonos no existen en la fotografía y
+se anuncian solos. Es la contraparte de la Regla del Ámbar Prestado: el mismo
+problema, un color que no sobrevive a su propio sustrato.
 
 **La Regla del Color Citado.** Los tres colores del OTBN no son nuestros: son los
 del organismo que publica la capa, para que la muestra coincida con un mapa que
@@ -343,7 +359,8 @@ Por debajo de `lg` (1024 px) el mapa ocupa una banda superior de altura fija en
 ancho fijo —28 rem en el detalle, 26 rem en la carga— mientras el mapa se lleva
 el resto. El panel de acceso usa el mismo gesto al revés:
 `lg:grid-cols-[1fr_28rem]`, con la columna de marca a la izquierda y el
-formulario a la derecha.
+formulario a la derecha. Esa columna abre con el lockup a `h-5`, no con el
+nombre en texto.
 
 Sólo existen **dos quiebres**: `sm` (640 px) resuelve saltos de padding y de
 tamaño de texto entre teléfono chico y grande; `lg` (1024 px) es donde cambia la
@@ -404,6 +421,15 @@ un problema físico concreto, no una jerarquía:
 una sombra. Una sombra en este sistema tiene que justificarse contra una textura
 fotográfica o contra una restricción de anclaje — nunca contra una jerarquía.
 
+**La Regla del Halo Oscuro.** Todo lo que se dibuje sobre la imagen satelital
+lleva oscuro debajo, y las tres sombras de arriba son sólo una de sus formas. Los
+nombres de provincia y departamento van con `text-halo` negro, el chip del lote
+con su sombra de legibilidad, los vértices del dibujo con contorno negro, y el
+contorno del lote con su casing. La razón es siempre la misma: la luminancia del
+fondo va de suelo trabajado a monte casi negro dentro de una misma pantalla, y
+ningún color plano la cruza entera. Si agregás un elemento nuevo al mapa sin
+oscuro debajo, va a desaparecer en la mitad de las capturas.
+
 **La Regla de la Franja Izquierda.** Todo aviso, error o advertencia se marca con
 un filete vertical de 4 px en el color del hecho (`rojo` para error, `amarillo`
 para advertencia) sobre fondo blanco, sin tinte de fondo y sin ícono. La lista de
@@ -441,13 +467,38 @@ puede tocar.
 
 ## Components
 
+### Marca
+
+El lockup —isotipo verde `#156137` y logotipo en negro— se pinta a `h-5`
+(20 px de alto, ~90 px de ancho a su relación 4,5:1) en las cuatro superficies
+donde la marca aparece: el encabezado y el pie de la landing, la columna del
+acceso y la cabecera de la aplicación. Una sola imagen, una sola altura, un solo
+componente: `components/marca/marca.tsx`.
+
+- **Nunca por ruta.** Se importa como módulo. Una URL `/marca/…` la intercepta
+  `proxy.ts` y la manda a `/ingresar`; el import estático se sirve desde
+  `/_next`, que el matcher excluye. Lo mismo vale para los iconos: `/icon.png` y
+  `/apple-icon.png` son rutas propias en Next 16 y están en `PREFIJOS_PUBLICOS`
+  (`lib/auth/rutas-publicas.ts`), o el navegador recibe un redirect en lugar de
+  una imagen y la pestaña queda sin marca.
+- **Los archivos se derivan, no se editan.** `scripts/build-marca.ts` recorta el
+  lockup y separa el isotipo para `app/icon.png` y `app/apple-icon.png`. El
+  maestro vive en `assets/marca/`, fuera de `public/`: es fuente, no algo para
+  servir.
+- **El verde del logo no es `verde`.** `#156137` contra el `#17663a` del token.
+  La diferencia no se armoniza: el archivo de marca es el original y el token es
+  del veredicto, que es información y no identidad.
+
 ### Buttons
 
-Tres tratamientos, y ninguno lleva ícono. El texto es siempre una frase completa
-en voseo — "Guardar y volver a verificar", no "Guardar".
+Cuatro tratamientos, y ninguno lleva ícono. El texto es siempre una frase
+completa en voseo — "Guardar y volver a verificar", no "Guardar". Eso vale
+también para el compacto: lo que baja es la altura, nunca las palabras.
 
 - **Shape:** esquina apenas quebrada (`0.3rem`), altura mínima de **3,25 rem**
-  vía la utilidad `tap`, nunca una clase `h-*`.
+  vía la utilidad `tap`, nunca una clase `h-*`. La única segunda altura del
+  sistema es **2,75 rem** vía `tap-compacto`, y sólo para el tratamiento
+  Compact / Inline de abajo. Entre las dos no hay nada, y por debajo tampoco.
 - **Primary:** tinta sólida sobre papel (fondo `ink` #000000, texto `paper`
   #fafaf8), `padding: 0 1rem`, peso 600, 1 rem. Es la acción que hace avanzar la
   tarea: guardar el lote, verificar, confirmar un cambio de contorno.
@@ -455,11 +506,32 @@ en voseo — "Guardar y volver a verificar", no "Guardar".
   texto `ink`, misma altura y radio. Es la acción alternativa de igual peso
   semántico —importar, cancelar, editar, descargar el documento—, no una acción
   menor.
+- **Compact / Inline:** altura mínima **2,75 rem** vía `tap-compacto`, texto de
+  **0,875 rem**, peso 600, mismo radio y mismos colores que Primary y Outline —
+  es una variante de tamaño, no un cuarto color. Se usa **sólo** cuando el
+  control comparte la fila con una línea de texto —un encabezado o una leyenda—
+  y el alto de esa fila es el recurso escaso: «Cargar un lote» junto al `<h1>`
+  de la lista, «Editar el contorno» junto al nombre del lote, «Quitar filtros»
+  junto al conteo de visibles. Nunca para la acción que hace avanzar la tarea,
+  nunca dentro de un formulario, y nunca para un botón que ocupa el ancho de su
+  contenedor: ahí los 3,25 rem son el punto. Los 2,75 rem no son un número nuevo
+  — es el mínimo de manual, el mismo que ya gasta la fila táctil del
+  comparador.
 - **Link:** texto `ink`, peso 600, subrayado con `underline-offset-4`. Sólo para
-  salidas de flujo: "Salir", "Creá una", "Entrá".
+  salidas de flujo: "Salir", "Creá una", "Entrá". El tratamiento es de pintura y
+  no de caja, así que su objetivo táctil depende de dónde caiga: **corriendo
+  dentro de un párrafo no lleva ninguno** —el renglón es el objetivo y una caja
+  ahí rompería el interlineado—, pero **parado solo en una fila lleva
+  `tap-compacto`**, igual que cualquier otro control. Lo que nunca lleva es una
+  clase `h-*`: ese hueco en la regla es exactamente el que se llenó una vez con
+  un `h-12` inventado en el momento. **"Salir" es la excepción conocida y sigue
+  sin objetivo táctil**: está parado solo en la cabecera, así que le
+  correspondería, pero la cabecera mide 3,5 rem y ese número está escrito a mano
+  en cada `calc(100svh - 3.5rem)` del sistema. Dárselo es recalcular la cabecera,
+  no agregar una clase. Queda anotado acá, no disimulado.
 - **Disabled:** `opacity: 0.5`, sin cambio de color.
 - **Focus:** la utilidad `focus-ink` — `outline: 2px solid var(--color-ink)` con
-  `outline-offset: 2px`. Es idéntica en los tres tratamientos, y el aire de 2 px
+  `outline-offset: 2px`. Es idéntica en los cuatro tratamientos, y el aire de 2 px
   es lo que la hace funcionar: dibujada sobre el borde del elemento desaparecería
   dentro del botón sólido negro. Se usa `outline` y no `ring` porque el hueco
   tiene que ser un hueco de verdad; el offset de una sombra pinta su propio
@@ -473,7 +545,10 @@ en voseo — "Guardar y volver a verificar", no "Guardar".
 
 - **Style:** borde de 1 px en `line`, fondo transparente, radio `0.375rem`,
   altura mínima **3,25 rem** vía `tap`, texto de **1 rem** (nunca 0,875 rem: a
-  16 px iOS no hace zoom al enfocar).
+  16 px iOS no hace zoom al enfocar). Acá no hay excepción compacta, y la razón
+  no es de escala sino de mecánica: el zoom de iOS lo dispara enfocar un campo
+  de texto, no tocar un botón. Por eso el tratamiento Compact / Inline puede
+  bajar a 0,875 rem y un campo no puede nunca.
 - **Focus:** borde en `ink` más anillo de 3 px en `ink` al 50 % de opacidad. Es
   el único anillo de foco del sistema y es negro, no azul.
 - **Label:** siempre `<Label htmlFor>` real, 1 rem, peso 500, en un
@@ -511,9 +586,12 @@ muestra "Sin verificar" o "Reintentar" sobre `field` en `ink-soft`.
 - **Style:** cabecera pegajosa (`sticky top-0 z-10`) sobre fondo papel con borde
   inferior de 1 px. `padding: 0.75rem 1rem`, 1,5 rem desde `sm`. Altura efectiva
   3,5 rem.
-- **Contenido:** marca a la izquierda en peso 700 con `tracking-tight`, sin logo;
-  a la derecha el nombre del usuario en 0,875 rem `ink-soft` —oculto por debajo
-  de `sm`— y "Salir" como botón de texto subrayado.
+- **Contenido:** el lockup a la izquierda a `h-5`, enlazado a `/lotes` (ver
+  «Marca»); a la derecha el nombre del usuario en 0,875 rem `ink-soft` —oculto
+  por debajo de `sm`— y "Salir" como botón de texto subrayado. La cabecera llevó
+  la marca en texto hasta que existió un logo: la regla era "sin logo" por
+  ausencia de archivo, no por una tesis sobre la pantalla, y las cuatro
+  superficies muestran ahora lo mismo.
 - **Móvil:** idéntica. No hay menú, no hay hamburguesa, no hay barra inferior. La
   aplicación tiene tres pantallas y no necesita navegación.
 
@@ -528,21 +606,55 @@ borde superior de 1 px, cada una con etiqueta en 0,875 rem `ink-soft`, valor en
 La opacidad hace de segundo color de texto dentro de las superficies de
 veredicto: sobre un fondo de color no se cambia de tinta, se baja la opacidad.
 
-La categoría OTBN se muestra como una muestra de 16 px con radio `0.225rem`
-—`aria-hidden`, porque su etiqueta está al lado— alineada con el nombre de la
-categoría. Cuando no hay capa, la muestra es `field` con borde en vez de color.
+La categoría OTBN y los motivos del veredicto no están desplegados: viven en una
+divulgación nativa `<details>/<summary>` titulada «Ordenamiento de Bosques
+Nativos», **cerrada por defecto**, montada como última fila de la pila de datos y
+con su mismo borde superior de 1 px. Sobre el pliegue quedan el veredicto y la
+pérdida de bosque; el resto está a un clic. El `summary` conserva su marcador
+—no se le toca el `display`— y llega a 3,25 rem con padding, no con `flex`.
 
-Cierra con los motivos, cada uno como una línea con filete izquierdo de 2 px, y
-las fuentes citadas, cada una con su etiqueta en peso 500, su vigencia en
-`ink-soft` y su `caveat` en `alerta` a 13 px.
+Abierta, muestra la categoría como una muestra de 16 px con radio `0.225rem`
+—`aria-hidden`, porque su etiqueta está al lado— alineada con el nombre de la
+categoría; cuando no hay capa, la muestra es `field` con borde en vez de color.
+Debajo van los motivos, cada uno como una línea con filete izquierdo de 2 px.
+
+Sin categoría OTBN no hay divulgación y los motivos se dibujan sueltos en el
+panel: un pliegue titulado «Ordenamiento de Bosques Nativos» que sólo contuviera
+motivos nombraría algo que no tiene adentro.
+
+Las fuentes citadas no están dentro del panel: son una sección hermana debajo,
+cada una con su etiqueta en peso 500, su vigencia en `ink-soft` y su `caveat` en
+`alerta` a 13 px.
+
+Esa sección también es una divulgación nativa **cerrada por defecto**, con el
+mismo tratamiento de `summary` que el pliegue de OTBN —marcador nativo intacto,
+3,25 rem de padding, `focus-ink`— y su mismo borde superior de 1 px, que es lo
+que hace que el padding se lea como una franja plegable y no como un hueco del
+`gap-6` del aside. La procedencia se cita completa —la lista está en el HTML
+inicial, no se pide al abrir—, pero no encabeza la lectura: plegada, la columna
+termina en el documento descargable y no en una lista de citas.
+
+El encabezado vive **dentro** del `summary`, en `inline`. Dentro porque el aside
+tiene otros `h2` hermanos y perderlo rompe la navegación por encabezados;
+`inline` porque un box de bloque empujaría el texto debajo del marcador y lo
+dejaría solo en su línea.
 
 ### Map Layer
 
 Base satelital cruda sin capa de estilo propia. Los lotes se pintan con el color
-de su veredicto al **25 % de relleno** y un contorno de **3 px** sólido; sin
-veredicto, el polígono se dibuja en papel (#fafaf8). El dibujo en curso usa ese
-mismo papel con vértices de contorno negro, para que se lea sobre cualquier
-textura.
+de su veredicto al **25 % de relleno** y un contorno de **3 px** sólido —en
+`verde-mapa` cuando el veredicto es verde—, montado sobre un **casing negro de
+5,4 px** con `line-blur` 0,4: 1,2 px de halo por lado, los mismos números que el
+halo de las etiquetas. Sin veredicto, el polígono se dibuja en papel (#fafaf8),
+con el mismo casing. El dibujo en curso usa ese mismo papel con vértices de
+contorno negro.
+
+El casing no es decoración ni jerarquía: es lo único que hace que el contorno
+sobreviva. Ningún color plano puede, porque la imagen cubre la rampa entera de
+luminancia —barridos de `oklch` L 0,62 a 0,86 tocan fondo en 1,27:1 o peor en
+algún punto—. Con el casing puesto, el vecino del trazo deja de ser fotografía
+impredecible: sobre monte lo lleva el trazo de color (9,0:1) y sobre suelo
+desnudo lo lleva el casing (10,1:1). Siempre hay uno de los dos trabajando.
 
 La etiqueta de cada lote es un marcador HTML, no una capa de símbolos: un chip de
 radio `0.25rem` en el color del veredicto, texto de 0,75 rem peso 700, con la
@@ -565,10 +677,12 @@ extra. Su etiqueta es `sr-only`.
 
 ### Named Rules
 
-**La Regla del Par.** `tap` y `focus-ink` viajan juntas. La primera resuelve el
-dedo, la segunda el teclado, y un control al que le falte cualquiera de las dos
-está a medio terminar. Las dos viven en `globals.css` por la misma razón: son
-decisiones del sistema, no de la pantalla que las usa.
+**La Regla del Par.** `tap` —o `tap-compacto`, su única alternativa— y
+`focus-ink` viajan juntas. La primera resuelve el dedo, la segunda el teclado, y
+un control al que le falte cualquiera de las dos está a medio terminar. El
+compacto no debilita la regla: le baja la altura al dedo hasta el mínimo de
+manual y no toca nada del teclado. Las tres viven en `globals.css` por la misma
+razón: son decisiones del sistema, no de la pantalla que las usa.
 
 **La Regla del Anillo Separado.** El foco se dibuja con `outline` y 2 px de aire,
 nunca pegado al borde ni a media opacidad. Un anillo negro sobre un botón negro
@@ -701,7 +815,9 @@ mal es el PNG: se regenera, no se mueve el SVG.
 ### Do:
 
 - **Do** poner `tap` (altura mínima 3,25 rem) en todo lo que se toque: botón,
-  campo, fila de control. Es la regla que más define el sistema.
+  campo, fila de control. Es la regla que más define el sistema. La única
+  excepción con nombre es `tap-compacto` (2,75 rem) para una acción que comparte
+  la fila con un encabezado — y sigue llevando `focus-ink`.
 - **Do** acompañar todo color de veredicto con su texto —"Sin observaciones" /
   "Con observaciones" / "No cumple"— en la misma superficie.
 - **Do** usar `svh` para toda altura de viewport, y actualizar los cinco

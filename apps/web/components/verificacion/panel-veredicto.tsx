@@ -28,6 +28,33 @@ function Dato({
   )
 }
 
+/* The heading level travels with the placement: folded under the OTBN
+   disclosure the reasons are nested content, loose in the panel they are a
+   section of their own. */
+function Motivos({
+  motivos,
+  titulo: Titulo,
+}: {
+  motivos: VerdictReason[]
+  titulo: "h2" | "h3"
+}) {
+  return (
+    <div>
+      <Titulo className="font-semibold">Por qué</Titulo>
+      <ul className="mt-2 grid gap-2">
+        {motivos.map((motivo) => (
+          <li
+            key={motivo}
+            className="border-line text-ink-soft border-l-2 pl-3 text-sm leading-relaxed"
+          >
+            {REASON_COPY[motivo] ?? motivo}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 export function PanelVeredicto({
   verificacion,
 }: {
@@ -66,43 +93,44 @@ export function PanelVeredicto({
           }
         />
         {otbn ? (
-          <div className="border-line border-t py-3">
-            <p className="text-ink-soft text-sm">
+          <details className="border-line border-t">
+            {/* No `display` override: anything but list-item drops the native
+                marker, and the marker is the only affordance that this folds.
+                The touch target comes from padding instead. */}
+            <summary className="tap focus-ink cursor-pointer rounded-sm py-4 font-semibold">
               Ordenamiento de Bosques Nativos
-            </p>
-            <p className="mt-1 flex items-center gap-2 text-lg font-semibold">
-              <span
-                aria-hidden
-                className={`${otbn.swatch} inline-block h-4 w-4 rounded-sm`}
-              />
-              {otbn.etiqueta}
-              {verificacion.otbnPct ? (
-                <span className="text-ink-soft text-sm font-normal">
-                  {formatPct(verificacion.otbnPct)} del lote
-                </span>
+            </summary>
+            <div className="grid gap-4 pb-3">
+              <div>
+                <p className="flex items-center gap-2 text-lg font-semibold">
+                  <span
+                    aria-hidden
+                    className={`${otbn.swatch} inline-block h-4 w-4 rounded-sm`}
+                  />
+                  {otbn.etiqueta}
+                  {verificacion.otbnPct ? (
+                    <span className="text-ink-soft text-sm font-normal">
+                      {formatPct(verificacion.otbnPct)} del lote
+                    </span>
+                  ) : null}
+                </p>
+                <p className="text-ink-soft mt-0.5 text-sm leading-snug">
+                  {otbn.detalle}
+                </p>
+              </div>
+              {motivos.length > 0 ? (
+                <Motivos motivos={motivos} titulo="h3" />
               ) : null}
-            </p>
-            <p className="text-ink-soft mt-0.5 text-sm leading-snug">
-              {otbn.detalle}
-            </p>
-          </div>
+            </div>
+          </details>
         ) : null}
       </div>
 
-      {motivos.length > 0 ? (
-        <div>
-          <h2 className="font-semibold">Por qué</h2>
-          <ul className="mt-2 grid gap-2">
-            {motivos.map((motivo) => (
-              <li
-                key={motivo}
-                className="border-line text-ink-soft border-l-2 pl-3 text-sm leading-relaxed"
-              >
-                {REASON_COPY[motivo] ?? motivo}
-              </li>
-            ))}
-          </ul>
-        </div>
+      {/* Without an OTBN category there is no disclosure to fold them into: a
+          fold titled «Ordenamiento de Bosques Nativos» holding only reasons
+          would name something it does not contain. */}
+      {!otbn && motivos.length > 0 ? (
+        <Motivos motivos={motivos} titulo="h2" />
       ) : null}
     </section>
   )

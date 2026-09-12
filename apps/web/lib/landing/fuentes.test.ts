@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest"
 
+import manifiestoReal from "@/data/sources.json"
+
 import {
-  CALENDARIO_EUDR,
-  FECHA_VERIFICACION_CALENDARIO,
   FUENTE_COPERNICUS,
   type ManifiestoFuentes,
-  URL_COMISION_EUROPEA,
+  desincronizadas,
   formatearConsulta,
   mapearFuentes,
+  vigenciaLegible,
 } from "./fuentes"
 
 const CAVEAT_CORDOBA =
@@ -79,6 +80,17 @@ const manifiesto: ManifiestoFuentes = {
   },
 }
 
+/** The same manifest with one layer re-downloaded a day later. */
+function conDeriva(): ManifiestoFuentes {
+  return {
+    ...manifiesto,
+    otbn: {
+      ...manifiesto.otbn,
+      chaco: { ...manifiesto.otbn.chaco, downloadedAt: "2026-09-11" },
+    },
+  }
+}
+
 describe("mapearFuentes", () => {
   const fuentes = mapearFuentes(manifiesto)
 
@@ -95,8 +107,11 @@ describe("mapearFuentes", () => {
   it("collapses the three forest-loss blocks into one entry covering all provinces", () => {
     const umsef = fuentes[0]!
     expect(umsef.cobertura).toEqual(["Córdoba", "Chaco", "Santiago del Estero"])
-    expect(umsef.vigencia).toBe("1998-2024 (filtrado a periodo >= 2021)")
     expect(umsef.rol).toBe("verificacion")
+  })
+
+  it("reads the UMSEF vintage as a period range, not as the filter expression", () => {
+    expect(fuentes[0]!.vigencia).toBe("Períodos 2021 a 2024")
   })
 
   it("carries the manifest wording verbatim", () => {
@@ -116,19 +131,57 @@ describe("mapearFuentes", () => {
     expect(ign.instrumento).toBeNull()
   })
 
-  it("exposes the consultation date from the manifest", () => {
+  it("stamps each source with its own download date", () => {
     for (const f of fuentes) expect(f.consultadaEl).toBe("12/09/2026")
   })
 
-  it("refuses a manifest whose download dates drifted from generatedAt", () => {
-    const roto: ManifiestoFuentes = {
-      ...manifiesto,
-      otbn: {
-        ...manifiesto.otbn,
-        chaco: { ...manifiesto.otbn.chaco, downloadedAt: "2026-09-11" },
-      },
-    }
-    expect(() => mapearFuentes(roto)).toThrow(/downloadedAt/)
+  it("reports a drifted layer's real date instead of the manifest's", () => {
+    const fuentes = mapearFuentes(conDeriva())
+    const chaco = fuentes.find((f) => f.id === "otbn-chaco")!
+    expect(chaco.consultadaEl).toBe("11/09/2026")
+    expect(fuentes.find((f) => f.id === "ign")!.consultadaEl).toBe("12/09/2026")
+  })
+
+  it("renders a drifted manifest instead of throwing", () => {
+    // The landing is a server component: a throw here is a 500 on the home
+    // page. Drift is a fact about committed data, so a test guards it.
+    expect(() => mapearFuentes(conDeriva())).not.toThrow()
+  })
+})
+
+describe("desincronizadas", () => {
+  it("is empty when every layer was downloaded on generatedAt", () => {
+    expect(desincronizadas(manifiesto)).toEqual([])
+  })
+
+  it("names the layers whose download date drifted", () => {
+    expect(desincronizadas(conDeriva())).toEqual([
+      manifiesto.otbn.chaco.label,
+    ])
+  })
+
+  it("ships a manifest whose layers were all downloaded on generatedAt", () => {
+    // The invariant that used to run at render time, where it could only fail
+    // in front of a visitor. It is a claim about committed data; it lives here.
+    expect(desincronizadas(manifiestoReal as ManifiestoFuentes)).toEqual([])
+  })
+})
+
+describe("vigenciaLegible", () => {
+  it("turns the UMSEF filter expression into the periods actually used", () => {
+    expect(vigenciaLegible("1998-2024 (filtrado a periodo >= 2021)")).toBe(
+      "Períodos 2021 a 2024"
+    )
+  })
+
+  it("leaves a plain year untouched", () => {
+    expect(vigenciaLegible("2010")).toBe("2010")
+    expect(vigenciaLegible("2015")).toBe("2015")
+  })
+
+  it("leaves anything it does not recognise verbatim", () => {
+    expect(vigenciaLegible("1998-2024")).toBe("1998-2024")
+    expect(vigenciaLegible("")).toBe("")
   })
 })
 
@@ -144,19 +197,5 @@ describe("formatearConsulta", () => {
   it("prints dd/mm/yyyy", () => {
     expect(formatearConsulta("2026-09-12")).toBe("12/09/2026")
     expect(formatearConsulta("2026-01-05")).toBe("05/01/2026")
-  })
-})
-
-describe("CALENDARIO_EUDR", () => {
-  it("carries the two Commission dates and their instrument", () => {
-    const fechas = CALENDARIO_EUDR.map((e) => e.fecha)
-    expect(fechas).toEqual(["30/12/2026", "30/06/2027"])
-    for (const e of CALENDARIO_EUDR) {
-      expect(e.instrumento).toMatch(/2025\/2650/)
-    }
-    expect(FECHA_VERIFICACION_CALENDARIO).toBe("12/09/2026")
-    expect(URL_COMISION_EUROPEA).toBe(
-      "https://green-forum.ec.europa.eu/deforestation-regulation-implementation_en"
-    )
   })
 })

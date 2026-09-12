@@ -83,25 +83,50 @@ export function formatearConsulta(iso: string): string {
 }
 
 /**
- * UMSEF (one entry, the three provinces collapsed) → OTBN ×3 → IGN.
- * Throws if any layer was downloaded on a different day than the manifest
- * was generated: the landing prints one consultation date, and a desynced
- * build would make that date a lie.
+ * The layers whose download date drifted from the manifest's generatedAt.
+ *
+ * This used to be a throw inside mapearFuentes, which runs in the landing's
+ * server component: one re-downloaded layer took the home page down with a
+ * 500. Drift is a claim about committed data, so it is asserted in
+ * fuentes.test.ts instead, and each source simply prints its own date.
  */
-export function mapearFuentes(m: ManifiestoFuentes): FuenteLanding[] {
-  const entradas = [
+export function desincronizadas(m: ManifiestoFuentes): string[] {
+  return todasLasEntradas(m)
+    .filter((entrada) => entrada.downloadedAt !== m.generatedAt)
+    .map((entrada) => entrada.label)
+}
+
+function todasLasEntradas(
+  m: ManifiestoFuentes
+): { label: string; downloadedAt: string }[] {
+  return [
     ...ORDEN_PROVINCIAS.map((p) => m.forestLoss[p]),
     ...ORDEN_PROVINCIAS.map((p) => m.otbn[p]),
     m.provincias,
   ]
-  for (const entrada of entradas) {
-    if (entrada.downloadedAt !== m.generatedAt) {
-      throw new Error(
-        `sources.json: downloadedAt ${entrada.downloadedAt} de «${entrada.label}» no coincide con generatedAt ${m.generatedAt}`
-      )
-    }
-  }
-  const consultadaEl = formatearConsulta(m.generatedAt)
+}
+
+/** `1998-2024 (filtrado a periodo >= 2021)` → `Períodos 2021 a 2024`. */
+const FILTRO_DE_PERIODO = /^\d{4}-(\d{4}) \(filtrado a periodo >= (\d{4})\)$/
+
+/**
+ * The manifest's vintage as a reader can use it.
+ *
+ * UMSEF publishes one 1998-2024 layer and we query a slice of it, so the
+ * manifest records the query — `1998-2024 (filtrado a periodo >= 2021)`. That
+ * string is provenance the PDF prints verbatim (lib/services/forest-loss.ts),
+ * so it is not edited at the source; it is read out loud here instead.
+ * Anything else passes through untouched.
+ */
+export function vigenciaLegible(vintage: string): string {
+  const coincidencia = FILTRO_DE_PERIODO.exec(vintage)
+  if (coincidencia === null) return vintage
+  const [, fin, desde] = coincidencia
+  return `Períodos ${desde} a ${fin}`
+}
+
+/** UMSEF (one entry, the three provinces collapsed) → OTBN ×3 → IGN. */
+export function mapearFuentes(m: ManifiestoFuentes): FuenteLanding[] {
   const umsef = m.forestLoss.cordoba
 
   return [
@@ -109,13 +134,13 @@ export function mapearFuentes(m: ManifiestoFuentes): FuenteLanding[] {
       id: "umsef",
       titulo: "Pérdida de bosque nativo posterior a 2020 (UMSEF)",
       organismo: umsef.publisher,
-      vigencia: umsef.vintage,
+      vigencia: vigenciaLegible(umsef.vintage),
       instrumento: null,
       licencia: umsef.license,
       cobertura: ORDEN_PROVINCIAS.map((p) => NOMBRE_PROVINCIA[p]),
       url: umsef.sourceUrl,
       caveat: umsef.caveat,
-      consultadaEl,
+      consultadaEl: formatearConsulta(umsef.downloadedAt),
       rol: "verificacion",
     },
     ...ORDEN_PROVINCIAS.map((p): FuenteLanding => {
@@ -124,13 +149,13 @@ export function mapearFuentes(m: ManifiestoFuentes): FuenteLanding[] {
         id: `otbn-${p}`,
         titulo: `OTBN ${NOMBRE_PROVINCIA[p]}`,
         organismo: capa.publisher,
-        vigencia: capa.vintage,
+        vigencia: vigenciaLegible(capa.vintage),
         instrumento: capa.legalInstrument,
         licencia: capa.license,
         cobertura: [NOMBRE_PROVINCIA[p]],
         url: capa.sourceUrl,
         caveat: capa.caveat,
-        consultadaEl,
+        consultadaEl: formatearConsulta(capa.downloadedAt),
         rol: "verificacion",
       }
     }),
@@ -144,7 +169,7 @@ export function mapearFuentes(m: ManifiestoFuentes): FuenteLanding[] {
       cobertura: null,
       url: m.provincias.sourceUrl,
       caveat: m.provincias.caveat,
-      consultadaEl,
+      consultadaEl: formatearConsulta(m.provincias.downloadedAt),
       rol: "referencia",
     },
   ]
@@ -166,29 +191,3 @@ export const FUENTE_COPERNICUS: FuenteLanding = {
   consultadaEl: "",
   rol: "evidencia",
 }
-
-const INSTRUMENTO_CALENDARIO =
-  "Reglamento (UE) 2023/1115, art. 38, modificado por el Reglamento (UE) 2025/2650"
-
-export const CALENDARIO_EUDR: readonly {
-  fecha: string
-  quien: string
-  instrumento: string
-}[] = [
-  {
-    fecha: "30/12/2026",
-    quien: "Aplicación general: grandes y medianos operadores",
-    instrumento: INSTRUMENTO_CALENDARIO,
-  },
-  {
-    fecha: "30/06/2027",
-    quien:
-      "Micro y pequeñas empresas (salvo las ya alcanzadas por el EUTR, que mantienen el 30/12/2026)",
-    instrumento: INSTRUMENTO_CALENDARIO,
-  },
-]
-
-export const FECHA_VERIFICACION_CALENDARIO = "12/09/2026"
-
-export const URL_COMISION_EUROPEA =
-  "https://green-forum.ec.europa.eu/deforestation-regulation-implementation_en"

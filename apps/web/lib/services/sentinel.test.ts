@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto"
+import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -82,18 +83,42 @@ describe("request defaults", () => {
 
 describe("EVALSCRIPT_VERSION", () => {
   it("matches the scripts it labels", () => {
-    // The cache keys images by this number and nothing else about the script.
+    // The cache keys images by this number and nothing else about the request.
     // If this fails you edited an evalscript: bump EVALSCRIPT_VERSION and
     // update the digest below together, or every cached PNG keeps being served
     // by the old renderer for ever.
+    //
+    // Note what this test CANNOT see. It hashes the scripts, so a change to the
+    // bounds — which is what v3 was, and not a character of any script moved —
+    // leaves the digest identical and this assertion green. Change what pixels
+    // you ask Copernicus for and you have to bump the number by hand.
     const digest = createHash("sha256")
       .update(JSON.stringify(EVALSCRIPTS))
       .digest("hex")
       .slice(0, 16)
 
     expect({ version: EVALSCRIPT_VERSION, digest }).toEqual({
-      version: 2,
+      version: 3,
       digest: "1f1b479e8e7bb786",
     })
+  })
+})
+
+describe("the request bounds", () => {
+  it("asks for a rectangle, never for a masked polygon", () => {
+    // Passing `geometry` here makes Sentinel Hub return everything outside the
+    // polygon as alpha 0, which the comparador rendered as a black diamond. The
+    // type has one arm so the mistake cannot be made again; this pins the type.
+    const source = readFileSync(
+      new URL("./sentinel.ts", import.meta.url),
+      "utf8",
+    )
+    const tipo = source.slice(
+      source.indexOf("type ProcessBounds"),
+      source.indexOf("type ProcessRequest"),
+    )
+
+    expect(tipo).toContain("bbox: number[]")
+    expect(tipo).not.toContain("geometry:")
   })
 })

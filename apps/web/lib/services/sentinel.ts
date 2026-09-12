@@ -3,11 +3,8 @@
 // 2) SH_CLIENT_ID y SH_CLIENT_SECRET en .env
 // Uso: const png = await getLoteImage(geojsonPolygon, "2020-11-01", "2020-12-31", "ndvi");
 
-import bbox from "@turf/bbox"
-import { polygon as turfPolygon } from "@turf/helpers"
-
 import { env } from "@/lib/config/env"
-import { pixelSize } from "@/lib/geo/raster"
+import { encuadreDeLote } from "@/lib/geo/encuadre"
 
 const TOKEN_URL =
   "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
@@ -40,14 +37,19 @@ export async function getToken(): Promise<string> {
 }
 
 /**
- * Bumped whenever any evalscript below changes.
+ * Bumped whenever what we ask Copernicus for changes.
  *
- * Nothing else in the cache key describes the renderer, so without this an
- * edited script keeps serving PNGs drawn by the previous one — for ever, in the
- * case of reference images, which never expire. `sentinel.test.ts` fails when
- * the scripts and this number drift apart.
+ * That is wider than the evalscripts below: it covers the bounds too. v3 stopped
+ * clipping to the polygon and started framing the lote with its neighbours, and
+ * not one character of any script moved.
+ *
+ * Nothing else in the cache key describes the request, so without this an old
+ * row keeps serving PNGs taken the previous way — for ever, in the case of
+ * reference images, which never expire. `sentinel.test.ts` fails when the
+ * scripts and this number drift apart, but it cannot see a change of bounds:
+ * if you alter what pixels are requested, bump this by hand.
  */
-export const EVALSCRIPT_VERSION = 2 as const
+export const EVALSCRIPT_VERSION = 3 as const
 
 /**
  * Tile-level cloud filter, in percent.
@@ -186,17 +188,18 @@ function setup() { return { input: ["B02","B03","B04","dataMask"], output: { ban
 function evaluatePixel(s) { return [2.5*s.B04, 2.5*s.B03, 2.5*s.B02, s.dataMask]; }`,
 } as const
 
-export type GeoJSONPolygon = {
-  type: "Polygon" | "MultiPolygon"
-  coordinates: number[][][] | number[][][][]
-}
-
 /** [minLon, minLat, maxLon, maxLat] in WGS84, lon/lat axis order. */
 export type Bbox4326 = readonly [number, number, number, number]
 
-type ProcessBounds =
-  | { geometry: GeoJSONPolygon; properties: { crs: string } }
-  | { bbox: number[]; properties: { crs: string } }
+/**
+ * A rectangle, and only ever a rectangle.
+ *
+ * Sentinel Hub also accepts a `geometry` here and masks everything outside it to
+ * a transparent alpha. That is how this file used to ask for a lote, and the
+ * result was a rotated diamond on a black field that read as a broken image. The
+ * arm is gone rather than merely unused, so nothing falls back into it.
+ */
+type ProcessBounds = { bbox: number[]; properties: { crs: string } }
 
 type ProcessRequest = {
   bounds: ProcessBounds
@@ -249,48 +252,46 @@ async function procesar(request: ProcessRequest): Promise<Buffer> {
 }
 
 /**
- * A Sentinel-2 PNG clipped to the polygon, composited over the range.
+ * A Sentinel-2 PNG of the lote and the country around it, composited over the
+ * range.
  *
- * The raster is sized from the polygon's own bounding box rather than forced
- * square: Sentinel Hub maps the box onto whatever pixel grid it is given, so a
- * square request stretches an elongated lote until it no longer matches the map
- * beside it.
+ * The frame is the lote's own bounding box opened up by `encuadreDeLote`, not
+ * the polygon itself. Clipping to the polygon used to leave everything outside
+ * it transparent, which rendered as a black field and told the producer
+ * nothing: the judgement the legend asks for — monte is mottled, clearing is
+ * flat and straight-edged — needs the neighbouring fields to read against.
+ *
+ * The lote's edge is drawn back on top as an SVG outline by the comparador,
+ * using the very same frame. Do not change the bounds here without changing
+ * `encuadreDeLote`, and bump EVALSCRIPT_VERSION when you do.
  */
 export async function getLoteImage(
-  geometry: GeoJSONPolygon,
+  geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon,
   from: string, // "YYYY-MM-DD"
   to: string,
   layer: keyof typeof EVALSCRIPTS = "trueColor"
 ): Promise<Buffer> {
-  const [minLon, minLat, maxLon, maxLat] = bbox(
-    turfPolygon(geometry.coordinates as number[][][])
-  )
-  const { width, height } = pixelSize({
-    minLon: minLon!,
-    minLat: minLat!,
-    maxLon: maxLon!,
-    maxLat: maxLat!,
-  })
+  const { marco, vista } = encuadreDeLote(geometry)
 
-  return procesar({
-    bounds: {
-      geometry, // WGS84 por defecto (EPSG:4326). Recorta al polígono: afuera queda transparente.
-      properties: { crs: CRS_4326 },
-    },
+  return getFrameImage(
+    marco,
     from,
     to,
     layer,
-    width,
-    height,
-    maxCloudCoverage: MAX_TILE_CLOUD_PCT,
-  })
+    vista.ancho,
+    vista.alto,
+    MAX_TILE_CLOUD_PCT
+  )
 }
 
 /**
- * Rectangular frame instead of a masked polygon: the whole bbox is imagery,
- * nothing is transparent. Used to bake static artwork (the landing hero), where
- * width/height must match a fixed viewBox so vectors projected with the same
- * bbox register pixel for pixel.
+ * One request for a rectangular frame: the whole bbox is imagery, nothing is
+ * transparent.
+ *
+ * The only shape of request there is. width/height must match the viewBox any
+ * vectors are projected onto, so that those vectors register with the raster
+ * pixel for pixel — the landing hero bake and the lote comparador both depend
+ * on it.
  */
 export async function getFrameImage(
   bbox: Bbox4326,

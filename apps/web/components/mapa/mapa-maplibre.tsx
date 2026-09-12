@@ -23,6 +23,22 @@ import {
 } from "@/lib/geo/map-style"
 import { VERDICT_UI } from "@/lib/ui/verdict"
 
+/**
+ * MapLibre 6 requires this under a bundler: it cannot resolve its own worker
+ * path, and without the call the worker never answers. Every GeoJSON source
+ * then hangs with `_isUpdatingWorker` stuck true and no vector layer ever
+ * paints — silently, because the raster basemap does not use the worker and
+ * keeps rendering, and nothing is logged.
+ *
+ * The file is staged into public/maplibre by scripts/copy-maplibre-worker.ts,
+ * which runs from predev and prebuild.
+ *
+ * Module scope, not inside the effect: it has to happen before any `new Map()`,
+ * and calling it once per mount would be pointless work. The file is only
+ * reached through `dynamic(ssr: false)`, so this never runs on the server.
+ */
+maplibre.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs")
+
 export type MapaProps = {
   /** Every lote to draw. One for the detail screen, many for the overview. */
   lotes?: MapLote[]

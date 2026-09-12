@@ -7,6 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "build:layers": "tsx scripts/build-layers.ts",
+    "maplibre:worker": "tsx scripts/copy-maplibre-worker.ts",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
@@ -18,7 +19,8 @@
     "db:seed": "tsx --env-file-if-exists=.env.local lib/db/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "predev": "pnpm db:migrate"
+    "predev": "pnpm maplibre:worker && pnpm db:migrate",
+    "prebuild": "pnpm maplibre:worker"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.7.4",

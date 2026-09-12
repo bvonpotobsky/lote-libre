@@ -36,6 +36,13 @@ export function proxy(request: NextRequest) {
   return NextResponse.redirect(url)
 }
 
+/**
+ * `maplibre` is excluded because it holds MapLibre's web worker, served from
+ * public/. A worker script answered with a redirect to the sign-in page fails
+ * to start, and the map then hangs with no error anywhere — the same silent
+ * failure the worker URL itself causes. Static assets must not depend on a
+ * session.
+ */
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|maplibre).*)"],
 }

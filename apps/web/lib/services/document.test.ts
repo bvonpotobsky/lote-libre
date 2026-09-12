@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { Lote, LoteVerification } from "@/lib/db/schema"
 import { buildPayload, canonicalJson, hashPayload } from "./document"
+import { REASON_COPY } from "./verdict"
 
 const LOTE = {
   id: "lote1",
@@ -124,5 +125,65 @@ describe("buildPayload", () => {
     )
     expect(result.verificacion.motivos[0]?.texto).toContain("31/12/2020")
     expect(result.fuentes).toHaveLength(1)
+  })
+})
+
+/** Obtenido del código en PAYLOAD_VERSION 1. No se recalcula: se preserva. */
+const HUELLA_V1 =
+  "3945d2c5df5eebc3f7c4a55180268175745544221a69a2218ddf678b00220df4"
+
+/**
+ * A payload exactly as version 1 wrote it, frozen here on purpose.
+ *
+ * Documents already issued carry their payload on the verification row and are
+ * replayed from it, never rebuilt. If this hash ever moves, a hash printed on
+ * somebody's PDF stopped verifying — which is the one failure this whole
+ * mechanism exists to prevent.
+ */
+const PAYLOAD_V1 = {
+  version: 1,
+  emitidoEl: "2026-09-11T15:00:00.000Z",
+  productor: { nombre: "Ana Productora", email: "ana@campo.test" },
+  lote: {
+    id: "lote1",
+    nombre: "Pellegrini Norte",
+    provincia: "santiago-del-estero",
+    renspa: "01.234.5.67890/AB",
+    superficieHa: 501.02,
+    centroide: { lon: -63.98953, lat: -25.85153 },
+    geometriaHash: "a".repeat(64),
+  },
+  verificacion: {
+    id: "ver1",
+    fecha: "2026-09-11T12:00:00.000Z",
+    veredicto: "rojo",
+    motivos: [
+      {
+        codigo: "FOREST_LOSS_AFTER_CUTOFF",
+        texto: REASON_COPY.FOREST_LOSS_AFTER_CUTOFF,
+      },
+    ],
+    perdidaForestal: {
+      porcentajeSuperficie: 98.71,
+      hectareas: 494.56,
+      primerAnio: 2023,
+      fechaDeCorte: "2020-12-31",
+    },
+    otbn: { categoria: "rojo", porcentajeSuperficie: 100 },
+  },
+  imagenes: [],
+  fuentes: [
+    {
+      id: "umsef",
+      label: "UMSEF",
+      vintage: "2023",
+      consultedAt: "2026-09-11T12:00:00.000Z",
+    },
+  ],
+}
+
+describe("version 1 payloads", () => {
+  it("still hashes to the value printed on documents already issued", () => {
+    expect(hashPayload(PAYLOAD_V1 as never)).toBe(HUELLA_V1)
   })
 })

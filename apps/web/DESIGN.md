@@ -787,12 +787,12 @@ una tercera superficie, y una sola: la tinta, enumerada abajo.
    opacidad, sólo sobre secciones de papel. Nunca sobre controles, sobre la
    imagen satelital ni sobre la hoja del documento. Es un archivo estático,
    no un canvas.
-4. **Escala display.** H1 en `clamp(2.75rem, 1.2rem + 5.2vw, 6.25rem)`, tope
-   elegido para que "Un campo no vale lo que mide." entre en dos líneas dentro
-   del hero de seis columnas desde los 1024 px; interlineado 1,02, tracking
-   −0,04 em y `padding-block: 0.06em` para que los acentos no se recorten; H2
-   de 32 a 64 px. Es la segunda aparición del tamaño Display, con la misma
-   justificación que la primera: el producto se está presentando.
+4. **Escala display.** H1 en `clamp(2.75rem, 1.2rem + 5.2vw, 6.25rem)`, calibrado
+   para el titular del hero («El acopio va a pedir respaldo sobre este suelo.»)
+   en dos o tres líneas dentro de seis columnas desde 1024 px; interlineado 1,02,
+   tracking −0,04 em y `padding-block: 0.06em` para que los acentos no se
+   recorten; H2 de 32 a 64 px. Es la segunda aparición del tamaño Display, con
+   la misma justificación que la primera: el producto se está presentando.
 5. **Un icono en un botón.** La flecha del CTA principal es un SVG inline con
    `aria-hidden`, no un glifo pegado al texto. Es la única excepción a la regla
    de botones sin iconos.

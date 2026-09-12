@@ -17,14 +17,15 @@ export function Hero() {
       <div className="landing__marco grid items-center gap-10 lg:grid-cols-12 lg:gap-8">
         <div className="flex flex-col gap-6 lg:col-span-6">
           <p className="text-base text-ink-soft">
-            Aptitud legal y exportabilidad · Córdoba, Santiago del Estero y
-            Chaco
+            Aptitud legal y exportabilidad
           </p>
-          <h1 className="landing__h1">Un campo no vale lo que mide.</h1>
+          <h1 className="landing__h1">
+            El acopio va a pedir respaldo sobre este suelo.
+          </h1>
           <p className="landing__cuerpo text-ink-soft">
-            Vale lo que la ley te deja hacer con él, y lo que Europa te deja
-            vender desde él. Dibujá el lote sobre el satelital y verificalo
-            contra las capas oficiales.
+            Aptitud OTBN y exportabilidad EUDR: dos veredictos distintos sobre
+            el mismo contorno. Dibujá el lote sobre el satelital, contrastalo
+            con las capas oficiales y llevate el documento listo para entregar.
           </p>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <BotonPrincipal href="/crear-cuenta">Creá tu cuenta</BotonPrincipal>

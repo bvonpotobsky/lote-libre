@@ -120,19 +120,27 @@ async function main(): Promise<void> {
       // Seeding is the densest burst of Xweather calls the app ever makes.
       // Pacing it is what keeps the demo's windows real instead of falling
       // back to the wide range.
+      //
+      // The pause is per period, not per layer: the first layer of a period
+      // resolves the window and the second reads it back off that row, so the
+      // second costs one Copernicus call and no Xweather traffic at all.
       await new Promise((resolve) => setTimeout(resolve, 2_000))
       try {
-        const { meta } = await getOrCreateImage(
-          geometry,
-          metrics.geometryHash,
-          metrics.centroid,
-          period,
-        )
-        console.log(
-          `[seed]   ${period.padEnd(9)} ${meta.dateFrom} a ${meta.dateTo}  ` +
-            `${meta.cloudAvgPct === null ? "rango amplio" : `${meta.cloudAvgPct.toFixed(1)} % nubes`}` +
-            `${meta.isEmpty ? "  (sin imagen despejada)" : ""}`,
-        )
+        for (const layer of ["trueColor", "ndvi"] as const) {
+          const { meta } = await getOrCreateImage(
+            geometry,
+            metrics.geometryHash,
+            metrics.centroid,
+            period,
+            layer,
+          )
+          console.log(
+            `[seed]   ${period.padEnd(9)} ${layer.padEnd(9)} ${meta.dateFrom} a ${meta.dateTo}  ` +
+              `${meta.cloudAvgPct === null ? "rango amplio" : `${meta.cloudAvgPct.toFixed(1)} % nubes`}` +
+              `${meta.clearRatio === null ? "" : `  ${Math.round(meta.clearRatio * 100)} % limpio`}` +
+              `${meta.isEmpty ? "  (sin imagen despejada)" : ""}`,
+          )
+        }
       } catch (error) {
         console.warn(
           `[seed]   ${period}: no se pudo precargar la imagen —`,

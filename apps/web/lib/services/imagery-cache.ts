@@ -6,14 +6,24 @@ import type { SatelliteImage } from "@/lib/db/schema"
 /** Relative to the process cwd, which is apps/web in every environment. */
 export const CACHE_DIR = resolve(process.cwd(), ".cache/sentinel")
 
+/**
+ * The name a PNG is stored under.
+ *
+ * `evalscriptVersion` is part of it because nothing else in the name describes
+ * the renderer: edit a colour ramp without it and the new code writes to the
+ * exact filenames the old images already occupy, so the stale pixels keep being
+ * served. Bumping the version makes every old file unreachable rather than
+ * wrong.
+ */
 export function cacheFileName(
   geometryHash: string,
   period: "reference" | "current",
   layer: "trueColor" | "ndvi",
+  evalscriptVersion: number,
   from: string,
   to: string,
 ): string {
-  return `${geometryHash}-${period}-${layer}-${from}_${to}.png`
+  return `${geometryHash}-${period}-${layer}-v${evalscriptVersion}-${from}_${to}.png`
 }
 
 /**

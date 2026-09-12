@@ -159,7 +159,7 @@ async function bajarPasada(
     MARCO,
     ventana.desde,
     ventana.hasta,
-    "trueColor",
+    "trueColorFlat",
     VISTA.ancho,
     VISTA.alto,
     15
@@ -174,7 +174,7 @@ async function bajarPasada(
       MARCO,
       ventana.desde,
       ventana.hasta,
-      "trueColor",
+      "trueColorFlat",
       VISTA.ancho,
       VISTA.alto,
       15

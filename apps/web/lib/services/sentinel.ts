@@ -3,7 +3,11 @@
 // 2) SH_CLIENT_ID y SH_CLIENT_SECRET en .env
 // Uso: const png = await getLoteImage(geojsonPolygon, "2020-11-01", "2020-12-31", "ndvi");
 
+import bbox from "@turf/bbox"
+import { polygon as turfPolygon } from "@turf/helpers"
+
 import { env } from "@/lib/config/env"
+import { pixelSize } from "@/lib/geo/raster"
 
 const TOKEN_URL =
   "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
@@ -35,21 +39,151 @@ export async function getToken(): Promise<string> {
   return cachedToken.value
 }
 
-const EVALSCRIPTS = {
-  // Color real, con brillo levantado (las reflectancias son bajas)
+/**
+ * Bumped whenever any evalscript below changes.
+ *
+ * Nothing else in the cache key describes the renderer, so without this an
+ * edited script keeps serving PNGs drawn by the previous one — for ever, in the
+ * case of reference images, which never expire. `sentinel.test.ts` fails when
+ * the scripts and this number drift apart.
+ */
+export const EVALSCRIPT_VERSION = 2 as const
+
+/**
+ * Tile-level cloud filter, in percent.
+ *
+ * Deliberately loose. It used to sit at 30 because there was no per-pixel mask
+ * and a cloudy scene meant a cloudy image; now the evalscripts reject cloud
+ * pixel by pixel and composite across orbits, so a tile that is 60% clouded
+ * elsewhere is a useful orbit for this lote. Filtering it out only leaves holes.
+ */
+export const MAX_TILE_CLOUD_PCT = 70
+
+/** SCL classes that are not ground: no data, defective, shadow, cloud, snow. */
+const SCL_REJECTED = "[0, 1, 3, 8, 9, 10, 11]"
+
+export const EVALSCRIPTS = {
+  // Cloud-free composite, not a single pass. One sample per orbit, ordered by
+  // scene cloud cover; the first orbit that is not cloud, shadow, cirrus or
+  // snow over this pixel wins. A pixel no orbit could resolve stays
+  // transparent — a hole reads as "no clean view here", which bare soil does
+  // not, and it keeps isEmptyCoverage able to tell a blank window from a field.
   trueColor: `//VERSION=3
+function setup() {
+  return {
+    input: ["B02", "B03", "B04", "SCL", "dataMask"],
+    output: { bands: 4 },
+    mosaicking: "ORBIT",
+  };
+}
+
+const REJECTED = ${SCL_REJECTED};
+
+function usable(s) {
+  return s.dataMask === 1 && REJECTED.indexOf(s.SCL) === -1;
+}
+
+// Sentinel Hub's own L2A "true colour optimized" tone curve. The flat 2.5x gain
+// it replaces clipped bright bare soil to white and crushed the dry Chaco
+// canopy to near black — the two things this image exists to tell apart.
+const maxR = 3.0;
+const midR = 0.13;
+const sat = 1.2;
+const gamma = 1.8;
+const gOff = 0.01;
+const gOffPow = Math.pow(gOff, gamma);
+const gOffRange = Math.pow(1 + gOff, gamma) - gOffPow;
+
+function clip(s) { return s < 0 ? 0 : s > 1 ? 1 : s; }
+
+function adj(a, tx, ty, maxC) {
+  const ar = clip(a / maxC);
+  return ar * (ar * (tx / maxC + ty - 1) - ty) / (ar * (2 * tx / maxC - 1) - tx / maxC);
+}
+
+function adjGamma(b) { return (Math.pow(b + gOff, gamma) - gOffPow) / gOffRange; }
+
+function sAdj(a) { return adjGamma(adj(a, midR, 1, maxR)); }
+
+function satEnh(r, g, b) {
+  const avgS = ((r + g + b) / 3.0) * (1 - sat);
+  return [clip(avgS + r * sat), clip(avgS + g * sat), clip(avgS + b * sat)];
+}
+
+function sRGB(c) {
+  return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 0.41666666666) - 0.055;
+}
+
+function evaluatePixel(samples) {
+  for (let i = 0; i < samples.length; i++) {
+    const s = samples[i];
+    if (!usable(s)) continue;
+    const rgb = satEnh(sAdj(s.B04), sAdj(s.B03), sAdj(s.B02));
+    return [sRGB(rgb[0]), sRGB(rgb[1]), sRGB(rgb[2]), 1];
+  }
+  return [0, 0, 0, 0];
+}`,
+
+  // NDVI over the same cloud-free composite and the same sample selection as
+  // trueColor, so both layers describe the same ground on the same dates.
+  ndvi: `//VERSION=3
+function setup() {
+  return {
+    input: ["B04", "B08", "SCL", "dataMask"],
+    output: { bands: 4 },
+    mosaicking: "ORBIT",
+  };
+}
+
+const REJECTED = ${SCL_REJECTED};
+
+function usable(s) {
+  return s.dataMask === 1 && REJECTED.indexOf(s.SCL) === -1;
+}
+
+// Earth tones below, canopy green above, and the swing at 0.30-0.35 where the
+// dry Chaco actually separates standing forest from cleared ground: bare soil
+// sits at 0.10-0.20, rastrojo at 0.20-0.30, dry thorn forest at 0.35-0.55,
+// closed canopy at 0.60-0.85. The old ramp swung at 0.20, which called rastrojo
+// "almost green" and dry monte "yellow" — the complaint that started this.
+//
+// No pure yellow and no red, on purpose: those are the OTBN legend, rendered on
+// the same screen. An index ramp borrowing the legal palette invites reading a
+// legal category out of a leaf-greenness measurement.
+//
+// Lightness falls from bare soil to closed canopy, so the ramp still separates
+// for a reader who cannot tell red from green.
+const RAMP = [
+  [-0.20, 0x2b3a55],
+  [0.00, 0x6b5b4a],
+  [0.10, 0x9c8663],
+  [0.18, 0xc4ad84],
+  [0.25, 0xd9cf9a],
+  [0.35, 0xb9c47a],
+  [0.45, 0x82ab5a],
+  [0.60, 0x4a8a43],
+  [0.80, 0x1d5c2e]
+];
+const viz = new ColorRampVisualizer(RAMP);
+
+function evaluatePixel(samples) {
+  for (let i = 0; i < samples.length; i++) {
+    const s = samples[i];
+    if (!usable(s)) continue;
+    const sum = s.B08 + s.B04;
+    if (sum === 0) continue;
+    return [...viz.process((s.B08 - s.B04) / sum), 1];
+  }
+  return [0, 0, 0, 0];
+}`,
+
+  // Frozen. scripts/build-landing-assets.ts compensates this exact flat 2.5x
+  // gain with a linear lift in sharp (HERO_GANANCIA / HERO_DESPLAZAMIENTO) and
+  // commits the result to public/. Changing it re-brightens that artwork twice.
+  // The app uses `trueColor` above; this one only feeds the bake.
+  trueColorFlat: `//VERSION=3
 function setup() { return { input: ["B02","B03","B04","dataMask"], output: { bands: 4 } }; }
 function evaluatePixel(s) { return [2.5*s.B04, 2.5*s.B03, 2.5*s.B02, s.dataMask]; }`,
-
-  // NDVI en escala rojo→amarillo→verde. Sirve para ver el contraste monte/lote pelado.
-  ndvi: `//VERSION=3
-function setup() { return { input: ["B04","B08","dataMask"], output: { bands: 4 } }; }
-const ramp = [[-0.2,0x8b0000],[0,0xd2b48c],[0.2,0xffff66],[0.4,0x99e600],[0.6,0x33a02c],[0.8,0x006400]];
-const viz = new ColorRampVisualizer(ramp);
-function evaluatePixel(s) {
-  const ndvi = (s.B08 - s.B04) / (s.B08 + s.B04);
-  return [...viz.process(ndvi), s.dataMask];
-}`,
 } as const
 
 export type GeoJSONPolygon = {
@@ -114,14 +248,30 @@ async function procesar(request: ProcessRequest): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer())
 }
 
-/** Devuelve un PNG (Buffer) de Sentinel-2 recortado al polígono, mosaico menos nuboso del rango. */
+/**
+ * A Sentinel-2 PNG clipped to the polygon, composited over the range.
+ *
+ * The raster is sized from the polygon's own bounding box rather than forced
+ * square: Sentinel Hub maps the box onto whatever pixel grid it is given, so a
+ * square request stretches an elongated lote until it no longer matches the map
+ * beside it.
+ */
 export async function getLoteImage(
   geometry: GeoJSONPolygon,
   from: string, // "YYYY-MM-DD"
   to: string,
-  layer: keyof typeof EVALSCRIPTS = "trueColor",
-  size = 512
+  layer: keyof typeof EVALSCRIPTS = "trueColor"
 ): Promise<Buffer> {
+  const [minLon, minLat, maxLon, maxLat] = bbox(
+    turfPolygon(geometry.coordinates as number[][][])
+  )
+  const { width, height } = pixelSize({
+    minLon: minLon!,
+    minLat: minLat!,
+    maxLon: maxLon!,
+    maxLat: maxLat!,
+  })
+
   return procesar({
     bounds: {
       geometry, // WGS84 por defecto (EPSG:4326). Recorta al polígono: afuera queda transparente.
@@ -130,9 +280,9 @@ export async function getLoteImage(
     from,
     to,
     layer,
-    width: size,
-    height: size,
-    maxCloudCoverage: 30,
+    width,
+    height,
+    maxCloudCoverage: MAX_TILE_CLOUD_PCT,
   })
 }
 
@@ -162,13 +312,3 @@ export async function getFrameImage(
   })
 }
 
-// Ejemplo: comparación "2020 vs hoy" para el slider del demo
-export async function getBeforeAfter(geometry: GeoJSONPolygon) {
-  const today = new Date().toISOString().slice(0, 10)
-  const monthAgo = new Date(Date.now() - 45 * 864e5).toISOString().slice(0, 10)
-  const [before, after] = await Promise.all([
-    getLoteImage(geometry, "2020-10-01", "2020-12-31", "trueColor"),
-    getLoteImage(geometry, monthAgo, today, "trueColor"),
-  ])
-  return { before, after } // servilos como data:image/png;base64 o desde un endpoint
-}

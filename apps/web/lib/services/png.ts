@@ -28,13 +28,45 @@ export function measureCoverage(buffer: Buffer): PngCoverage {
   }
 }
 
+/** Guards against dividing by a footprint rounded down to nothing. */
+const MIN_EXPECTED_RATIO = 0.01
+
+/**
+ * How much of the lote itself came back painted, 0-1.
+ *
+ * Raw opacity is not the measure. The raster covers the polygon's bounding box
+ * and masks everything outside the polygon, so a perfectly good image of an
+ * L-shaped lote is mostly transparent by design. Dividing by the coverage that
+ * shape should produce turns the alpha channel into a statement about the lote.
+ *
+ * Since the evalscripts leave a pixel transparent when no orbit in the window
+ * resolved it, this is a measurement on the Sentinel scene: the share of the
+ * field that was actually seen through the clouds. That is a different and
+ * stronger claim than the Xweather figure beside it, which is surface weather
+ * at the centroid and knows nothing about the image.
+ *
+ * @param expectedRatio polygon area divided by its bounding box area, 0-1.
+ */
+export function clearRatio(
+  coverage: PngCoverage,
+  expectedRatio: number,
+): number {
+  const expected = Math.max(expectedRatio, MIN_EXPECTED_RATIO)
+  return Math.min(1, coverage.opaqueRatio / expected)
+}
+
+/** Whether a measured raster carries too little of the lote to be evidence. */
+export function isEmptyCoverage(
+  coverage: PngCoverage,
+  expectedRatio: number,
+  tolerance = 0.2,
+): boolean {
+  if (coverage.opaqueRatio === 0) return true
+  return clearRatio(coverage, expectedRatio) < tolerance
+}
+
 /**
  * Whether the returned image carries no usable imagery.
- *
- * Raw opacity is not the test. The raster covers the polygon's bounding box and
- * masks everything outside the polygon, so a perfectly good image of an
- * L-shaped lote is mostly transparent by design. What matters is how the actual
- * coverage compares to the coverage that shape should produce.
  *
  * @param expectedRatio polygon area divided by its bounding box area, 0-1.
  */
@@ -43,15 +75,11 @@ export function isEffectivelyEmpty(
   expectedRatio: number,
   tolerance = 0.2,
 ): boolean {
-  let coverage: PngCoverage
   try {
-    coverage = measureCoverage(buffer)
+    return isEmptyCoverage(measureCoverage(buffer), expectedRatio, tolerance)
   } catch {
     // Undecodable bytes are not an empty image; let the caller surface the
     // transport problem rather than reporting "no clear imagery".
     return false
   }
-
-  if (coverage.opaqueRatio === 0) return true
-  return coverage.opaqueRatio < Math.max(expectedRatio, 0.01) * tolerance
 }

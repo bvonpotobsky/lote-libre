@@ -1,4 +1,6 @@
 import type { FuenteLanding } from "@/lib/landing/fuentes"
+import { APTITUD_EJEMPLO } from "@/lib/landing/aptitud-ejemplo"
+import { filasAptitud } from "@/lib/ui/aptitud"
 import { VERDICT_UI } from "@/lib/ui/verdict"
 
 /** Only what the real PDF would cite for a lote in Santiago del Estero. */
@@ -108,7 +110,21 @@ export function HojaDocumento({ fuentes }: { fuentes: FuenteLanding[] }) {
         </section>
 
         <section className="flex flex-col gap-2">
-          <h3 className="font-semibold">Resultado de la verificación</h3>
+          <h3 className="font-semibold">Aptitud legal</h3>
+          <ul className="flex flex-col gap-1">
+            {filasAptitud(APTITUD_EJEMPLO).map((fila) => (
+              <li key={fila.bucket} className="flex justify-between gap-4">
+                <span>{fila.etiqueta}</span>
+                <span className="tabular-nums">
+                  {fila.hectareas} · {fila.porcentaje}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <h3 className="font-semibold">Resultado de exportación</h3>
           <dl className="grid grid-cols-[7rem_1fr] gap-x-4 gap-y-1 sm:grid-cols-[8.5rem_1fr]">
             <Fila etiqueta="Fecha">{EJEMPLO.fecha}</Fila>
             <Fila etiqueta="Pérdida de cobertura">{EJEMPLO.perdida}</Fila>

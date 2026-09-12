@@ -1,1 +1,0 @@
-ALTER TABLE `lote_verifications` ADD `reasons` text DEFAULT '[]' NOT NULL;

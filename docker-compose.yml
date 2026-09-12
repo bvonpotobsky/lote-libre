@@ -1,0 +1,33 @@
+# Base de datos de desarrollo.
+#
+# Sólo la base: la app de Next corre en tu máquina con `pnpm dev`. Meterla en un
+# contenedor costaría el hot reload y no compraría nada, porque lo único que un
+# clon nuevo no puede levantar solo es el servidor de Postgres.
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: lote-limpio-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lote
+      POSTGRES_PASSWORD: lote
+      POSTGRES_DB: lote_limpio
+    ports:
+      # DB_PORT existe para quien ya tenga un Postgres ocupando el 5432: se
+      # exporta la variable y listo, sin tocar este archivo ni el de al lado.
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - lote-limpio-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Esto es lo que hace confiable el arranque de un solo comando. Postgres
+      # acepta el puerto TCP antes de estar listo para consultas; sin esperar a
+      # pg_isready, `db:migrate` corre contra un servidor a medio arrancar y
+      # falla de forma intermitente, que es la peor manera de fallar.
+      test: ["CMD-SHELL", "pg_isready -U lote -d lote_limpio"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
+
+volumes:
+  lote-limpio-pgdata:

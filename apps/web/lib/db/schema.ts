@@ -1,12 +1,15 @@
-import { relations, sql } from "drizzle-orm"
+import { relations } from "drizzle-orm"
 import {
+  boolean,
+  doublePrecision,
   index,
   integer,
-  real,
-  sqliteTable,
+  jsonb,
+  pgTable,
   text,
+  timestamp,
   uniqueIndex,
-} from "drizzle-orm/sqlite-core"
+} from "drizzle-orm/pg-core"
 
 /* -------------------------------------------------------------------------- */
 /* Domain vocabulary                                                          */
@@ -49,6 +52,17 @@ export type SourceRef = {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Coordinates are double precision, never `real`                              */
+/*                                                                             */
+/* Postgres `real` is float4: four bytes, about six significant digits. SQLite */
+/* `real`, which these columns used to be, is an eight-byte double. Translating */
+/* one to the other literally would silently round -63.79244 to -63.7924,      */
+/* shifting centroids by tens of metres, breaking bbox comparisons, and        */
+/* leaving the geometry hash pointing at coordinates that no longer produce it. */
+/* Every coordinate and percentage below is therefore `doublePrecision`.       */
+/* -------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------- */
 /* Better Auth tables                                                          */
 /*                                                                             */
 /* Shape dictated by Better Auth. Note `verification` here is Better Auth's    */
@@ -56,40 +70,38 @@ export type SourceRef = {
 /* verification of a lote, which lives in `lote_verifications` below.          */
 /* -------------------------------------------------------------------------- */
 
-export const user = sqliteTable("user", {
+export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  emailVerified: integer("email_verified", { mode: "boolean" })
-    .notNull()
-    .default(false),
+  emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 })
 
-export const session = sqliteTable(
+export const session = pgTable(
   "session",
   {
     id: text("id").primaryKey(),
-    expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     token: text("token").notNull().unique(),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (table) => [index("session_user_id_idx").on(table.userId)],
+  (table) => [index("session_user_id_idx").on(table.userId)]
 )
 
-export const account = sqliteTable(
+export const account = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
@@ -101,38 +113,38 @@ export const account = sqliteTable(
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
-    accessTokenExpiresAt: integer("access_token_expires_at", {
-      mode: "timestamp",
+    accessTokenExpiresAt: timestamp("access_token_expires_at", {
+      withTimezone: true,
     }),
-    refreshTokenExpiresAt: integer("refresh_token_expires_at", {
-      mode: "timestamp",
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", {
+      withTimezone: true,
     }),
     scope: text("scope"),
     password: text("password"),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [index("account_user_id_idx").on(table.userId)],
+  (table) => [index("account_user_id_idx").on(table.userId)]
 )
 
-export const verification = sqliteTable(
+export const verification = pgTable(
   "verification",
   {
     id: text("id").primaryKey(),
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
-    expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [index("verification_identifier_idx").on(table.identifier)],
+  (table) => [index("verification_identifier_idx").on(table.identifier)]
 )
 
 /* -------------------------------------------------------------------------- */
 /* Lotes                                                                       */
 /* -------------------------------------------------------------------------- */
 
-export const lotes = sqliteTable(
+export const lotes = pgTable(
   "lotes",
   {
     id: text("id").primaryKey(),
@@ -147,44 +159,42 @@ export const lotes = sqliteTable(
     renspa: text("renspa"),
 
     /** Canonical GeoJSON Polygon, WGS84 (EPSG:4326), lon/lat order. */
-    geometry: text("geometry", { mode: "json" })
-      .notNull()
-      .$type<GeoJSON.Polygon>(),
+    geometry: jsonb("geometry").notNull().$type<GeoJSON.Polygon>(),
     /** SHA-256 of the canonical geometry. Content-addresses the image cache. */
     geometryHash: text("geometry_hash").notNull(),
 
-    areaHa: real("area_ha").notNull(),
+    areaHa: doublePrecision("area_ha").notNull(),
 
     /* Derived and denormalized: Xweather queries by point, the list view must
        not run Turf per row, and the bbox rejects a province layer before it is
-       ever read off disk. */
-    centroidLon: real("centroid_lon").notNull(),
-    centroidLat: real("centroid_lat").notNull(),
-    bboxMinLon: real("bbox_min_lon").notNull(),
-    bboxMinLat: real("bbox_min_lat").notNull(),
-    bboxMaxLon: real("bbox_max_lon").notNull(),
-    bboxMaxLat: real("bbox_max_lat").notNull(),
+       ever read off disk. Double precision, never real — see the note above. */
+    centroidLon: doublePrecision("centroid_lon").notNull(),
+    centroidLat: doublePrecision("centroid_lat").notNull(),
+    bboxMinLon: doublePrecision("bbox_min_lon").notNull(),
+    bboxMinLat: doublePrecision("bbox_min_lat").notNull(),
+    bboxMaxLon: doublePrecision("bbox_max_lon").notNull(),
+    bboxMaxLat: doublePrecision("bbox_max_lat").notNull(),
 
     source: text("source").notNull().$type<LoteSource>(),
 
-    createdAt: integer("created_at", { mode: "timestamp" })
+    createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
-      .default(sql`(unixepoch())`),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
-      .default(sql`(unixepoch())`),
+      .defaultNow(),
   },
   (table) => [
     index("lotes_user_id_idx").on(table.userId),
     index("lotes_geometry_hash_idx").on(table.geometryHash),
-  ],
+  ]
 )
 
 /* -------------------------------------------------------------------------- */
 /* Verifications                                                               */
 /* -------------------------------------------------------------------------- */
 
-export const loteVerifications = sqliteTable(
+export const loteVerifications = pgTable(
   "lote_verifications",
   {
     id: text("id").primaryKey(),
@@ -204,25 +214,19 @@ export const loteVerifications = sqliteTable(
     verdict: text("verdict").$type<Verdict>(),
 
     /** Share of the lote's area intersecting post-2020 loss, 0-100. */
-    forestLossPct: real("forest_loss_pct"),
-    forestLossHa: real("forest_loss_ha"),
+    forestLossPct: doublePrecision("forest_loss_pct"),
+    forestLossHa: doublePrecision("forest_loss_ha"),
     /** Earliest loss year found after the 2020-12-31 cutoff. */
     forestLossFirstYear: integer("forest_loss_first_year"),
 
     otbnCategory: text("otbn_category").$type<OtbnCategory>(),
     /** Share of the lote's area in the dominant OTBN category, 0-100. */
-    otbnPct: real("otbn_pct"),
+    otbnPct: doublePrecision("otbn_pct"),
 
-    sources: text("sources", { mode: "json" })
-      .notNull()
-      .$type<SourceRef[]>()
-      .default(sql`'[]'`),
+    sources: jsonb("sources").notNull().$type<SourceRef[]>().default([]),
 
     /** Machine-readable evidence behind the verdict; rendered in the UI and PDF. */
-    reasons: text("reasons", { mode: "json" })
-      .notNull()
-      .$type<string[]>()
-      .default(sql`'[]'`),
+    reasons: jsonb("reasons").notNull().$type<string[]>().default([]),
 
     /** Set when status is "failed". Drives the retry copy shown to the user. */
     failureCode: text("failure_code"),
@@ -237,16 +241,16 @@ export const loteVerifications = sqliteTable(
      * checkable later: anyone can re-serialize it and re-hash.
      */
     documentHash: text("document_hash"),
-    documentPayload: text("document_payload", { mode: "json" }),
+    documentPayload: jsonb("document_payload"),
 
-    createdAt: integer("created_at", { mode: "timestamp" })
+    createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
-      .default(sql`(unixepoch())`),
+      .defaultNow(),
   },
   (table) => [
     index("lote_verifications_lote_idx").on(table.loteId, table.createdAt),
     index("lote_verifications_user_idx").on(table.userId),
-  ],
+  ]
 )
 
 /* -------------------------------------------------------------------------- */
@@ -258,7 +262,7 @@ export const loteVerifications = sqliteTable(
 /* first and only then reads the file.                                         */
 /* -------------------------------------------------------------------------- */
 
-export const satelliteImages = sqliteTable(
+export const satelliteImages = pgTable(
   "satellite_images",
   {
     id: text("id").primaryKey(),
@@ -280,17 +284,17 @@ export const satelliteImages = sqliteTable(
       .notNull()
       .$type<"xweather" | "ampliada" | "fallback">(),
     /** Mean daily cloud cover over the chosen window, 0-100. Null on fallback. */
-    cloudAvgPct: real("cloud_avg_pct"),
+    cloudAvgPct: doublePrecision("cloud_avg_pct"),
 
     filePath: text("file_path").notNull(),
     bytes: integer("bytes").notNull(),
     /** Sentinel answers 200 with a transparent PNG when nothing clears the
         cloud filter. That is a result, not an error — we record it. */
-    isEmpty: integer("is_empty", { mode: "boolean" }).notNull().default(false),
+    isEmpty: boolean("is_empty").notNull().default(false),
 
-    createdAt: integer("created_at", { mode: "timestamp" })
+    createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
-      .default(sql`(unixepoch())`),
+      .defaultNow(),
   },
   (table) => [
     uniqueIndex("satellite_images_key_idx").on(
@@ -298,9 +302,9 @@ export const satelliteImages = sqliteTable(
       table.period,
       table.layer,
       table.dateFrom,
-      table.dateTo,
+      table.dateTo
     ),
-  ],
+  ]
 )
 
 /* -------------------------------------------------------------------------- */
@@ -323,7 +327,7 @@ export const loteVerificationsRelations = relations(
       fields: [loteVerifications.loteId],
       references: [lotes.id],
     }),
-  }),
+  })
 )
 
 export type Lote = typeof lotes.$inferSelect

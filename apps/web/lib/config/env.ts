@@ -13,11 +13,17 @@ import { z } from "zod"
  * of surfacing as an opaque 400 from a third-party API mid-demo.
  */
 
-const DEFAULT_DATABASE_URL = "file:./.data/lote-limpio.db"
+const DEFAULT_DATABASE_URL = "postgresql://lote:lote@localhost:5432/lote_limpio"
 const DEFAULT_AUTH_URL = "http://localhost:3000"
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().min(1).default(DEFAULT_DATABASE_URL),
+  DATABASE_URL: z
+    .string()
+    .min(1)
+    .refine((value) => /^postgres(ql)?:\/\//.test(value), {
+      error: "must be a Postgres connection URL (postgresql://...)",
+    })
+    .default(DEFAULT_DATABASE_URL),
   BETTER_AUTH_SECRET: z.string().min(32, {
     error: "must be at least 32 characters",
   }),
@@ -30,6 +36,7 @@ const envSchema = z.object({
 
 /** Where a human actually obtains each credential, printed on failure. */
 const PROVENANCE: Readonly<Record<string, string>> = {
+  DATABASE_URL: "start the local database with: pnpm db:up",
   BETTER_AUTH_SECRET: "generate one locally: openssl rand -base64 32",
   SH_CLIENT_ID: "dataspace.copernicus.eu -> Dashboard -> OAuth clients",
   SH_CLIENT_SECRET: "dataspace.copernicus.eu -> Dashboard -> OAuth clients",
@@ -38,8 +45,8 @@ const PROVENANCE: Readonly<Record<string, string>> = {
 }
 
 export type Env = {
-  /** Filesystem path to the SQLite database, `file:` prefix stripped. */
-  databaseFile: string
+  /** Postgres connection URL. Same shape locally (Docker) and in production. */
+  databaseUrl: string
   auth: { secret: string; url: string }
   copernicus: { clientId: string; clientSecret: string }
   xweather: { clientId: string; clientSecret: string }
@@ -68,7 +75,7 @@ function loadEnv(): Env {
 
   const raw = parsed.data
   return {
-    databaseFile: raw.DATABASE_URL.replace(/^file:/, ""),
+    databaseUrl: raw.DATABASE_URL,
     auth: { secret: raw.BETTER_AUTH_SECRET, url: raw.BETTER_AUTH_URL },
     copernicus: {
       clientId: raw.SH_CLIENT_ID,
@@ -98,6 +105,5 @@ export function assertEnvironment(): Env {
 
 /** Lazily validated. Reading any property triggers `assertEnvironment()`. */
 export const env: Env = new Proxy({} as Env, {
-  get: (_target, property) =>
-    assertEnvironment()[property as keyof Env],
+  get: (_target, property) => assertEnvironment()[property as keyof Env],
 })

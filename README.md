@@ -12,16 +12,24 @@ cadena hasta el productor, que hasta ahora no tenía con qué responder.
 
 ## Arrancar
 
-Necesitás **Node 20.9+** y **pnpm 10+**.
+Necesitás **Node 20.9+**, **pnpm 10+** y **Docker** (la base corre en un contenedor).
 
 ```bash
-pnpm install
 cp apps/web/.env.example apps/web/.env.local   # completá las credenciales
-pnpm demo
+pnpm bootstrap
+pnpm dev
 ```
 
-`pnpm demo` migra la base, carga los dos lotes de demostración —verificados y con
-las imágenes satelitales ya en caché— y levanta la app en http://localhost:3000.
+`pnpm bootstrap` instala las dependencias, levanta PostgreSQL en Docker, migra y
+carga los dos lotes de demostración —verificados y con las imágenes satelitales
+ya en caché—. Después `pnpm dev` levanta la app en http://localhost:3000.
+
+Si el puerto 5432 ya está ocupado en tu máquina, elegí otro y ajustá
+`DATABASE_URL` en `apps/web/.env.local` para que coincida:
+
+```bash
+DB_PORT=5433 pnpm db:up
+```
 
 Entrás con **`demo@lotelimpio.ar`** / **`lotelimpio2026`**.
 
@@ -64,6 +72,10 @@ openssl rand -base64 32     # -> BETTER_AUTH_SECRET
 
 | Comando | Qué hace |
 |---|---|
+| `pnpm bootstrap` | instala, levanta la base, migra y carga los lotes de demostración |
+| `pnpm db:up` | levanta PostgreSQL en Docker y espera a que acepte consultas |
+| `pnpm db:down` | apaga la base (los datos sobreviven en el volumen) |
+| `pnpm db:reset` | borra el volumen y deja la base vacía y migrada |
 | `pnpm demo` | migra, carga los lotes de demostración y levanta la app |
 | `pnpm dev` | levanta la app (migra primero, sin cargar datos) |
 | `pnpm test` | 71 tests unitarios |
@@ -118,11 +130,18 @@ re-serializarlo y verificar que el documento no fue alterado.
 
 ## Decisiones técnicas
 
-**SQLite, no PostgreSQL.** Toda la geometría se resuelve con Turf.js contra
-archivos GeoJSON, así que PostGIS no aportaría nada: Postgres quedaría guardando
-filas igual que SQLite, a cambio de un servicio más antes de que la app arranque.
-No hay una sola query con SQL crudo, así que migrar es cambiar el dialecto de
-Drizzle.
+**PostgreSQL, sin PostGIS.** Toda la geometría se resuelve con Turf.js contra
+archivos GeoJSON, así que PostGIS no aportaría nada: la base sólo guarda filas.
+Postgres está porque la app se despliega en un runtime serverless, donde el
+sistema de archivos es efímero y un archivo SQLite no sobrevive de una
+invocación a la otra. En desarrollo eso se cubre con un contenedor, y el mismo
+`DATABASE_URL` sirve para los dos entornos.
+
+**Las coordenadas son `double precision`, nunca `real`.** En Postgres `real` es
+float4: cuatro bytes, unos seis dígitos significativos. Guardaría `-63.79244`
+como `-63.7924`, corriendo los centroides decenas de metros y dejando el hash de
+geometría apuntando a coordenadas que ya no lo producen. Sin error y sin aviso,
+que es la peor forma de romperse.
 
 **Leaflet a mano, no react-leaflet.** `leaflet-draw` es vanilla y
 `react-leaflet-draw` está sin mantenimiento. Montarlo imperativamente elimina la

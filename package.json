@@ -3,12 +3,16 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "bootstrap": "pnpm install && pnpm db:up && pnpm --filter web db:migrate && pnpm --filter web db:seed",
     "build": "turbo build",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && pnpm db:up && pnpm --filter web db:migrate",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
-    "demo": "pnpm --filter web db:migrate && pnpm --filter web db:seed && pnpm --filter web dev",
+    "demo": "pnpm db:up && pnpm --filter web db:migrate && pnpm --filter web db:seed && pnpm --filter web dev",
     "test": "turbo test"
   },
   "devDependencies": {

@@ -3,6 +3,7 @@ import { fail, ok, withRoute } from "@/lib/http/responses"
 import { findLote } from "@/lib/lotes/service"
 import {
   getOrCreateImage,
+  type ImageLayer,
   type ImageryMeta,
   type ImagePeriod,
 } from "@/lib/services/imagery"
@@ -23,12 +24,19 @@ const UNAVAILABLE: Omit<Extract<Slot, { status: "unavailable" }>, "status"> = {
   hint: "El veredicto no depende de las imágenes. Probá de nuevo en un momento.",
 }
 
+/** Anything but an explicit "ndvi" is the default view. */
+const readLayer = (request: Request): ImageLayer =>
+  new URL(request.url).searchParams.get("layer") === "ndvi"
+    ? "ndvi"
+    : "trueColor"
+
 async function buildSlot(
   loteId: string,
   geometry: GeoJSON.Polygon,
   geometryHash: string,
   centroid: { lon: number; lat: number },
   period: ImagePeriod,
+  layer: ImageLayer,
 ): Promise<Slot> {
   try {
     const { meta } = await getOrCreateImage(
@@ -36,10 +44,13 @@ async function buildSlot(
       geometryHash,
       centroid,
       period,
+      layer,
     )
     return {
       status: "ready",
-      url: `/api/lotes/${loteId}/imagery/${period}`,
+      // The layer rides in the URL so the browser keeps one cache entry per
+      // layer instead of serving whichever one it fetched first.
+      url: `/api/lotes/${loteId}/imagery/${period}?layer=${layer}`,
       ...meta,
     }
   } catch (error) {
@@ -48,7 +59,7 @@ async function buildSlot(
   }
 }
 
-export const GET = withRoute(async (_request: Request, context: Context) => {
+export const GET = withRoute(async (request: Request, context: Context) => {
   const user = await requireUser()
   const { id } = await context.params
 
@@ -56,10 +67,21 @@ export const GET = withRoute(async (_request: Request, context: Context) => {
   if (!lote) return fail("NOT_FOUND")
 
   const centroid = { lon: lote.centroidLon, lat: lote.centroidLat }
+  const layer = readLayer(request)
+
+  const slot = (period: ImagePeriod) =>
+    buildSlot(
+      lote.id,
+      lote.geometry,
+      lote.geometryHash,
+      centroid,
+      period,
+      layer,
+    )
 
   const [reference, current] = await Promise.all([
-    buildSlot(lote.id, lote.geometry, lote.geometryHash, centroid, "reference"),
-    buildSlot(lote.id, lote.geometry, lote.geometryHash, centroid, "current"),
+    slot("reference"),
+    slot("current"),
   ])
 
   if (reference.status === "unavailable" && current.status === "unavailable") {

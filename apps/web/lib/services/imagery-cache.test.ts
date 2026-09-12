@@ -69,7 +69,17 @@ describe("stillOnDisk", () => {
 describe("cacheFileName", () => {
   it("keys the file by everything that changes the pixels", () => {
     expect(
-      cacheFileName(HASH, "reference", "ndvi", "2020-10-01", "2020-12-31"),
-    ).toBe(`${HASH}-reference-ndvi-2020-10-01_2020-12-31.png`)
+      cacheFileName(HASH, "reference", "ndvi", 2, "2020-10-01", "2020-12-31"),
+    ).toBe(`${HASH}-reference-ndvi-v2-2020-10-01_2020-12-31.png`)
+  })
+
+  it("gives an edited evalscript a name of its own", () => {
+    // Without the version in the name, changing a ramp leaves every PNG on disk
+    // reachable under the name the new renderer would write to.
+    expect(
+      cacheFileName(HASH, "reference", "ndvi", 3, "2020-10-01", "2020-12-31"),
+    ).not.toBe(
+      cacheFileName(HASH, "reference", "ndvi", 2, "2020-10-01", "2020-12-31"),
+    )
   })
 })

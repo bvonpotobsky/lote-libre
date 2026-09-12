@@ -272,7 +272,7 @@ function DueDiligenceDocument({
                 {imagen.periodo === "referencia" ? "Referencia" : "Actual"}:{" "}
                 {formatDate(imagen.desde)} a {formatDate(imagen.hasta)}
                 {imagen.nubosidadMediaPct !== null
-                  ? ` — nubosidad media ${imagen.nubosidadMediaPct.toFixed(1)} %`
+                  ? ` — ventana elegida por nubosidad meteorológica media de ${imagen.nubosidadMediaPct.toFixed(1)} % (dato del pronóstico del lugar, no una medición sobre la imagen)`
                   : " — ventana amplia, sin selección por nubosidad"}
                 {imagen.origenVentana === "fallback"
                   ? " (sin datos meteorológicos; se aplicó el criterio de menor nubosidad de Sentinel Hub)"

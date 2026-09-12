@@ -317,6 +317,8 @@ export const satelliteImages = pgTable(
     /** "reference" = 2020 baseline, "current" = most recent clear window. */
     period: text("period").notNull().$type<"reference" | "current">(),
     layer: text("layer").notNull().$type<"trueColor" | "ndvi">(),
+    /** Which generation of evalscript drew these pixels. See EVALSCRIPT_VERSION. */
+    evalscriptVersion: integer("evalscript_version").notNull().default(1),
 
     /** The window actually requested from Copernicus, YYYY-MM-DD. */
     dateFrom: text("date_from").notNull(),
@@ -335,6 +337,12 @@ export const satelliteImages = pgTable(
 
     filePath: text("file_path").notNull(),
     bytes: integer("bytes").notNull(),
+    /** Raster dimensions, sized from the lote's own bbox rather than squared. */
+    pixelWidth: integer("pixel_width").notNull().default(512),
+    pixelHeight: integer("pixel_height").notNull().default(512),
+    /** Share of the lote that came back unclouded, 0-1. A measurement on the
+        Sentinel scene, unlike cloudAvgPct, which is surface weather. */
+    clearRatio: doublePrecision("clear_ratio"),
     /** Sentinel answers 200 with a transparent PNG when nothing clears the
         cloud filter. That is a result, not an error — we record it. */
     isEmpty: boolean("is_empty").notNull().default(false),
@@ -348,6 +356,7 @@ export const satelliteImages = pgTable(
       table.geometryHash,
       table.period,
       table.layer,
+      table.evalscriptVersion,
       table.dateFrom,
       table.dateTo
     ),

@@ -1,8 +1,9 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import area from "@turf/area"
+import bbox from "@turf/bbox"
 import { polygon as turfPolygon } from "@turf/helpers"
 
 import { Comparador, type VentanaImagen } from "@/components/mapa/comparador"
@@ -14,7 +15,10 @@ import {
   PanelVeredicto,
 } from "@/components/verificacion/panel-veredicto"
 import type { Lote, LoteVerification } from "@/lib/db/schema"
+import { metricAspect } from "@/lib/geo/raster"
 import { isVerificationCurrent } from "@/lib/lotes/freshness"
+import type { ImageLayer } from "@/lib/services/imagery"
+import { otherLayer, toggleLabel } from "@/lib/ui/imagery"
 import { formatHa, nombreProvincia } from "@/lib/ui/verdict"
 
 type Slot =
@@ -39,10 +43,11 @@ export function DetalleLote({
    * this lote's pictures — tagging them is what makes that a comparison rather
    * than a reset inside an effect.
    */
-  const [imagenes, setImagenes] = useState<{
-    hash: string
-    datos: Imagenes
-  } | null>(null)
+  const [capa, setCapa] = useState<ImageLayer>("trueColor")
+  const enVuelo = useRef(new Set<string>())
+  const [imagenes, setImagenes] = useState<
+    Partial<Record<ImageLayer, { hash: string; datos: Imagenes }>>
+  >({})
   const [hashQueFallo, setHashQueFallo] = useState<string | null>(null)
 
   const [editando, setEditando] = useState(false)
@@ -74,21 +79,66 @@ export function DetalleLote({
     verificacion !== null &&
     !isVerificationCurrent(lote.geometryHash, verificacion.geometryHash)
 
+  /**
+   * Fetches one layer of the comparison.
+   *
+   * `reportarFallo` is false for the idle prefetch: a warm-up that fails must
+   * not paint the error state over a comparison that is on screen and working.
+   */
+  const cargarCapa = useCallback(
+    (pedida: ImageLayer, vivo: () => boolean, reportarFallo: boolean) => {
+      const hash = lote.geometryHash
+      const marca = `${hash}:${pedida}`
+      if (enVuelo.current.has(marca)) return
+      enVuelo.current.add(marca)
+
+      fetch(`/api/lotes/${lote.id}/imagery?layer=${pedida}`)
+        .then((r) => r.json())
+        .then((cuerpo) => {
+          if (!vivo()) return
+          if (cuerpo.ok) {
+            setImagenes((previas) => ({
+              ...previas,
+              [pedida]: { hash, datos: cuerpo.data as Imagenes },
+            }))
+          } else if (reportarFallo) setHashQueFallo(hash)
+        })
+        .catch(() => {
+          if (vivo() && reportarFallo) setHashQueFallo(hash)
+        })
+        .finally(() => enVuelo.current.delete(marca))
+    },
+    [lote.id, lote.geometryHash],
+  )
+
+  const cargada = imagenes[capa]?.hash === lote.geometryHash
+
   useEffect(() => {
+    if (cargada) return
     let vigente = true
-    const hash = lote.geometryHash
-    fetch(`/api/lotes/${lote.id}/imagery`)
-      .then((r) => r.json())
-      .then((cuerpo) => {
-        if (!vigente) return
-        if (cuerpo.ok) setImagenes({ hash, datos: cuerpo.data as Imagenes })
-        else setHashQueFallo(hash)
-      })
-      .catch(() => vigente && setHashQueFallo(hash))
+    cargarCapa(capa, () => vigente, true)
     return () => {
       vigente = false
     }
-  }, [lote.id, lote.geometryHash])
+  }, [capa, cargada, cargarCapa])
+
+  /*
+   * Warm the other layer once the visible one has landed, so the toggle feels
+   * instant. It waits on purpose: both layers of a period share one window, and
+   * the first request is what resolves it. Asking in parallel would run a
+   * second serial chain of Xweather requests to learn the same dates, against a
+   * quota tight enough that a burst of three trips it.
+   */
+  const otraCargada = imagenes[otherLayer(capa)]?.hash === lote.geometryHash
+
+  useEffect(() => {
+    if (!cargada || otraCargada) return
+    let vigente = true
+    cargarCapa(otherLayer(capa), () => vigente, false)
+    return () => {
+      vigente = false
+    }
+  }, [capa, cargada, otraCargada, cargarCapa])
 
   const verificar = useCallback(async () => {
     setVerificando(true)
@@ -153,9 +203,26 @@ export function DetalleLote({
 
   // Only this lote's own pictures count as loaded; anything tagged with an
   // older hash belongs to a shape that no longer exists.
-  const imagenesActuales =
-    imagenes?.hash === lote.geometryHash ? imagenes.datos : null
+  const imagenesActuales = cargada ? imagenes[capa]!.datos : null
   const imagenesFallaron = hashQueFallo === lote.geometryHash
+
+  /* The placeholder holds the shape the images will arrive in, so nothing
+     jumps when they land. */
+  const proporcionLote = useMemo(() => {
+    try {
+      const [minLon, minLat, maxLon, maxLat] = bbox(
+        turfPolygon(lote.geometry.coordinates),
+      )
+      return metricAspect({
+        minLon: minLon!,
+        minLat: minLat!,
+        maxLon: maxLon!,
+        maxLat: maxLat!,
+      })
+    } catch {
+      return 1
+    }
+  }, [lote.geometry])
 
   const lista = verificacion?.status === "ready" && !vencida
   const fallo = verificacion?.status === "failed" && !vencida
@@ -350,12 +417,22 @@ export function DetalleLote({
         ) : null}
 
         <section className="grid gap-3">
-          <h2 className="font-semibold">Comparación satelital</h2>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <h2 className="font-semibold">Comparación satelital</h2>
+            <button
+              type="button"
+              onClick={() => setCapa(otherLayer(capa))}
+              className="text-ink-soft hover:text-ink underline underline-offset-4"
+            >
+              {toggleLabel(capa)}
+            </button>
+          </div>
           {imagenesActuales?.reference.status === "ready" &&
           imagenesActuales.current.status === "ready" ? (
             <Comparador
               referencia={imagenesActuales.reference}
               actual={imagenesActuales.current}
+              capa={capa}
             />
           ) : imagenesFallaron ? (
             <p className="text-sm leading-relaxed text-ink-soft">
@@ -363,7 +440,10 @@ export function DetalleLote({
               ellas; volvé a entrar más tarde para verlas.
             </p>
           ) : (
-            <div className="grid aspect-square place-items-center rounded-lg bg-field text-sm text-ink-soft">
+            <div
+              className="grid place-items-center rounded-lg bg-field text-sm text-ink-soft"
+              style={{ aspectRatio: String(proporcionLote) }}
+            >
               Buscando las ventanas más despejadas…
             </div>
           )}

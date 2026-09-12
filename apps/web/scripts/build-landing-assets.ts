@@ -164,8 +164,7 @@ async function bajarPasada(
     VISTA.alto,
     15
   )
-  // A frame is a full rectangle, so the expected opaque ratio is 1.
-  if (isEffectivelyEmpty(png, 1)) {
+  if (isEffectivelyEmpty(png)) {
     console.warn(
       `Sin pasada limpia entre ${ventana.desde} y ${ventana.hasta}; probando la ventana de respaldo.`
     )
@@ -179,7 +178,7 @@ async function bajarPasada(
       VISTA.alto,
       15
     )
-    if (isEffectivelyEmpty(png, 1)) {
+    if (isEffectivelyEmpty(png)) {
       throw new Error(
         `Copernicus no devolvió imagen utilizable ni en ${principal.desde}–${principal.hasta} ni en ${respaldo.desde}–${respaldo.hasta}.`
       )

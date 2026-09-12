@@ -2,8 +2,10 @@
 
 import { useId, useState } from "react"
 
+import type { Encuadre } from "@/lib/geo/encuadre"
 import type { ImageLayer } from "@/lib/services/imagery"
 import {
+  FRAME_NOTE,
   HOLES_NOTE,
   LAYER_LEGEND,
   SEASONAL_NOTE,
@@ -12,6 +14,7 @@ import {
   referenceChip,
 } from "@/lib/ui/imagery"
 import { formatFecha } from "@/lib/ui/verdict"
+import { ContornoLote } from "./contorno-lote"
 
 export type VentanaImagen = {
   url: string
@@ -60,29 +63,32 @@ function Pie({ titulo, ventana }: { titulo: string; ventana: VentanaImagen }) {
  * thumb, with a mouse, and with a keyboard, and it announces itself to a screen
  * reader without any extra wiring.
  *
- * The frame takes its aspect ratio from the raster, which is cut to the lote's
- * own bounding box. A square frame used to stretch an elongated field until it
- * no longer matched the map above it.
+ * The frame takes its shape from the encuadre both windows were requested with,
+ * so the outline drawn over them lands on the lote rather than near it, and the
+ * placeholder that precedes them is already the right shape.
  */
 export function Comparador({
   referencia,
   actual,
   capa,
+  encuadre,
+  contorno,
 }: {
   referencia: VentanaImagen
   actual: VentanaImagen
   capa: ImageLayer
+  encuadre: Encuadre
+  contorno: string
 }) {
   const [posicion, setPosicion] = useState(50)
   const id = useId()
 
-  // Both windows are rasters of the same polygon, so either one sets the shape.
-  const ratio = `${actual.pixelWidth} / ${actual.pixelHeight}`
+  const ratio = `${encuadre.vista.ancho} / ${encuadre.vista.alto}`
 
   return (
     <div className="grid gap-3">
       <div
-        className="border-line relative w-full overflow-hidden rounded-lg border bg-black"
+        className="border-line bg-field relative w-full overflow-hidden rounded-lg border"
         style={{ aspectRatio: ratio }}
       >
         <img
@@ -100,6 +106,17 @@ export function Comparador({
             className="absolute inset-0 h-full w-full object-contain"
           />
         </div>
+
+        {/* Over both halves rather than inside the wipe: it is the same polygon
+            in either window, so clipping it per half would make it flicker at
+            the seam for no information — and drawing it continuously is exactly
+            what lets the eye confirm the two halves are the same ground. Under
+            the divider and the chips, so the control never hides behind it. */}
+        <ContornoLote
+          d={contorno}
+          vista={encuadre.vista}
+          className="pointer-events-none absolute inset-0 h-full w-full"
+        />
 
         <div
           aria-hidden
@@ -125,6 +142,7 @@ export function Comparador({
       <p className="text-ink-soft text-sm leading-relaxed">
         {LAYER_LEGEND[capa]}
       </p>
+      <p className="text-ink-soft text-xs leading-relaxed">{FRAME_NOTE}</p>
       <p className="text-ink-soft text-xs leading-relaxed">{HOLES_NOTE}</p>
       <p className="text-ink-soft text-xs leading-relaxed">{SEASONAL_NOTE}</p>
 

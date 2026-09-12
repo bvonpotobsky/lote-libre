@@ -709,17 +709,42 @@ feedback.
 
 ### Comparador
 
-Marco con borde de 1 px sobre fondo negro, dos imágenes superpuestas y un
+Marco con borde de 1 px sobre `bg-field`, dos imágenes superpuestas y un
 `clip-path: inset()` manejado por porcentaje. El divisor es una barra blanca de
 2 px con un anillo negro de 1 px, `aria-hidden`. Las dos esquinas superiores
 llevan chips de 0,75 rem peso 600 en blanco sobre negro al 70 %.
 
-**El marco no es cuadrado: toma la proporción del lote.** El `aspect-ratio` sale
-de las dimensiones del ráster, que se recortan al bounding box del lote medido
-en metros, y las imágenes van con `object-contain`. Un marco cuadrado estiraba
-un lote alargado hasta que dejaba de coincidir con el mapa de arriba, y el
-`object-cover` que lo acompañaba recortaba evidencia. Mientras las imágenes
+**El marco no es cuadrado: toma la proporción del encuadre.** El `aspect-ratio`
+sale de las dimensiones del ráster, calculadas sobre el bounding box del lote
+medido en metros, y las imágenes van con `object-contain`. Un marco cuadrado
+estiraba un lote alargado hasta que dejaba de coincidir con el mapa de arriba, y
+el `object-cover` que lo acompañaba recortaba evidencia. Mientras las imágenes
 cargan, el placeholder usa esa misma proporción para que nada salte.
+
+**El recuadro pasa del lote, y el contorno marca el límite.** Hasta la v2 la
+imagen se pedía recortada al polígono (`bounds.geometry`), y todo lo que caía
+afuera volvía transparente: sobre fondo negro eso se leía como un rombo rotado,
+como una imagen rota. Peor todavía, el copy le atribuía ese negro a las nubes.
+Ahora se pide el bbox del lote abierto por `paddedBbox` —12 % del lado largo,
+piso de 200 m, techo de 1000 m, métrico y parejo en los cuatro lados— y el borde
+del lote se dibuja encima en SVG con `ContornoLote`. Dos razones: el juicio que
+pide la leyenda es comparativo —el monte es moteado, el desmonte es parejo y de
+filo recto— y sin los lotes vecinos no hay contra qué calibrar esa textura; y el
+entorno es el único punto de referencia que confirma que las dos mitades del
+barrido miran el mismo terreno.
+
+El contorno va **sobre las dos mitades, fuera del recorte del barrido**. Es el
+mismo polígono en las dos ventanas, así que recortarlo por mitad lo haría
+parpadear en la costura sin aportar nada, y dibujarlo de un solo lado leería
+como si el contorno perteneciera a ese año. Va debajo del divisor y de los
+chips, para que el control nunca quede tapado. Doble trazo, papel bajo tinta,
+igual que `TrazoLote` en la landing — pero sin relleno: ahí el velo de papel es
+decoración, acá taparía justo los píxeles que el productor está juzgando.
+
+El único alfa que queda en el PNG son huecos de nube, y por eso la nota al pie
+vuelve a ser cierta. La cara de eso es que `clear_ratio` ya no se puede estimar
+dividiendo por el área del polígono: se mide píxel por píxel adentro del
+contorno (`lib/geo/mascara.ts`), que es lo que el copy venía prometiendo.
 
 Arriba, en la fila del `h2`, va un único enlace de texto que alterna entre color
 real y NDVI. No es un segmented control: son dos estados, y el que no se está
@@ -876,15 +901,25 @@ activa sólo en `lg` con movimiento bienvenido, y desactiva si cualquiera de las
 dos condiciones deja de cumplirse.
 
 **La Regla de una Sola Proyección.** El bbox que se le pide a Sentinel Hub y
-el `viewBox` de todos los SVG son los mismos números (`MARCO` y `VISTA` en
-`lib/landing/proyeccion.ts`): la relación de aspecto se calcula con el coseno
-de la latitud y se pide la imagen con esas dimensiones exactas. Por eso el
-raster y los polígonos registran píxel a píxel sin un segundo sistema de
-coordenadas. Gobierna también el cuadro de referencia del comparador: las dos
-mitades del barrido se piden con el mismo `MARCO` y el mismo `VISTA`, y con la
-misma ganancia, porque una diferencia de procesado se lee como una diferencia
-en el terreno. Si el contorno se corre entre una mitad y la otra, el que está
-mal es el PNG: se regenera, no se mueve el SVG.
+el `viewBox` de todos los SVG son los mismos números: la relación de aspecto se
+calcula con el coseno de la latitud y se pide la imagen con esas dimensiones
+exactas. Por eso el raster y los polígonos registran píxel a píxel sin un
+segundo sistema de coordenadas. La proyección vive en `lib/geo/proyeccion.ts`;
+el mapeo en sí es lineal en grados, y el coseno sólo decide cuántos píxeles se
+piden, nunca dónde cae un punto.
+
+En la landing los números son `MARCO` y `VISTA` (`lib/landing/proyeccion.ts`);
+en `/lotes/:id` los devuelve `encuadreDeLote`, que el servidor llama para armar
+el request y el cliente vuelve a llamar para dibujar el contorno. **El encuadre
+se deriva de la geometría en los dos lados, no viaja por la API**: una segunda
+copia es una segunda cosa que puede discrepar con el recuadro que Copernicus
+realmente facturó.
+
+Gobierna también el cuadro de referencia del comparador: las dos mitades del
+barrido se piden con el mismo encuadre y con la misma ganancia, porque una
+diferencia de procesado se lee como una diferencia en el terreno. Si el contorno
+se corre entre una mitad y la otra, el que está mal es el PNG: se regenera, no
+se mueve el SVG.
 
 ## Do's and Don'ts
 

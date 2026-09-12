@@ -70,6 +70,7 @@ export async function runVerification(
     forestLossFirstYear: forestLoss.firstYear,
     otbnCategory: otbn.category,
     otbnPct: otbn.pct,
+    otbnBreakdown: otbn.breakdown,
     sources,
   })
 }

@@ -7,7 +7,12 @@ import { polygon as turfPolygon } from "@turf/helpers"
 
 import { Comparador, type VentanaImagen } from "@/components/mapa/comparador"
 import { Mapa } from "@/components/mapa/mapa"
-import { PanelVeredicto } from "@/components/verificacion/panel-veredicto"
+import { FuentesConsultadas } from "@/components/verificacion/fuentes-consultadas"
+import { PanelAptitud } from "@/components/verificacion/panel-aptitud"
+import {
+  BadgeVeredicto,
+  PanelVeredicto,
+} from "@/components/verificacion/panel-veredicto"
 import type { Lote, LoteVerification } from "@/lib/db/schema"
 import { isVerificationCurrent } from "@/lib/lotes/freshness"
 import { formatHa, nombreProvincia } from "@/lib/ui/verdict"
@@ -157,8 +162,16 @@ export function DetalleLote({
   const sinCobertura =
     verificacion?.failureCode === "PROVINCE_NOT_COVERED" && !vencida
 
+  /*
+   * The verdict and its sources are two halves of one answer, split so the
+   * satellite comparison can sit between them. One binding keeps them from ever
+   * appearing apart: a heading of citations with no verdict above it says
+   * nothing.
+   */
+  const veredicto = lista && verificacion?.verdict ? verificacion : null
+
   return (
-    <div className="flex min-h-[calc(100svh-3.5rem)] flex-col lg:flex-row">
+    <div className="flex min-h-[calc(100svh-3.5rem)] flex-col lg:h-[calc(100svh-3.5rem)] lg:min-h-0 lg:flex-row">
       <div className="relative min-h-[40svh] flex-1 lg:min-h-0">
         <Mapa
           className="absolute inset-0 h-full w-full"
@@ -190,17 +203,39 @@ export function DetalleLote({
       </div>
 
       <aside className="flex w-full flex-col gap-6 border-t border-line bg-white p-4 sm:p-6 lg:w-[28rem] lg:overflow-y-auto lg:border-t-0 lg:border-l">
-        <div>
-          <h1 className="text-2xl leading-tight font-bold tracking-tight">
-            {lote.nombre}
-          </h1>
-          <p className="mt-1 text-sm text-ink-soft">
-            {formatHa(lote.areaHa)} ha · {nombreProvincia(lote.provincia)}
-            {lote.renspa ? ` · RENSPA ${lote.renspa}` : ""}
-          </p>
-          <p className="mt-0.5 text-sm text-ink-soft">
-            {lote.centroidLat.toFixed(5)}, {lote.centroidLon.toFixed(5)}
-          </p>
+        {/*
+         * `min-w-0 flex-1` on the text block is what actually keeps the action
+         * in this row. A flex line is collected from each item's hypothetical
+         * main size, and for an auto-width item that is its max-content — the
+         * metadata laid out on one line, wider than the panel on its own. With
+         * a shrinkable basis the button fits and the text wraps instead. It
+         * wraps: nothing is truncated, the name of the lote is its identity.
+         * `flex-wrap` stays as the escape hatch for a name of one very long
+         * word, which no basis can shrink past.
+         */}
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl leading-tight font-bold tracking-tight">
+              {lote.nombre}
+            </h1>
+            <p className="mt-1 text-sm text-ink-soft">
+              {formatHa(lote.areaHa)} ha · {nombreProvincia(lote.provincia)}
+              {lote.renspa ? ` · RENSPA ${lote.renspa}` : ""}
+            </p>
+            <p className="mt-0.5 text-sm text-ink-soft">
+              {lote.centroidLat.toFixed(5)}, {lote.centroidLon.toFixed(5)}
+            </p>
+          </div>
+
+          {editando ? null : (
+            <button
+              type="button"
+              onClick={() => setEditando(true)}
+              className="flex tap-compacto focus-ink shrink-0 items-center justify-center rounded-md border-2 border-ink px-4 text-sm font-semibold text-ink"
+            >
+              Editar el contorno
+            </button>
+          )}
         </div>
 
         {editando ? (
@@ -263,15 +298,7 @@ export function DetalleLote({
               </button>
             </div>
           </section>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setEditando(true)}
-            className="flex tap focus-ink items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink"
-          >
-            Editar el contorno
-          </button>
-        )}
+        ) : null}
 
         {vencida && !editando ? (
           <div className="border-l-4 border-amarillo bg-white py-3 pl-3">
@@ -283,8 +310,12 @@ export function DetalleLote({
           </div>
         ) : null}
 
-        {verificacion && lista ? (
-          <PanelVeredicto verificacion={verificacion} />
+        {veredicto ? (
+          <>
+            <BadgeVeredicto verificacion={veredicto} />
+            <PanelAptitud verificacion={veredicto} areaHa={lote.areaHa} />
+            <PanelVeredicto verificacion={veredicto} />
+          </>
         ) : null}
 
         {fallo ? (
@@ -337,6 +368,8 @@ export function DetalleLote({
             </div>
           )}
         </section>
+
+        {veredicto ? <FuentesConsultadas fuentes={veredicto.sources} /> : null}
 
         {lista && !editando ? (
           <a

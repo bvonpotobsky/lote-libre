@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { Lote, LoteVerification } from "@/lib/db/schema"
 import { buildPayload, canonicalJson, hashPayload } from "./document"
+import { REASON_COPY } from "./verdict"
 
 const LOTE = {
   id: "lote1",
@@ -124,5 +125,113 @@ describe("buildPayload", () => {
     )
     expect(result.verificacion.motivos[0]?.texto).toContain("31/12/2020")
     expect(result.fuentes).toHaveLength(1)
+  })
+
+  it("declares the OTBN split so the document can print it", () => {
+    const conReparto = buildPayload({
+      lote: LOTE,
+      verification: {
+        ...VERIFICATION,
+        otbnBreakdown: [
+          { bucket: "rojo", hectares: 150, pct: 29.94 },
+          { bucket: "fuera_de_otbn", hectares: 351, pct: 70.06 },
+        ],
+      } as unknown as LoteVerification,
+      productor: PRODUCTOR,
+      imagenes: [],
+      emitidoEl: EMITIDO,
+    })
+
+    expect(conReparto.version).toBe(2)
+    expect(conReparto.verificacion.otbn.reparto).toEqual([
+      { categoria: "rojo", hectareas: 150, porcentajeSuperficie: 29.94 },
+      { categoria: "fuera_de_otbn", hectareas: 351, porcentajeSuperficie: 70.06 },
+    ])
+  })
+
+  it("omits the split entirely when the province had no layer", () => {
+    // An empty array would assert "measured, and it is nothing". It was not
+    // measured at all, and the payload has to say the difference.
+    const result = buildPayload({
+      lote: LOTE,
+      verification: {
+        ...VERIFICATION,
+        otbnBreakdown: null,
+      } as unknown as LoteVerification,
+      productor: PRODUCTOR,
+      imagenes: [],
+      emitidoEl: EMITIDO,
+    })
+
+    expect(result.verificacion.otbn.reparto).toBeUndefined()
+  })
+
+  it("changes the hash when the split changes", () => {
+    const base = payload()
+    const alterado = structuredClone(base)
+    alterado.verificacion.otbn.reparto = [
+      { categoria: "verde", hectareas: 501, porcentajeSuperficie: 100 },
+    ]
+    expect(hashPayload(alterado)).not.toBe(hashPayload(base))
+  })
+})
+
+/** Obtenido del código en PAYLOAD_VERSION 1. No se recalcula: se preserva. */
+const HUELLA_V1 =
+  "3945d2c5df5eebc3f7c4a55180268175745544221a69a2218ddf678b00220df4"
+
+/**
+ * A payload exactly as version 1 wrote it, frozen here on purpose.
+ *
+ * Documents already issued carry their payload on the verification row and are
+ * replayed from it, never rebuilt. If this hash ever moves, a hash printed on
+ * somebody's PDF stopped verifying — which is the one failure this whole
+ * mechanism exists to prevent.
+ */
+const PAYLOAD_V1 = {
+  version: 1,
+  emitidoEl: "2026-09-11T15:00:00.000Z",
+  productor: { nombre: "Ana Productora", email: "ana@campo.test" },
+  lote: {
+    id: "lote1",
+    nombre: "Pellegrini Norte",
+    provincia: "santiago-del-estero",
+    renspa: "01.234.5.67890/AB",
+    superficieHa: 501.02,
+    centroide: { lon: -63.98953, lat: -25.85153 },
+    geometriaHash: "a".repeat(64),
+  },
+  verificacion: {
+    id: "ver1",
+    fecha: "2026-09-11T12:00:00.000Z",
+    veredicto: "rojo",
+    motivos: [
+      {
+        codigo: "FOREST_LOSS_AFTER_CUTOFF",
+        texto: REASON_COPY.FOREST_LOSS_AFTER_CUTOFF,
+      },
+    ],
+    perdidaForestal: {
+      porcentajeSuperficie: 98.71,
+      hectareas: 494.56,
+      primerAnio: 2023,
+      fechaDeCorte: "2020-12-31",
+    },
+    otbn: { categoria: "rojo", porcentajeSuperficie: 100 },
+  },
+  imagenes: [],
+  fuentes: [
+    {
+      id: "umsef",
+      label: "UMSEF",
+      vintage: "2023",
+      consultedAt: "2026-09-11T12:00:00.000Z",
+    },
+  ],
+}
+
+describe("version 1 payloads", () => {
+  it("still hashes to the value printed on documents already issued", () => {
+    expect(hashPayload(PAYLOAD_V1 as never)).toBe(HUELLA_V1)
   })
 })

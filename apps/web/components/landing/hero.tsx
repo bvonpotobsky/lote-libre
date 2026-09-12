@@ -17,12 +17,14 @@ export function Hero() {
       <div className="landing__marco grid items-center gap-10 lg:grid-cols-12 lg:gap-8">
         <div className="flex flex-col gap-6 lg:col-span-6">
           <p className="text-base text-ink-soft">
-            Trazabilidad EUDR para soja y ganadería
+            Aptitud legal y exportabilidad · Córdoba, Santiago del Estero y
+            Chaco
           </p>
-          <h1 className="landing__h1">Tu lote, con evidencia.</h1>
+          <h1 className="landing__h1">Un campo no vale lo que mide.</h1>
           <p className="landing__cuerpo text-ink-soft">
-            Verificá tu lote con capas oficiales y generá un documento de
-            respaldo para presentar al acopio.
+            Vale lo que la ley te deja hacer con él, y lo que Europa te deja
+            vender desde él. Dibujá el lote sobre el satelital y verificalo
+            contra las capas oficiales.
           </p>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <BotonPrincipal href="/crear-cuenta">Creá tu cuenta</BotonPrincipal>

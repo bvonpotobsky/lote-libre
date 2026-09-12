@@ -139,6 +139,7 @@ export function CargarLote() {
         <Mapa
           className="absolute inset-0 h-full w-full"
           etiqueta="Mapa para trazar el lote"
+          conBuscador
           modo="dibujar"
           editandoId="nuevo"
           lotes={

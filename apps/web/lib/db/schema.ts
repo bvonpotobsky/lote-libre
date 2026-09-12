@@ -37,6 +37,24 @@ export type OtbnCategory =
   | "fuera_de_otbn"
   | "sin_cobertura"
 
+/**
+ * One slice of a lote's surface in the aptitude breakdown.
+ *
+ * `fuera_de_otbn` is a bucket here, not an absence: the province did not
+ * classify that land as native forest, which is positive information and, in
+ * Córdoba — which zones no Categoría III at all — the only bucket a buyer can
+ * actually plant. `sin_cobertura` never appears: we do not know is not a share.
+ */
+export type OtbnBucket = "rojo" | "amarillo" | "verde" | "fuera_de_otbn"
+
+export type OtbnShare = {
+  bucket: OtbnBucket
+  /** Whole hectares. The layers are 1:250 000; a decimal would be a lie. */
+  hectares: number
+  /** Share of the lote, 0-100, one decimal — the scale sustains no more. */
+  pct: number
+}
+
 export type VerificationStatus = "pending" | "ready" | "failed"
 
 export type LoteSource = "draw" | "kml" | "geojson"
@@ -242,6 +260,15 @@ export const loteVerifications = pgTable(
     otbnCategory: text("otbn_category").$type<OtbnCategory>(),
     /** Share of the lote's area in the dominant OTBN category, 0-100. */
     otbnPct: doublePrecision("otbn_pct"),
+    /**
+     * How the lote's surface divides across the OTBN, in hectares.
+     *
+     * Nullable, and nullable on purpose: rows written before this column exists
+     * never had the breakdown computed, and backfilling would mean re-running
+     * the intersection against today's layers while claiming the old
+     * verification date. A null here means "not measured", which is true.
+     */
+    otbnBreakdown: jsonb("otbn_breakdown").$type<OtbnShare[]>(),
 
     sources: jsonb("sources").notNull().$type<SourceRef[]>().default([]),
 

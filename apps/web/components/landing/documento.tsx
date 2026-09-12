@@ -1,4 +1,6 @@
 import type { FuenteLanding } from "@/lib/landing/fuentes"
+import { APTITUD_EJEMPLO } from "@/lib/landing/aptitud-ejemplo"
+import { filasAptitud } from "@/lib/ui/aptitud"
 import { VERDICT_UI } from "@/lib/ui/verdict"
 
 /** Only what the real PDF would cite for a lote in Santiago del Estero. */
@@ -36,8 +38,13 @@ const BENEFICIOS = [
  * corner — and the caption says so. The figures that do show the real frame
  * (Hero, EscenaTerritorio, EvidenciaSatelital) still carry no result at all.
  *
- * The numbers are internally consistent with lib/services/verdict.ts: no loss
- * after the cutoff plus Categoría III is the only combination that reads green.
+ * The numbers are internally consistent with lib/services/verdict.ts, and the
+ * aptitude section below is what makes that checkable. `APTITUD_EJEMPLO` splits
+ * the 312 ha so that Categoría I takes 0,641 % and Categoría II 0,962 % — both
+ * under `MIN_OTBN_SHARE_PCT`, so neither governs. `dominantOtbnCategory` lands
+ * on Categoría III at 98,1 %, which is the share printed here, and with no loss
+ * after the cutoff `decideVerdict` returns verde: the badge this sheet shows.
+ * The sub-1 % buckets are precisely why the verdict stays green.
  */
 const EJEMPLO = {
   denominacion: "Lote de ejemplo",
@@ -47,7 +54,7 @@ const EJEMPLO = {
   renspa: "no declarado",
   fecha: "12/09/2026",
   perdida: "0,00 % de la superficie",
-  categoria: "Categoría III — 98,20 % del lote",
+  categoria: "Categoría III — 98,1 % del lote",
 } as const
 
 type FilaProps = { etiqueta: string; children: React.ReactNode }
@@ -108,7 +115,21 @@ export function HojaDocumento({ fuentes }: { fuentes: FuenteLanding[] }) {
         </section>
 
         <section className="flex flex-col gap-2">
-          <h3 className="font-semibold">Resultado de la verificación</h3>
+          <h3 className="font-semibold">Aptitud legal</h3>
+          <ul className="flex flex-col gap-1">
+            {filasAptitud(APTITUD_EJEMPLO).map((fila) => (
+              <li key={fila.bucket} className="flex justify-between gap-4">
+                <span>{fila.etiqueta}</span>
+                <span className="tabular-nums">
+                  {fila.hectareas} · {fila.porcentaje}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <h3 className="font-semibold">Resultado de exportación</h3>
           <dl className="grid grid-cols-[7rem_1fr] gap-x-4 gap-y-1 sm:grid-cols-[8.5rem_1fr]">
             <Fila etiqueta="Fecha">{EJEMPLO.fecha}</Fila>
             <Fila etiqueta="Pérdida de cobertura">{EJEMPLO.perdida}</Fila>

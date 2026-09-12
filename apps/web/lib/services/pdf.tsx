@@ -7,7 +7,9 @@ import {
   renderToBuffer,
 } from "@react-pdf/renderer"
 
+import type { OtbnShare, SourceRef } from "@/lib/db/schema"
 import type { DueDiligencePayload } from "./document"
+import { CAVEAT_APTITUD, filasAptitud } from "@/lib/ui/aptitud"
 
 const VERDICT_COLOR: Record<string, string> = {
   verde: "#15803d",
@@ -71,6 +73,16 @@ const styles = StyleSheet.create({
     borderLeftColor: "#d1d5db",
   },
   caveat: { color: "#92400e", marginTop: 2 },
+  aptitudRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#d1d5db",
+    paddingVertical: 4,
+  },
+  aptitudLabel: { fontFamily: "Helvetica-Bold" },
+  aptitudDetail: { color: "#4b5563", fontSize: 8 },
+  aptitudFigure: { textAlign: "right" },
   footer: {
     position: "absolute",
     bottom: 24,
@@ -101,6 +113,29 @@ const formatDate = (iso: string): string =>
 const pct = (value: number | null): string =>
   value === null ? "sin dato" : `${value.toFixed(2)} %`
 
+/**
+ * The OTBN layer's own warning, so it sits beside the figures it qualifies.
+ *
+ * `CAVEAT_APTITUD` is the general statement about scale and simplification.
+ * This is the consulted province's, which can say something far stronger —
+ * Chaco's declares its polygons zone territory rather than forest and are "no
+ * utilizable para estadísticas de superficie", which is exactly what this
+ * section computes. It stays in "Fuentes consultadas" too: same text, two
+ * readers.
+ */
+const otbnCaveat = (fuentes: readonly SourceRef[]): string | undefined =>
+  fuentes.find((fuente) => fuente.id.startsWith("otbn-"))?.caveat
+
+/** The document declares its split in Spanish; `filasAptitud` speaks OtbnShare. */
+const comoReparto = (
+  reparto: DueDiligencePayload["verificacion"]["otbn"]["reparto"],
+): OtbnShare[] =>
+  (reparto ?? []).map((parte) => ({
+    bucket: parte.categoria as OtbnShare["bucket"],
+    hectares: parte.hectareas,
+    pct: parte.porcentajeSuperficie,
+  }))
+
 function DueDiligenceDocument({
   payload,
   hash,
@@ -113,13 +148,13 @@ function DueDiligenceDocument({
 
   return (
     <Document
-      title={`Debida diligencia EUDR - ${lote.nombre}`}
+      title={`Informe de lote - aptitud legal y debida diligencia - ${lote.nombre}`}
       author="Lote Limpio"
     >
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <Text style={styles.title}>
-            Declaración de debida diligencia — EUDR
+            Informe de lote — aptitud legal y debida diligencia
           </Text>
           <Text style={styles.subtitle}>
             Reglamento (UE) 2023/1115. Fecha de corte de deforestación:
@@ -166,8 +201,37 @@ function DueDiligenceDocument({
           <Field label="Huella de geometría" value={lote.geometriaHash} />
         </View>
 
+        {verificacion.otbn.reparto ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Aptitud legal</Text>
+            <Text style={styles.aptitudDetail}>
+              Ordenamiento Territorial de Bosques Nativos (Ley 26.331). Cómo se
+              reparte la superficie del lote.
+            </Text>
+            {/* `swatch` is a Tailwind class: no meaning here, so it is ignored. */}
+            {filasAptitud(comoReparto(verificacion.otbn.reparto)).map((fila) => (
+              <View key={fila.bucket} style={styles.aptitudRow}>
+                <View>
+                  <Text style={styles.aptitudLabel}>{fila.etiqueta}</Text>
+                  <Text style={styles.aptitudDetail}>{fila.detalle}</Text>
+                </View>
+                <View style={styles.aptitudFigure}>
+                  <Text style={styles.aptitudLabel}>{fila.hectareas}</Text>
+                  <Text style={styles.aptitudDetail}>{fila.porcentaje}</Text>
+                </View>
+              </View>
+            ))}
+            <Text style={[styles.caveat, { marginTop: 5 }]}>
+              {CAVEAT_APTITUD}
+            </Text>
+            {otbnCaveat(fuentes) ? (
+              <Text style={styles.caveat}>{otbnCaveat(fuentes)}</Text>
+            ) : null}
+          </View>
+        ) : null}
+
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Resultado de la verificación</Text>
+          <Text style={styles.sectionTitle}>Resultado de exportación</Text>
           <Field label="Fecha" value={formatDate(verificacion.fecha)} />
           <Field
             label="Pérdida de cobertura"

@@ -11,7 +11,7 @@ export function Cierre() {
       <div className="landing__marco grid gap-10 lg:grid-cols-12 lg:items-center">
         <div className="flex flex-col gap-8 lg:col-span-7">
           <h2 className="landing__h2">
-            Cuando el acopio pida el papel, tené cómo respaldarlo.
+            Antes de firmar, sabé qué estás comprando.
           </h2>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <BotonPrincipal href="/crear-cuenta">Creá tu cuenta</BotonPrincipal>

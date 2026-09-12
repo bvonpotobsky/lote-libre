@@ -149,6 +149,36 @@ describe("lookupOtbn", () => {
     const result = await lookupOtbn(LOTE, LOTE_HA, PROVINCE)
     expect(result.category).toBe("fuera_de_otbn")
   })
+
+  it("reports how the surface splits, not just the governing category", () => {
+    primeLayerCache(OTBN_LAYER, [
+      rect(-64.0, -63.985, { categoria: "verde" }),
+      rect(-63.985, -63.98, { categoria: "rojo" }),
+    ])
+
+    return lookupOtbn(LOTE, LOTE_HA, PROVINCE).then((result) => {
+      const buckets = result.breakdown.map((share) => share.bucket)
+      expect(buckets).toEqual(["rojo", "verde"])
+      expect(
+        result.breakdown.reduce((total, share) => total + share.pct, 0),
+      ).toBeGreaterThan(99)
+    })
+  })
+
+  it("gives no breakdown when the province has no layer", async () => {
+    // Absence of data is not a distribution.
+    const result = await lookupOtbn(LOTE, LOTE_HA, "chubut")
+    expect(result.breakdown).toEqual([])
+  })
+
+  it("puts a lote outside the zoning entirely in the unzoned bucket", async () => {
+    primeLayerCache(OTBN_LAYER, [rect(-60.0, -59.99, { categoria: "rojo" })])
+
+    const result = await lookupOtbn(LOTE, LOTE_HA, PROVINCE)
+    expect(result.breakdown).toEqual([
+      { bucket: "fuera_de_otbn", hectares: Math.round(LOTE_HA), pct: 100 },
+    ])
+  })
 })
 
 describe("both layers feeding the verdict", () => {

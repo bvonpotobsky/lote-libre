@@ -29,13 +29,16 @@ export type VerdictReason =
   | "OTBN_CATEGORY_I"
   | "OTBN_CATEGORY_II"
   | "OTBN_NO_COVERAGE"
+  | "OTBN_OUTSIDE"
   | "NO_FINDINGS"
 
 /**
  * The traffic light.
  *
  * Green requires positive evidence from BOTH layers: zero post-cutoff forest
- * loss AND a confirmed Categoría III. Absence of data is never green — an
+ * loss AND an OTBN answer that is not a restriction — either a confirmed
+ * Categoría III, or the lote sitting outside the zoning entirely, which means
+ * the province did not classify it as native forest. Absence of data is never green — an
  * unknown dressed up as a clean result is worse than an honest amber, because
  * the whole point of the document is that someone downstream can rely on it.
  *
@@ -59,6 +62,8 @@ export function decideVerdict({
   if (otbnCategory === "rojo") reasons.push("OTBN_CATEGORY_I")
   if (otbnCategory === "amarillo") reasons.push("OTBN_CATEGORY_II")
   if (otbnCategory === "sin_cobertura") reasons.push("OTBN_NO_COVERAGE")
+  // `fuera_de_otbn` adds no reason: it is the absence of a restriction, not a
+  // finding, and it does not on its own keep a lote from being green.
 
   if (reasons.length > 0) return { verdict: "amarillo", reasons }
 
@@ -77,8 +82,10 @@ export const REASON_COPY: Record<VerdictReason, string> = {
     "El lote está en Categoría II (amarillo) del OTBN: uso sostenible, sin desmonte.",
   OTBN_NO_COVERAGE:
     "No hay capa de OTBN cargada para esta provincia, así que no pudimos verificar la categoría.",
+  OTBN_OUTSIDE:
+    "El lote no está comprendido en el OTBN de la provincia: no fue clasificado como bosque nativo.",
   NO_FINDINGS:
-    "Sin pérdida de cobertura posterior al 31/12/2020 y en Categoría III (verde) del OTBN.",
+    "Sin pérdida de cobertura posterior al 31/12/2020 y sin restricción del OTBN.",
 }
 
 /**

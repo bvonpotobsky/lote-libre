@@ -16,9 +16,13 @@ export type OtbnResult = {
  * Ley 26.331).
  *
  * A province whose layer we do not ship yields `sin_cobertura`, which the
- * verdict treats as amber. That is a deliberate domain state, not an error:
- * the legal category of a parcel is not observable from any satellite, so if
- * we do not have the map we genuinely do not know.
+ * verdict treats as amber: the legal category of a parcel is not observable
+ * from any satellite, so without the map we genuinely do not know.
+ *
+ * A lote that falls outside every zoned polygon of a layer we DO have yields
+ * `fuera_de_otbn`, which is different in kind. The OTBN zones native forest;
+ * land outside it was not classified as forest. Collapsing the two would make
+ * a green verdict unreachable in Córdoba, which zones no Categoría III at all.
  */
 export async function lookupOtbn(
   lote: GeoJSON.Polygon,
@@ -43,7 +47,11 @@ export async function lookupOtbn(
   }
 
   const { category, pct } = dominantOtbnCategory(shareByCategory)
-  return { category, pct, source: await describeSource(provincia) }
+  // The layer answered; the lote simply is not inside any zoned polygon.
+  // That is an answer, not a gap, and it must not read as "we do not know".
+  const resolved = category === "sin_cobertura" ? "fuera_de_otbn" : category
+
+  return { category: resolved, pct, source: await describeSource(provincia) }
 }
 
 async function describeSource(provincia: string): Promise<SourceRef | null> {

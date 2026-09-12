@@ -19,11 +19,20 @@ export type Verdict = "verde" | "amarillo" | "rojo"
  * OTBN conservation category (Ley 26.331), normalized from the official
  * `cat_cons` Roman numerals: I -> rojo, II -> amarillo, III -> verde.
  *
- * `sin_cobertura` means the lote falls in a province whose OTBN layer we do not
- * ship. It is not "no restriction" — it is "we do not know", and the verdict
- * rules treat it accordingly.
+ * Two non-categories, and the difference decides the verdict:
+ *
+ * `sin_cobertura` - we do not ship this province's layer. We know nothing.
+ * `fuera_de_otbn` - the layer IS loaded and the lote falls outside every zoned
+ *   polygon. That is positive information: the province did not classify this
+ *   land as native forest. Córdoba, for instance, zones no Categoría III at
+ *   all, so every field there sits outside the OTBN by design.
  */
-export type OtbnCategory = "rojo" | "amarillo" | "verde" | "sin_cobertura"
+export type OtbnCategory =
+  | "rojo"
+  | "amarillo"
+  | "verde"
+  | "fuera_de_otbn"
+  | "sin_cobertura"
 
 export type VerificationStatus = "pending" | "ready" | "failed"
 

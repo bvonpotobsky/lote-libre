@@ -43,6 +43,34 @@ describe("decideVerdict", () => {
     expect(result.reasons).toContain("OTBN_NO_COVERAGE")
   })
 
+  it("is green for a lote outside the zoning with no loss", () => {
+    // The OTBN maps native forest. Land outside it was not classified as
+    // forest, which is an answer — not the absence of one.
+    const result = decideVerdict({
+      forestLossPct: 0,
+      otbnCategory: "fuera_de_otbn",
+    })
+    expect(result.verdict).toBe("verde")
+  })
+
+  it("is still red for a cleared lote outside the zoning", () => {
+    expect(
+      decideVerdict({ forestLossPct: 40, otbnCategory: "fuera_de_otbn" })
+        .verdict,
+    ).toBe("rojo")
+  })
+
+  it("separates a missing layer from a lote outside the zoning", () => {
+    expect(
+      decideVerdict({ forestLossPct: 0, otbnCategory: "sin_cobertura" })
+        .verdict,
+    ).toBe("amarillo")
+    expect(
+      decideVerdict({ forestLossPct: 0, otbnCategory: "fuera_de_otbn" })
+        .verdict,
+    ).toBe("verde")
+  })
+
   it("is green only with positive evidence from both layers", () => {
     const result = decideVerdict({ forestLossPct: 0, otbnCategory: "verde" })
     expect(result.verdict).toBe("verde")

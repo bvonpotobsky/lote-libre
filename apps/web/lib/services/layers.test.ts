@@ -132,6 +132,15 @@ describe("lookupOtbn", () => {
     expect(result.category).toBe("sin_cobertura")
     expect(result.pct).toBe(0)
   })
+
+  it("reports a lote outside the zoning as outside, not as unknown", async () => {
+    // Layer present, but the lote touches none of it: exactly a long-standing
+    // Córdoba field, in a province that zones no Categoría III at all.
+    primeLayerCache(OTBN_LAYER, [rect(-60.0, -59.99, { categoria: "rojo" })])
+
+    const result = await lookupOtbn(LOTE, LOTE_HA, PROVINCE)
+    expect(result.category).toBe("fuera_de_otbn")
+  })
 })
 
 describe("both layers feeding the verdict", () => {
@@ -147,6 +156,21 @@ describe("both layers feeding the verdict", () => {
       decideVerdict({ forestLossPct: loss.pct, otbnCategory: otbn.category })
         .verdict,
     ).toBe("rojo")
+  })
+
+  it("is green for a cropland lote outside the zoning", async () => {
+    primeLayerCache(LOSS_LAYER, [])
+    primeLayerCache(OTBN_LAYER, [rect(-60.0, -59.99, { categoria: "rojo" })])
+
+    const loss = await lookupForestLoss(LOTE, LOTE_HA, PROVINCE)
+    const otbn = await lookupOtbn(LOTE, LOTE_HA, PROVINCE)
+    if (loss.status !== "ok") throw new Error("expected ok")
+
+    expect(otbn.category).toBe("fuera_de_otbn")
+    expect(
+      decideVerdict({ forestLossPct: loss.pct, otbnCategory: otbn.category })
+        .verdict,
+    ).toBe("verde")
   })
 
   it("is green only with no loss and a confirmed category III", async () => {

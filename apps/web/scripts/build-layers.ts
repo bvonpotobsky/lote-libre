@@ -187,10 +187,6 @@ function readJson<T>(file: string): T {
   return JSON.parse(fs.readFileSync(file, "utf8")) as T;
 }
 
-function featureCount(file: string): number {
-  return readJson<{ features: unknown[] }>(file).features.length;
-}
-
 /** Build a WFS 2.0.0 GetFeature URL. */
 function wfsUrl(base: string, params: Record<string, string>): string {
   const url = new URL(base);
@@ -361,8 +357,12 @@ function buildOtbn(
   const attrs = readJson<{ cat_cons_original: string }[]>(attrsFile);
   const categoryCounts: Record<string, number> = { I: 0, II: 0, III: 0 };
   for (const row of attrs) {
-    if (row.cat_cons_original in categoryCounts) categoryCounts[row.cat_cons_original]++;
-    else fail(`unexpected cat_cons value '${row.cat_cons_original}' in ${province.archive}`);
+    const seen = categoryCounts[row.cat_cons_original];
+    if (seen === undefined) {
+      fail(`unexpected cat_cons value '${row.cat_cons_original}' in ${province.archive}`);
+    } else {
+      categoryCounts[row.cat_cons_original] = seen + 1;
+    }
   }
   const categoryField = fs.existsSync(shp.replace(/\.shp$/i, ".dbf"))
     ? detectCategoryField(shp)
@@ -454,29 +454,72 @@ function detectCategoryField(shp: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Discover which `periodo` values count as post-2020 loss. Values are strings,
- * either a single year ("2023") or a range ("2008-2011"); a period qualifies
- * when its first year is >= MIN_LOSS_YEAR. Reading the domain from the server
- * means a future "2025" period is picked up automatically.
+ * Largest result set we are willing to request in a single unpaginated page.
+ * This server caps GetFeature at 28.000 features and `startIndex` paging is not
+ * stable without a `sortBy`, so we keep every request comfortably below the cap
+ * and fail loudly rather than paginate.
  */
-async function discoverLossPeriods(layer: string): Promise<string[]> {
+const SAFE_PAGE_SIZE = 25_000;
+
+/** Ask the server how many features a filter matches, without fetching them. */
+async function wfsHits(layer: string, cql: string): Promise<number> {
   const url = wfsUrl(AMBIENTE_WFS, {
     typeNames: layer,
-    propertyName: "periodo",
-    outputFormat: "application/json",
+    resultType: "hits",
+    CQL_FILTER: cql,
   });
   const response = await fetch(url);
-  if (!response.ok) fail(`WFS GET ${url} returned HTTP ${response.status}`);
-  const json = (await response.json()) as {
-    features: { properties: { periodo: string } }[];
-  };
+  if (!response.ok) fail(`WFS hits GET ${url} returned HTTP ${response.status}`);
+  const xml = await response.text();
+  const match = /numberMatched="(\d+)"/.exec(xml);
+  if (!match) fail(`WFS hits response for ${layer} had no numberMatched:\n${xml.slice(0, 300)}`);
+  return Number(match[1]);
+}
+
+/**
+ * Discover which `periodo` values count as post-2020 loss for one province.
+ *
+ * Values are strings: either a single year ("2023") or a range ("2008-2011").
+ * A period qualifies when its first year is >= MIN_LOSS_YEAR, so a future
+ * "2025" is picked up automatically without editing this script.
+ *
+ * The domain MUST be read from a jurisdiction-scoped query. Scanning a whole
+ * monitoring layer does not work: `bosques:monitoreo_pch_1998_2024` holds
+ * ~62.000 features, the server truncates the response at 28.000 with HTTP 200,
+ * and the resulting period list silently loses the most recent years.
+ */
+async function discoverLossPeriods(
+  layer: string,
+  jurisdiction: string,
+  stageDir: string,
+): Promise<string[]> {
+  const cql = `jurisdic='${jurisdiction}'`;
+  const hits = await wfsHits(layer, cql);
+  if (hits === 0) return [];
+  if (hits > SAFE_PAGE_SIZE) {
+    fail(
+      `${layer} matches ${hits} features for ${jurisdiction}, above the ${SAFE_PAGE_SIZE} single-page limit. ` +
+        `Paginating here requires an explicit stable sortBy plus a union-size check against resultType=hits.`,
+    );
+  }
+  const dest = path.join(stageDir, `periods.${jurisdiction}.${layer.split(":")[1]}.json`);
+  await fetchWfsGeoJson(
+    AMBIENTE_WFS,
+    { typeNames: layer, propertyName: "periodo", CQL_FILTER: cql },
+    dest,
+  );
+  const json = readJson<{ features: { properties: { periodo: string } }[] }>(dest);
+  if (json.features.length !== hits) {
+    fail(
+      `${layer}/${jurisdiction}: period scan returned ${json.features.length} of ${hits} features.`,
+    );
+  }
   const periods = new Set<string>();
   for (const f of json.features) {
     const value = f.properties.periodo;
     const startYear = Number(String(value).slice(0, 4));
     if (Number.isFinite(startYear) && startYear >= MIN_LOSS_YEAR) periods.add(value);
   }
-  if (periods.size === 0) fail(`no periodo >= ${MIN_LOSS_YEAR} found in ${layer}`);
   return [...periods].sort();
 }
 

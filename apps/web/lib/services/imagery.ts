@@ -9,6 +9,7 @@ import { nanoid } from "nanoid"
 
 import { db } from "@/lib/db"
 import { satelliteImages, type SatelliteImage } from "@/lib/db/schema"
+import { CACHE_DIR, cacheFileName, stillOnDisk } from "./imagery-cache"
 import { getLoteImage } from "./sentinel"
 import { isEffectivelyEmpty } from "./png"
 import { addDays, pickClearWindow, type ClearWindow } from "./xweather"
@@ -20,7 +21,6 @@ export type ImageLayer = "trueColor" | "ndvi"
 const REFERENCE_SEARCH = { from: "2020-10-01", to: "2020-12-31" } as const
 const CURRENT_SEARCH_DAYS = 60
 const CLEAR_WINDOW_DAYS = 5
-const CACHE_DIR = resolve(process.cwd(), ".cache/sentinel")
 
 /**
  * NDVI, not true colour.
@@ -100,22 +100,16 @@ function footprintRatio(geometry: GeoJSON.Polygon): number {
   return boxArea === 0 ? 1 : area(feature) / boxArea
 }
 
-export function cacheFileName(
-  geometryHash: string,
-  period: ImagePeriod,
-  layer: ImageLayer,
-  from: string,
-  to: string,
-): string {
-  return `${geometryHash}-${period}-${layer}-${from}_${to}.png`
-}
-
 /**
  * Returns the cached image for a lote, fetching it from Copernicus on a miss.
  *
  * The cache is keyed by geometry hash rather than lote id, so two producers who
  * drew the same field share the PNG. Authorization happens one layer up, on the
  * lote — this function never sees a user.
+ *
+ * The returned `filePath` is guaranteed to exist at the moment it is returned:
+ * a row is only a hit while its bytes are still on disk. Callers read that file
+ * directly, so a row that outlived its PNG has to count as a miss.
  */
 export async function getOrCreateImage(
   geometry: GeoJSON.Polygon,
@@ -124,7 +118,9 @@ export async function getOrCreateImage(
   period: ImagePeriod,
   layer: ImageLayer = "ndvi",
 ): Promise<{ meta: ImageryMeta; filePath: string }> {
-  const cached = await findCached(geometryHash, period, layer)
+  const cached = await stillOnDisk(
+    await findCached(geometryHash, period, layer),
+  )
   if (cached) return { meta: toMeta(cached), filePath: cached.filePath }
 
   const search = searchPeriod(period)

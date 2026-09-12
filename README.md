@@ -143,9 +143,24 @@ como `-63.7924`, corriendo los centroides decenas de metros y dejando el hash de
 geometría apuntando a coordenadas que ya no lo producen. Sin error y sin aviso,
 que es la peor forma de romperse.
 
-**Leaflet a mano, no react-leaflet.** `leaflet-draw` es vanilla y
-`react-leaflet-draw` está sin mantenimiento. Montarlo imperativamente elimina la
-pregunta de compatibilidad con React 19 y es menos código.
+**MapLibre a mano, no react-map-gl.** El mapa se monta imperativamente en un
+`useEffect`, igual que antes con Leaflet: elimina la pregunta de compatibilidad
+con React 19, es menos código y Terra Draw —que reemplaza a `leaflet-draw`— pide
+la instancia cruda del mapa de todos modos. Una capa menos entre nosotros y el
+motor.
+
+**El estilo del mapa es inline, sin `style.json` externo.** Una única fuente
+raster con los tiles de Esri World Imagery, los mismos de siempre: sin API key,
+sin servidor de glifos y sin depender de un basemap de terceros. Las etiquetas de
+cada lote son marcadores HTML, no una capa `symbol`, así que no hace falta
+ninguna tipografía cargada en el mapa. Y como son HTML, el veredicto viaja en
+palabras dentro del DOM —legible para un lector de pantalla— y no solamente en
+el color del polígono.
+
+**La etiqueta es el objetivo táctil, no el polígono.** Con el zoom lo bastante
+lejos para ver todos los lotes juntos, un campo mide dos o tres píxeles: no hay
+dedo que lo acierte. El marcador siempre tiene tamaño de pulgar, así que él se
+lleva el toque.
 
 **El aislamiento por usuario vive en la capa de datos.** Toda función del
 repositorio recibe `userId` y toda consulta filtra por él, así ningún handler

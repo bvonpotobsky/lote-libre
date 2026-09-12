@@ -2,14 +2,14 @@
 
 import dynamic from "next/dynamic"
 
-import type { MapaProps } from "./mapa-leaflet"
+import type { MapaProps } from "./mapa-maplibre"
 
 /**
- * Leaflet touches `window` at import time, so it cannot be server rendered.
+ * MapLibre touches `window` at import time, so it cannot be server rendered.
  * Next 16 refuses `ssr: false` inside a Server Component, so this wrapper has
  * to be a Client Component — that is the whole reason it exists.
  */
-const MapaLeaflet = dynamic(() => import("./mapa-leaflet"), {
+const MapaMapLibre = dynamic(() => import("./mapa-maplibre"), {
   ssr: false,
   loading: () => (
     <div className="bg-field text-ink-soft flex h-full w-full items-center justify-center text-sm">
@@ -19,5 +19,5 @@ const MapaLeaflet = dynamic(() => import("./mapa-leaflet"), {
 })
 
 export function Mapa(props: MapaProps) {
-  return <MapaLeaflet {...props} />
+  return <MapaMapLibre {...props} />
 }

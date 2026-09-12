@@ -63,7 +63,15 @@ export function DetalleLote({
       <div className="relative min-h-[40svh] flex-1 lg:min-h-0">
         <Mapa
           className="absolute inset-0 h-full w-full"
-          geometry={lote.geometry}
+          lotes={[
+            {
+              id: lote.id,
+              nombre: lote.nombre,
+              geometry: lote.geometry,
+              verdict: lista ? (verificacion?.verdict ?? null) : null,
+              areaHa: lote.areaHa,
+            },
+          ]}
         />
       </div>
 

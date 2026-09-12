@@ -18,7 +18,14 @@ export function Encabezado({ nombre }: { nombre: string }) {
   }
 
   return (
-    <header className="border-line bg-paper sticky top-0 z-[1000] flex items-center justify-between gap-4 border-b px-4 py-3 sm:px-6">
+    /*
+     * `z-10` and no more. This used to be `z-[1000]`, an undocumented number
+     * chosen to clear Leaflet's pane ladder (400-700) and its controls
+     * (800-1000). MapLibre has no such ladder, and the map container isolates
+     * its own stacking context, so the header only has to beat ordinary
+     * siblings.
+     */
+    <header className="border-line bg-paper sticky top-0 z-10 flex items-center justify-between gap-4 border-b px-4 py-3 sm:px-6">
       <Link href="/" className="font-bold tracking-tight">
         Lote Limpio
       </Link>

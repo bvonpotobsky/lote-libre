@@ -126,13 +126,39 @@ export function CargarLote() {
   return (
     <div className="flex h-[calc(100svh-3.5rem)] flex-col lg:flex-row">
       <div className="relative min-h-[42svh] flex-1 lg:min-h-0">
+        {/*
+         * Under Leaflet this had to pass `null` while drawing, because the draw
+         * control and the rendered geometry shared one FeatureGroup. Terra Draw
+         * keeps its own layers and hands the finished polygon over, so the lote
+         * is simply drawn — one polygon, one owner, no special case.
+         */}
         <Mapa
           className="absolute inset-0 h-full w-full"
-          geometry={origen === "draw" ? null : geometry}
+          lotes={
+            geometry
+              ? [
+                  {
+                    id: "nuevo",
+                    nombre: "Tu lote",
+                    geometry,
+                    verdict: null,
+                    areaHa: superficieHa ?? 0,
+                  },
+                ]
+              : []
+          }
           onDibujar={(dibujado) => {
             setGeometry(dibujado)
             setOrigen("draw")
-            setAviso(null)
+            setAviso(
+              dibujado === null
+                ? {
+                    mensaje: "Los lados del lote se cruzan.",
+                    sugerencia:
+                      "Volvé a marcarlo sin que el contorno se corte a sí mismo.",
+                  }
+                : null,
+            )
           }}
         />
       </div>
@@ -144,8 +170,8 @@ export function CargarLote() {
         <div>
           <h1 className="text-xl font-bold tracking-tight">Cargar un lote</h1>
           <p className="text-ink-soft mt-1 text-sm leading-relaxed">
-            Dibujá el contorno con la herramienta de arriba a la derecha del
-            mapa, o importá el archivo que ya tenés.
+            Tocá el mapa para ir marcando las esquinas del lote, y cerralo con
+            doble toque sobre la última. O importá el archivo que ya tenés.
           </p>
         </div>
 

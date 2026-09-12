@@ -1,0 +1,112 @@
+// Sentinel-2 L2A vía Copernicus Data Space Ecosystem (Sentinel Hub Process API)
+// 1) Cuenta gratis en dataspace.copernicus.eu → Dashboard → "OAuth clients" → crear client_id / client_secret
+// 2) SH_CLIENT_ID y SH_CLIENT_SECRET en .env
+// Uso: const png = await getLoteImage(geojsonPolygon, "2020-11-01", "2020-12-31", "ndvi");
+
+const TOKEN_URL =
+  "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+const PROCESS_URL = "https://sh.dataspace.copernicus.eu/api/v1/process"
+
+let cachedToken: { value: string; exp: number } | null = null
+
+export async function getToken(): Promise<string> {
+  if (cachedToken && Date.now() < cachedToken.exp) return cachedToken.value
+  const res = await fetch(TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: process.env.SH_CLIENT_ID!,
+      client_secret: process.env.SH_CLIENT_SECRET!,
+    }),
+  })
+  if (!res.ok) throw new Error(`token ${res.status}: ${await res.text()}`)
+  const json = (await res.json()) as {
+    access_token: string
+    expires_in: number
+  }
+  cachedToken = {
+    value: json.access_token,
+    exp: Date.now() + (json.expires_in - 60) * 1000,
+  }
+  return cachedToken.value
+}
+
+const EVALSCRIPTS = {
+  // Color real, con brillo levantado (las reflectancias son bajas)
+  trueColor: `//VERSION=3
+function setup() { return { input: ["B02","B03","B04","dataMask"], output: { bands: 4 } }; }
+function evaluatePixel(s) { return [2.5*s.B04, 2.5*s.B03, 2.5*s.B02, s.dataMask]; }`,
+
+  // NDVI en escala rojo→amarillo→verde. Sirve para ver el contraste monte/lote pelado.
+  ndvi: `//VERSION=3
+function setup() { return { input: ["B04","B08","dataMask"], output: { bands: 4 } }; }
+const ramp = [[-0.2,0x8b0000],[0,0xd2b48c],[0.2,0xffff66],[0.4,0x99e600],[0.6,0x33a02c],[0.8,0x006400]];
+const viz = new ColorRampVisualizer(ramp);
+function evaluatePixel(s) {
+  const ndvi = (s.B08 - s.B04) / (s.B08 + s.B04);
+  return [...viz.process(ndvi), s.dataMask];
+}`,
+} as const
+
+export type GeoJSONPolygon = {
+  type: "Polygon" | "MultiPolygon"
+  coordinates: number[][][] | number[][][][]
+}
+
+/** Devuelve un PNG (Buffer) de Sentinel-2 recortado al polígono, mosaico menos nuboso del rango. */
+export async function getLoteImage(
+  geometry: GeoJSONPolygon,
+  from: string, // "YYYY-MM-DD"
+  to: string,
+  layer: keyof typeof EVALSCRIPTS = "trueColor",
+  size = 512
+): Promise<Buffer> {
+  const body = {
+    input: {
+      bounds: {
+        geometry, // WGS84 por defecto (EPSG:4326). Recorta al polígono: afuera queda transparente.
+        properties: { crs: "http://www.opengis.net/def/crs/EPSG/0/4326" },
+      },
+      data: [
+        {
+          type: "sentinel-2-l2a",
+          dataFilter: {
+            timeRange: { from: `${from}T00:00:00Z`, to: `${to}T23:59:59Z` },
+            maxCloudCoverage: 30, // % por tile; subilo si el rango no devuelve nada
+            mosaickingOrder: "leastCC", // píxeles de la pasada menos nubosa
+          },
+        },
+      ],
+    },
+    output: {
+      width: size,
+      height: size,
+      responses: [{ identifier: "default", format: { type: "image/png" } }],
+    },
+    evalscript: EVALSCRIPTS[layer],
+  }
+
+  const res = await fetch(PROCESS_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${await getToken()}`,
+      "Content-Type": "application/json",
+      Accept: "image/png",
+    },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`process ${res.status}: ${await res.text()}`)
+  return Buffer.from(await res.arrayBuffer())
+}
+
+// Ejemplo: comparación "2020 vs hoy" para el slider del demo
+export async function getBeforeAfter(geometry: GeoJSONPolygon) {
+  const today = new Date().toISOString().slice(0, 10)
+  const monthAgo = new Date(Date.now() - 45 * 864e5).toISOString().slice(0, 10)
+  const [before, after] = await Promise.all([
+    getLoteImage(geometry, "2020-10-01", "2020-12-31", "trueColor"),
+    getLoteImage(geometry, monthAgo, today, "trueColor"),
+  ])
+  return { before, after } // servilos como data:image/png;base64 o desde un endpoint
+}

@@ -192,7 +192,8 @@ de campo necesita.
 - Negro puro (#000000) como texto principal, por contraste, no por estilo.
 - Altura mínima de 3,25 rem en todo lo que se toca.
 - Sin sombras en el flujo ordinario: la profundidad es un filete de 1 px.
-- Sin animación: el movimiento es ruido en un vehículo.
+- Sin animación: el movimiento es ruido en un vehículo. La landing pública es
+  la única excepción, y está acotada en la sección «Landing».
 - El color del veredicto nunca viaja solo; siempre lleva sus palabras.
 - Una sola familia (Archivo), dos pesos (600/700), un radio base (0,375 rem).
 - Sólo claro. El sistema no tiene modo oscuro y no debe tenerlo sin rediseñarse.
@@ -574,6 +575,89 @@ nunca pegado al borde ni a media opacidad. Un anillo negro sobre un botón negro
 no existe, y uno al 50 % no sobrevive al sol. Si el anillo no se ve desde un
 brazo de distancia, no es un anillo de foco.
 
+## Landing
+
+La landing pública (`/`, `app/(marketing)`) es la única superficie donde el
+producto se presenta en vez de trabajar. Se lee sentado, en un escritorio o en
+el teléfono en casa, no en una camioneta al mediodía; por eso la premisa de
+"cero animación" no le aplica, y por eso todo lo demás sí. Cada desviación
+respecto del sistema está enumerada acá, tiene un parámetro y vive bajo
+`app/(marketing)/landing.css` o `lib/landing/`. Nada de esto entra en la app.
+
+### Qué se conserva
+
+Los tokens, Archivo y sus pesos, la ausencia de mayúsculas sostenidas y de
+tracking abierto, los dos quiebres (`sm` ajusta, `lg` reestructura), `tap` +
+`focus-ink` en todo control (el CTA principal mide 52 px), `svh`, `gap-*`, los
+botones escritos a mano con `bg-ink text-paper`, el color de veredicto siempre
+con sus palabras, los colores del OTBN sin armonizar y el ámbar de texto en
+`alerta` para toda advertencia de fuente. Las superficies siguen siendo dos:
+papel y una sola hoja blanca con filete de 1 px, que es el documento.
+
+### Qué se permite, y con qué número
+
+1. **Movimiento, centralizado.** Los parámetros viven en `lib/landing/movimiento.ts`
+   y se repiten como custom properties en `landing.css`; si cambia uno, cambian
+   los dos. Revelado secundario: `translateY(12px → 0)` y opacidad, 560 ms,
+   `cubic-bezier(0.22, 1, 0.36, 1)`, escalonado de 70 ms con tope de 300 ms.
+   Trazo del lote: `pathLength="1"` y `stroke-dashoffset`, 1100 ms, una sola
+   vez. Hover del CTA: cambio de superficie y flecha de 3 px en 180 ms, sólo
+   bajo `(hover: hover) and (pointer: fine)`, sin mover el área clickeable. La
+   escena ligada al scroll escribe cuatro custom properties por frame desde un
+   `requestAnimationFrame`, sin estado de React; el capítulo activo cambia tres
+   veces en todo el recorrido.
+2. **Perspectiva, en un solo lugar.** La escena «Del territorio al documento»
+   usa `perspective: 1200px`, `rotateX(24deg)` y `rotateZ(-10deg)` como máximo,
+   32 px entre planos y ±20 px de deriva decorativa. El hero lleva una
+   inclinación leve y estática. Las capas son cuatro elementos HTML hermanos
+   (`preserve-3d` no existe dentro de un `<svg>`), la cámara nunca lleva
+   `overflow: hidden` y el margen que necesita la inclinación se paga con
+   padding, no con recorte.
+3. **Grano de papel.** Un PNG de 64 × 64 en gris de 8 bits, repetido al 2 % de
+   opacidad, sólo sobre secciones de papel. Nunca sobre controles, sobre la
+   imagen satelital ni sobre la hoja del documento. Es un archivo estático,
+   no un canvas.
+4. **Escala display.** H1 en `clamp(2.75rem, 1.4rem + 5.6vw, 7rem)`, interlineado
+   1,02, tracking −0,04 em y `padding-block: 0.06em` para que los acentos no se
+   recorten; H2 de 32 a 64 px. Es la segunda aparición del tamaño Display, con
+   la misma justificación que la primera: el producto se está presentando.
+5. **Un icono en un botón.** La flecha del CTA principal es un SVG inline con
+   `aria-hidden`, no un glifo pegado al texto. Es la única excepción a la regla
+   de botones sin iconos.
+6. **Punto medio en rótulos de lugar.** «Ejemplo ilustrativo · Dpto. Pellegrini,
+   Santiago del Estero» es un rótulo cartográfico y puede llevarlo. Las cadenas
+   de metadatos no.
+
+### Named Rules
+
+**La Regla de la Presentación.** Todo movimiento de la landing vive bajo
+`.escena`, `[data-revelar]` y `.cta`; ninguna regla de `landing.css` selecciona
+elementos de la app. Si una animación necesita salir de esos selectores, no es
+de la landing y no entra.
+
+**La Regla del Ejemplo Rotulado.** Cada figura dice qué es: «Ejemplo
+ilustrativo», «Imagen satelital: evidencia visual», «Contiene datos modificados
+de Copernicus Sentinel». El encuadre es un lugar real con capas oficiales
+reales, y por eso nunca se le atribuye un resultado: sin veredicto, hectáreas,
+años, nombre de lote ni RENSPA. El módulo generado
+(`lib/landing/ejemplo-capas.generated.ts`) no exporta resúmenes para que la
+tentación no exista.
+
+**La Regla del Contenido Completo.** El H1, la bajada y el CTA están en el HTML
+inicial y nunca se ocultan. Los estados ocultos del revelado sólo existen bajo
+`html[data-js]` y `prefers-reduced-motion: no-preference`, así que sin
+JavaScript o con movimiento reducido la página se ve terminada, no vacía. La
+escena apilada es el marcado; la versión sticky es una mejora que el hook
+activa sólo en `lg` con movimiento bienvenido, y desactiva si cualquiera de las
+dos condiciones deja de cumplirse.
+
+**La Regla de una Sola Proyección.** El bbox que se le pide a Sentinel Hub y
+el `viewBox` de todos los SVG son los mismos números (`MARCO` y `VISTA` en
+`lib/landing/proyeccion.ts`): la relación de aspecto se calcula con el coseno
+de la latitud y se pide la imagen con esas dimensiones exactas. Por eso el
+raster y los polígonos registran píxel a píxel sin un segundo sistema de
+coordenadas.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -612,7 +696,8 @@ brazo de distancia, no es un anillo de foco.
   corresponden a esta paleta. El sistema es sólo claro por la escena de uso.
 - **Don't** animar transiciones de estado. Fuera del vuelo de cámara del mapa
   (800 ms) el sistema no tiene movimiento, y agregarlo contradice la premisa de
-  una pantalla que se lee de un vistazo, en movimiento.
+  una pantalla que se lee de un vistazo, en movimiento. La landing es la única
+  excepción, documentada en «Landing», y su movimiento no sale de ahí.
 - **Don't** hacer del polígono el objetivo táctil en el mapa. Siempre la etiqueta.
 - **Don't** usar `space-y-*`. El ritmo vertical del sistema se construye con
   `gap-*`.

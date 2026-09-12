@@ -104,26 +104,6 @@ export function PanelVeredicto({
           </ul>
         </div>
       ) : null}
-
-      <div>
-        <h2 className="font-semibold">Fuentes consultadas</h2>
-        <ul className="mt-2 grid gap-3">
-          {verificacion.sources.map((fuente) => (
-            <li key={fuente.id} className="text-sm leading-relaxed">
-              <p className="font-medium">{fuente.label}</p>
-              <p className="text-ink-soft">
-                Vigencia {fuente.vintage} · consultada el{" "}
-                {formatFecha(fuente.consultedAt)}
-              </p>
-              {fuente.caveat ? (
-                <p className="text-alerta mt-0.5 text-[13px]">
-                  {fuente.caveat}
-                </p>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </div>
     </section>
   )
 }

@@ -7,6 +7,7 @@ import { polygon as turfPolygon } from "@turf/helpers"
 
 import { Comparador, type VentanaImagen } from "@/components/mapa/comparador"
 import { Mapa } from "@/components/mapa/mapa"
+import { FuentesConsultadas } from "@/components/verificacion/fuentes-consultadas"
 import { PanelVeredicto } from "@/components/verificacion/panel-veredicto"
 import type { Lote, LoteVerification } from "@/lib/db/schema"
 import { isVerificationCurrent } from "@/lib/lotes/freshness"
@@ -157,6 +158,14 @@ export function DetalleLote({
   const sinCobertura =
     verificacion?.failureCode === "PROVINCE_NOT_COVERED" && !vencida
 
+  /*
+   * The verdict and its sources are two halves of one answer, split so the
+   * satellite comparison can sit between them. One binding keeps them from ever
+   * appearing apart: a heading of citations with no verdict above it says
+   * nothing.
+   */
+  const veredicto = lista && verificacion?.verdict ? verificacion : null
+
   return (
     <div className="flex min-h-[calc(100svh-3.5rem)] flex-col lg:flex-row">
       <div className="relative min-h-[40svh] flex-1 lg:min-h-0">
@@ -283,9 +292,7 @@ export function DetalleLote({
           </div>
         ) : null}
 
-        {verificacion && lista ? (
-          <PanelVeredicto verificacion={verificacion} />
-        ) : null}
+        {veredicto ? <PanelVeredicto verificacion={veredicto} /> : null}
 
         {fallo ? (
           <div className="border-l-4 border-amarillo bg-white py-3 pl-3">
@@ -337,6 +344,8 @@ export function DetalleLote({
             </div>
           )}
         </section>
+
+        {veredicto ? <FuentesConsultadas fuentes={veredicto.sources} /> : null}
 
         {lista && !editando ? (
           <a

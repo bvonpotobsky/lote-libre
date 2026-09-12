@@ -25,18 +25,40 @@ import {
 } from "@/lib/geo/drawing"
 import {
   ANCHO_DEPARTAMENTO,
+  ANCHO_HALO,
   ANCHO_LIMITE,
+  ANCHO_MAXIMO_NOMBRE_DEPARTAMENTO,
+  ANCHO_MAXIMO_NOMBRE_LIMITE,
+  ANCLAS_DEPARTAMENTOS_URL,
+  ANCLAS_LIMITES_URL,
+  campoDeNombre,
   CAPA_DEPARTAMENTOS,
   CAPA_LIMITES,
+  CAPA_NOMBRES_DEPARTAMENTOS,
+  CAPA_NOMBRES_LIMITES,
+  COLOR_HALO,
   COLOR_LIMITE,
   DEPARTAMENTOS_URL,
+  DIFUMINADO_HALO,
+  ESPACIADO_NOMBRE_DEPARTAMENTO,
+  ESPACIADO_NOMBRE_LIMITE,
+  FUENTE_ANCLAS_DEPARTAMENTOS,
+  FUENTE_ANCLAS_LIMITES,
   FUENTE_DEPARTAMENTOS,
   FUENTE_LIMITES,
+  GLIFOS_URL,
   GUION_DEPARTAMENTO,
   GUION_LIMITE,
   LIMITES_URL,
   OPACIDAD_DEPARTAMENTO,
   OPACIDAD_LIMITE,
+  OPACIDAD_NOMBRE_DEPARTAMENTO,
+  OPACIDAD_NOMBRE_LIMITE,
+  PILA_TIPOGRAFICA,
+  porZoom,
+  TAMANIO_NOMBRE_DEPARTAMENTO,
+  TAMANIO_NOMBRE_LIMITE,
+  ZOOM_MAXIMO_NOMBRE_LIMITE,
   ZOOM_MINIMO_DEPARTAMENTO,
 } from "@/lib/geo/limites"
 import {
@@ -193,10 +215,18 @@ export default function MapaMapLibre({
       center: CENTRO_INICIAL,
       zoom: 5,
       attributionControl: false,
-      // The style is inline on purpose: no external style.json, no glyph
-      // server, no API key. Labels are HTML markers, so no font is needed.
+      /*
+       * The style is inline on purpose: no external style.json, no API key, no
+       * vector-tile vendor.
+       *
+       * `glyphs` does not walk that back. It points at a fontstack this repo
+       * ships in `public/geo/`, generated once and committed like the boundary
+       * GeoJSONs — a file, not a service. Nothing here reaches a host this app
+       * does not serve itself.
+       */
       style: {
         version: 8,
+        glyphs: GLIFOS_URL,
         sources: {
           satelite: {
             type: "raster",
@@ -267,6 +297,73 @@ export default function MapaMapLibre({
           "line-width": ANCHO_LIMITE,
           "line-opacity": OPACIDAD_LIMITE,
           "line-dasharray": GUION_LIMITE,
+        },
+      })
+
+      /*
+       * The names, on their own point sources rather than on the polygons above.
+       *
+       * MapLibre anchors one symbol per polygon, and twelve of these
+       * jurisdictions are MultiPolygons, so labelling the boundary sources
+       * directly drew CORRIENTES twice and scattered BUENOS AIRES over the
+       * Delta. The anchors are precomputed instead — see `limites.ts`.
+       *
+       * Still under the lotes, for the same reason the lines are: this is the
+       * paper, not the subject.
+       *
+       * These are plain typographic labels with a halo, deliberately unlike the
+       * lote markers, which are solid boxes in the DOM. A lote marker will cover
+       * a name sometimes — that is the right outcome, and it only reads as
+       * hierarchy because the two are not competing in the same visual register.
+       */
+      mapa.addSource(FUENTE_ANCLAS_DEPARTAMENTOS, {
+        type: "geojson",
+        data: ANCLAS_DEPARTAMENTOS_URL,
+      })
+      mapa.addLayer({
+        id: CAPA_NOMBRES_DEPARTAMENTOS,
+        type: "symbol",
+        source: FUENTE_ANCLAS_DEPARTAMENTOS,
+        minzoom: ZOOM_MINIMO_DEPARTAMENTO,
+        layout: {
+          "text-field": campoDeNombre() as never,
+          "text-font": PILA_TIPOGRAFICA,
+          "text-size": porZoom(TAMANIO_NOMBRE_DEPARTAMENTO) as never,
+          "text-letter-spacing": ESPACIADO_NOMBRE_DEPARTAMENTO,
+          "text-max-width": ANCHO_MAXIMO_NOMBRE_DEPARTAMENTO,
+        },
+        paint: {
+          "text-color": COLOR_LIMITE,
+          "text-opacity": porZoom(OPACIDAD_NOMBRE_DEPARTAMENTO) as never,
+          "text-halo-color": COLOR_HALO,
+          "text-halo-width": ANCHO_HALO,
+          "text-halo-blur": DIFUMINADO_HALO,
+        },
+      })
+
+      mapa.addSource(FUENTE_ANCLAS_LIMITES, {
+        type: "geojson",
+        data: ANCLAS_LIMITES_URL,
+      })
+      mapa.addLayer({
+        id: CAPA_NOMBRES_LIMITES,
+        type: "symbol",
+        source: FUENTE_ANCLAS_LIMITES,
+        maxzoom: ZOOM_MAXIMO_NOMBRE_LIMITE,
+        layout: {
+          "text-field": campoDeNombre() as never,
+          "text-font": PILA_TIPOGRAFICA,
+          "text-size": porZoom(TAMANIO_NOMBRE_LIMITE) as never,
+          "text-transform": "uppercase",
+          "text-letter-spacing": ESPACIADO_NOMBRE_LIMITE,
+          "text-max-width": ANCHO_MAXIMO_NOMBRE_LIMITE,
+        },
+        paint: {
+          "text-color": COLOR_LIMITE,
+          "text-opacity": porZoom(OPACIDAD_NOMBRE_LIMITE) as never,
+          "text-halo-color": COLOR_HALO,
+          "text-halo-width": ANCHO_HALO,
+          "text-halo-blur": DIFUMINADO_HALO,
         },
       })
 

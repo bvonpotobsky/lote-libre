@@ -1,10 +1,31 @@
 import { createHash } from "node:crypto"
 
-import type { Lote, LoteVerification, SourceRef } from "@/lib/db/schema"
+import type {
+  Lote,
+  LoteVerification,
+  OtbnShare,
+  SourceRef,
+} from "@/lib/db/schema"
 import type { VerdictReason } from "./verdict"
 import { REASON_COPY } from "./verdict"
 
-export const PAYLOAD_VERSION = 1 as const
+export const PAYLOAD_VERSION = 2 as const
+
+/**
+ * Versions this module can still hash.
+ *
+ * v1 predates the aptitude split. Its payloads are stored on the verification
+ * row and replayed from there, never rebuilt, so they must keep type-checking
+ * and keep hashing to what was printed on them.
+ */
+export type PayloadVersion = 1 | 2
+
+/** One bucket of the OTBN split, exactly as the document declares it. */
+export type DocumentOtbnShare = {
+  categoria: string
+  hectareas: number
+  porcentajeSuperficie: number
+}
 
 export type DocumentImagery = {
   periodo: "referencia" | "actual"
@@ -25,7 +46,7 @@ export type DocumentImagery = {
  * reproduces the same hash, and so a third party can re-serialize it and check.
  */
 export type DueDiligencePayload = {
-  version: typeof PAYLOAD_VERSION
+  version: PayloadVersion
   emitidoEl: string
   productor: { nombre: string; email: string }
   lote: {
@@ -48,7 +69,16 @@ export type DueDiligencePayload = {
       primerAnio: number | null
       fechaDeCorte: string
     }
-    otbn: { categoria: string | null; porcentajeSuperficie: number | null }
+    otbn: {
+      categoria: string | null
+      porcentajeSuperficie: number | null
+      /**
+       * Absent, not empty, when the province ships no layer — and absent on
+       * every v1 payload. An empty array would assert that the split was
+       * measured and came to nothing.
+       */
+      reparto?: DocumentOtbnShare[]
+    }
   }
   imagenes: DocumentImagery[]
   fuentes: SourceRef[]
@@ -120,6 +150,7 @@ export function buildPayload(input: {
       otbn: {
         categoria: verification.otbnCategory,
         porcentajeSuperficie: verification.otbnPct,
+        ...repartoDeclarado(verification.otbnBreakdown),
       },
     },
     imagenes: imagenes.map((imagen) => ({ ...imagen })),
@@ -127,5 +158,25 @@ export function buildPayload(input: {
     // reference with the verification row means a later mutation of either one
     // silently invalidates a hash that was already printed on a document.
     fuentes: verification.sources.map((fuente) => ({ ...fuente })),
+  }
+}
+
+/**
+ * Spreads into the payload only when there is a split to declare.
+ *
+ * Spreading nothing leaves the key off the object, which is what `canonicalJson`
+ * then hashes — the same shape a v1 payload has.
+ */
+function repartoDeclarado(
+  breakdown: OtbnShare[] | null,
+): { reparto?: DocumentOtbnShare[] } {
+  if (!breakdown || breakdown.length === 0) return {}
+
+  return {
+    reparto: breakdown.map((share) => ({
+      categoria: share.bucket,
+      hectareas: share.hectares,
+      porcentajeSuperficie: share.pct,
+    })),
   }
 }

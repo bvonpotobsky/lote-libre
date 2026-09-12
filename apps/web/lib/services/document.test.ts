@@ -126,6 +126,54 @@ describe("buildPayload", () => {
     expect(result.verificacion.motivos[0]?.texto).toContain("31/12/2020")
     expect(result.fuentes).toHaveLength(1)
   })
+
+  it("declares the OTBN split so the document can print it", () => {
+    const conReparto = buildPayload({
+      lote: LOTE,
+      verification: {
+        ...VERIFICATION,
+        otbnBreakdown: [
+          { bucket: "rojo", hectares: 150, pct: 29.94 },
+          { bucket: "fuera_de_otbn", hectares: 351, pct: 70.06 },
+        ],
+      } as unknown as LoteVerification,
+      productor: PRODUCTOR,
+      imagenes: [],
+      emitidoEl: EMITIDO,
+    })
+
+    expect(conReparto.version).toBe(2)
+    expect(conReparto.verificacion.otbn.reparto).toEqual([
+      { categoria: "rojo", hectareas: 150, porcentajeSuperficie: 29.94 },
+      { categoria: "fuera_de_otbn", hectareas: 351, porcentajeSuperficie: 70.06 },
+    ])
+  })
+
+  it("omits the split entirely when the province had no layer", () => {
+    // An empty array would assert "measured, and it is nothing". It was not
+    // measured at all, and the payload has to say the difference.
+    const result = buildPayload({
+      lote: LOTE,
+      verification: {
+        ...VERIFICATION,
+        otbnBreakdown: null,
+      } as unknown as LoteVerification,
+      productor: PRODUCTOR,
+      imagenes: [],
+      emitidoEl: EMITIDO,
+    })
+
+    expect(result.verificacion.otbn.reparto).toBeUndefined()
+  })
+
+  it("changes the hash when the split changes", () => {
+    const base = payload()
+    const alterado = structuredClone(base)
+    alterado.verificacion.otbn.reparto = [
+      { categoria: "verde", hectareas: 501, porcentajeSuperficie: 100 },
+    ]
+    expect(hashPayload(alterado)).not.toBe(hashPayload(base))
+  })
 })
 
 /** Obtenido del código en PAYLOAD_VERSION 1. No se recalcula: se preserva. */

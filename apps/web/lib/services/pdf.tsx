@@ -8,6 +8,8 @@ import {
 } from "@react-pdf/renderer"
 
 import type { DueDiligencePayload } from "./document"
+import { CAVEAT_APTITUD } from "@/lib/ui/aptitud"
+import { OTBN_UI } from "@/lib/ui/verdict"
 
 const VERDICT_COLOR: Record<string, string> = {
   verde: "#15803d",
@@ -71,6 +73,16 @@ const styles = StyleSheet.create({
     borderLeftColor: "#d1d5db",
   },
   caveat: { color: "#92400e", marginTop: 2 },
+  aptitudRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#d1d5db",
+    paddingVertical: 4,
+  },
+  aptitudLabel: { fontFamily: "Helvetica-Bold" },
+  aptitudDetail: { color: "#4b5563", fontSize: 8 },
+  aptitudFigure: { textAlign: "right" },
   footer: {
     position: "absolute",
     bottom: 24,
@@ -113,13 +125,13 @@ function DueDiligenceDocument({
 
   return (
     <Document
-      title={`Debida diligencia EUDR - ${lote.nombre}`}
+      title={`Informe de lote - aptitud legal y debida diligencia - ${lote.nombre}`}
       author="Lote Limpio"
     >
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <Text style={styles.title}>
-            Declaración de debida diligencia — EUDR
+            Informe de lote — aptitud legal y debida diligencia
           </Text>
           <Text style={styles.subtitle}>
             Reglamento (UE) 2023/1115. Fecha de corte de deforestación:
@@ -165,6 +177,45 @@ function DueDiligenceDocument({
           <Field label="RENSPA declarado" value={lote.renspa ?? "no declarado"} />
           <Field label="Huella de geometría" value={lote.geometriaHash} />
         </View>
+
+        {verificacion.otbn.reparto ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Aptitud legal</Text>
+            <Text style={styles.aptitudDetail}>
+              Ordenamiento Territorial de Bosques Nativos (Ley 26.331). Cómo se
+              reparte la superficie del lote.
+            </Text>
+            {verificacion.otbn.reparto.map((parte) => {
+              const ui = OTBN_UI[parte.categoria as keyof typeof OTBN_UI]
+              return (
+                <View key={parte.categoria} style={styles.aptitudRow}>
+                  <View>
+                    <Text style={styles.aptitudLabel}>
+                      {ui?.etiqueta ?? parte.categoria}
+                    </Text>
+                    <Text style={styles.aptitudDetail}>{ui?.detalle ?? ""}</Text>
+                  </View>
+                  <View style={styles.aptitudFigure}>
+                    <Text style={styles.aptitudLabel}>
+                      {parte.hectareas === 0
+                        ? "menos de 1 ha"
+                        : `${parte.hectareas.toLocaleString("es-AR")} ha`}
+                    </Text>
+                    <Text style={styles.aptitudDetail}>
+                      {parte.porcentajeSuperficie.toLocaleString("es-AR", {
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                      %
+                    </Text>
+                  </View>
+                </View>
+              )
+            })}
+            <Text style={[styles.caveat, { marginTop: 5 }]}>
+              {CAVEAT_APTITUD}
+            </Text>
+          </View>
+        ) : null}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Resultado de la verificación</Text>

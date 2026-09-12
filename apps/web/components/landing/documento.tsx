@@ -1,10 +1,5 @@
-import area from "@turf/area"
-import centroid from "@turf/centroid"
-import { polygon } from "@turf/helpers"
-
 import type { FuenteLanding } from "@/lib/landing/fuentes"
-import { ANILLO_LOTE } from "@/lib/landing/proyeccion"
-import { formatHa } from "@/lib/ui/verdict"
+import { VERDICT_UI } from "@/lib/ui/verdict"
 
 /** Only what the real PDF would cite for a lote in Santiago del Estero. */
 const FUENTES_DEL_EJEMPLO = new Set(["umsef", "otbn-santiago-del-estero"])
@@ -27,10 +22,33 @@ const BENEFICIOS = [
   },
 ]
 
-const ejemplo = polygon([ANILLO_LOTE.map(([lon, lat]) => [lon, lat])])
-const superficieHa = formatHa(area(ejemplo) / 10_000)
-const [lon, lat] = centroid(ejemplo).geometry.coordinates as [number, number]
-const geolocalizacion = `${lat.toFixed(6)}, ${lon.toFixed(6)} (WGS84)`
+/**
+ * A fictional record, deliberately.
+ *
+ * DESIGN.md's «Regla del Ejemplo Rotulado» forbids attributing a verdict,
+ * hectares, a year, a name or a RENSPA to the real example frame. This sheet
+ * used to compute its surface and centroid from ANILLO_LOTE, which is the seed
+ * lote — so it was already printing 501 ha and a six-decimal coordinate of a
+ * real place, and filling in a verdict on top would have compounded that.
+ *
+ * So the sheet stops describing the frame. Every value below is invented, the
+ * coordinates are rounded to three decimals — a ~100 m square, not a surveyed
+ * corner — and the caption says so. The figures that do show the real frame
+ * (Hero, EscenaTerritorio, EvidenciaSatelital) still carry no result at all.
+ *
+ * The numbers are internally consistent with lib/services/verdict.ts: no loss
+ * after the cutoff plus Categoría III is the only combination that reads green.
+ */
+const EJEMPLO = {
+  denominacion: "Lote de ejemplo",
+  provincia: "Santiago del Estero",
+  superficie: "312,00 ha",
+  geolocalizacion: "-27,340, -63,120 (WGS84)",
+  renspa: "no declarado",
+  fecha: "12/09/2026",
+  perdida: "0,00 % de la superficie",
+  categoria: "Categoría III — 98,20 % del lote",
+} as const
 
 type FilaProps = { etiqueta: string; children: React.ReactNode }
 
@@ -44,10 +62,12 @@ function Fila({ etiqueta, children }: FilaProps) {
 }
 
 /**
- * A sheet that reproduces the real structure of lib/services/pdf.tsx:
- * title, subtitle, label column, source list, footer. The verdict rows are
- * empty on purpose and no hash digits are shown: this is the shape of the
- * document, not a result.
+ * A sheet that reproduces the real structure of lib/services/pdf.tsx: title,
+ * subtitle, verdict box, label column, source list, footer. No hash digits are
+ * shown — a fingerprint nobody can recompute is decoration.
+ *
+ * The verdict label is VERDICT_UI.verde.titulo, not the PDF's VERDICT_LABEL:
+ * that one is set in capitals, and sustained capitals are forbidden on screen.
  */
 export function HojaDocumento({ fuentes }: { fuentes: FuenteLanding[] }) {
   const citadas = fuentes.filter((fuente) => FUENTES_DEL_EJEMPLO.has(fuente.id))
@@ -64,26 +84,36 @@ export function HojaDocumento({ fuentes }: { fuentes: FuenteLanding[] }) {
           </p>
         </header>
 
+        <div
+          className={`flex flex-col gap-1 rounded-md border-2 ${VERDICT_UI.verde.borde} p-3`}
+        >
+          <p className="text-lg font-bold text-verde">
+            {VERDICT_UI.verde.titulo}
+          </p>
+          <p className="text-xs text-ink-soft">
+            Pérdida de cobertura arbórea posterior al 31/12/2020 dentro del
+            lote: {EJEMPLO.perdida}. Categoría OTBN: {EJEMPLO.categoria}.
+          </p>
+        </div>
+
         <section className="flex flex-col gap-2">
           <h3 className="font-semibold">Identificación del lote</h3>
           <dl className="grid grid-cols-[7rem_1fr] gap-x-4 gap-y-1 sm:grid-cols-[8.5rem_1fr]">
-            <Fila etiqueta="Denominación">Lote de ejemplo</Fila>
-            <Fila etiqueta="Provincia">Santiago del Estero</Fila>
-            <Fila etiqueta="Superficie">{superficieHa} ha</Fila>
-            <Fila etiqueta="Geolocalización">{geolocalizacion}</Fila>
+            <Fila etiqueta="Denominación">{EJEMPLO.denominacion}</Fila>
+            <Fila etiqueta="Provincia">{EJEMPLO.provincia}</Fila>
+            <Fila etiqueta="Superficie">{EJEMPLO.superficie}</Fila>
+            <Fila etiqueta="Geolocalización">{EJEMPLO.geolocalizacion}</Fila>
+            <Fila etiqueta="RENSPA declarado">{EJEMPLO.renspa}</Fila>
           </dl>
         </section>
 
         <section className="flex flex-col gap-2">
           <h3 className="font-semibold">Resultado de la verificación</h3>
           <dl className="grid grid-cols-[7rem_1fr] gap-x-4 gap-y-1 sm:grid-cols-[8.5rem_1fr]">
-            <Fila etiqueta="Fecha">—</Fila>
-            <Fila etiqueta="Pérdida de cobertura">—</Fila>
-            <Fila etiqueta="Categoría OTBN">—</Fila>
+            <Fila etiqueta="Fecha">{EJEMPLO.fecha}</Fila>
+            <Fila etiqueta="Pérdida de cobertura">{EJEMPLO.perdida}</Fila>
+            <Fila etiqueta="Categoría OTBN">{EJEMPLO.categoria}</Fila>
           </dl>
-          <p className="text-xs text-ink-soft">
-            Se completa al verificar el lote.
-          </p>
         </section>
 
         <section className="flex flex-col gap-2">
@@ -112,7 +142,8 @@ export function HojaDocumento({ fuentes }: { fuentes: FuenteLanding[] }) {
         </footer>
       </div>
       <p className="text-xs text-ink-soft">
-        Extracto ilustrativo con la estructura real del documento.
+        Extracto ilustrativo con la estructura real del documento. El lote y el
+        resultado son ficticios.
       </p>
     </div>
   )
@@ -129,7 +160,7 @@ export function Documento({ fuentes }: { fuentes: FuenteLanding[] }) {
             <HojaDocumento fuentes={fuentes} />
           </div>
 
-          <div className="flex flex-col gap-8 lg:col-span-5">
+          <div className="flex flex-col gap-8 lg:col-span-5 lg:justify-center">
             <dl className="border-t border-line">
               {BENEFICIOS.map((beneficio) => (
                 <div
@@ -143,13 +174,6 @@ export function Documento({ fuentes }: { fuentes: FuenteLanding[] }) {
                 </div>
               ))}
             </dl>
-            <p className="text-sm leading-relaxed text-ink-soft">
-              La huella SHA-256 se calcula sobre el contenido canónico definido
-              por el producto, no sobre los bytes del PDF. Permite comprobar que
-              un documento coincide con una referencia confiable; no demuestra
-              por sí sola la veracidad de los datos ni constituye una firma
-              digital.
-            </p>
           </div>
         </div>
       </div>

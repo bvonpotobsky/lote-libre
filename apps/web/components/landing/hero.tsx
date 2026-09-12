@@ -33,10 +33,6 @@ export function Hero() {
               Cómo funciona
             </a>
           </div>
-          <p className="max-w-[52ch] text-sm leading-relaxed text-ink-soft">
-            Cobertura de capas: Córdoba, Santiago del Estero y Chaco. Un lote en
-            otra provincia se guarda igual, pero todavía no se puede verificar.
-          </p>
         </div>
 
         <figure className="lg:col-span-6 lg:-mr-[clamp(1.25rem,4vw,5rem)]">

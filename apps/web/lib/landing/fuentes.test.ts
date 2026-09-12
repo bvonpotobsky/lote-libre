@@ -155,9 +155,7 @@ describe("desincronizadas", () => {
   })
 
   it("names the layers whose download date drifted", () => {
-    expect(desincronizadas(conDeriva())).toEqual([
-      manifiesto.otbn.chaco.label,
-    ])
+    expect(desincronizadas(conDeriva())).toEqual([manifiesto.otbn.chaco.label])
   })
 
   it("ships a manifest whose layers were all downloaded on generatedAt", () => {

@@ -19,7 +19,7 @@ import "./landing.css"
 
 const TITULO = "Lote Limpio: tu lote, con evidencia"
 const DESCRIPCION =
-  "Verificá tu lote con capas oficiales (UMSEF y OTBN) y generá un documento de respaldo para presentar al acopio. Trazabilidad EUDR para soja y ganadería en Córdoba, Santiago del Estero y Chaco."
+  "Verificá tu lote con capas oficiales (UMSEF y OTBN), mirá el cambio en imágenes Sentinel-2 y generá el documento de respaldo para el acopio. Trazabilidad EUDR para soja y ganadería en Córdoba, Santiago del Estero y Chaco."
 
 export const metadata: Metadata = {
   title: TITULO,

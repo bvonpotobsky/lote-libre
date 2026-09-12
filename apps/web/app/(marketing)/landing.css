@@ -145,6 +145,20 @@
   line-height: 1.25;
 }
 
+/* --------------------------------------------------------- tinta */
+
+/* The one inverted surface on the landing. `focus-ink` draws a black ring, and
+   the whole point of the rule — ink at full strength with a gap of paper around
+   it — inverts here: on ink, a black ring is invisible. Same rule, swapped. */
+.landing .landing__tinta {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+.landing .landing__tinta :focus-visible {
+  outline-color: var(--color-paper);
+}
+
 /* ------------------------------------------------------------------- CTA */
 
 .landing .cta {
@@ -211,67 +225,6 @@
   }
   to {
     stroke-dashoffset: 0;
-  }
-}
-
-/* ---------------------------------------------------------------- cadena */
-
-/* One line runs through the four nodes and travels once when the list
-   enters the viewport. Vertical below lg, horizontal from lg. */
-.landing .cadena {
-  position: relative;
-}
-
-.landing .cadena::before {
-  content: "";
-  position: absolute;
-  background: var(--color-ink);
-  left: 4px;
-  top: 0.5rem;
-  bottom: 0.5rem;
-  width: 1px;
-  transform: scaleY(0);
-  transform-origin: top;
-  transition: transform 1400ms var(--ease);
-}
-
-.landing .cadena__marca {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background: var(--color-ink);
-  outline: 3px solid var(--color-paper);
-  left: -24.5px;
-  top: 7px;
-}
-
-@media (min-width: 1024px) {
-  .landing .cadena::before {
-    left: 0;
-    right: 0;
-    top: 4px;
-    bottom: auto;
-    width: auto;
-    height: 1px;
-    transform: scaleX(0);
-    transform-origin: left;
-  }
-
-  .landing .cadena__marca {
-    left: 0;
-    top: -24.5px;
-  }
-}
-
-.landing [data-visible] .cadena::before,
-html:not([data-js]) .landing .cadena::before {
-  transform: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .landing .cadena::before {
-    transform: none;
-    transition: none;
   }
 }
 

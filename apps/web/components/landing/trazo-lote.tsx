@@ -1,14 +1,9 @@
 import { LOTE_PATH } from "@/lib/landing/ejemplo-capas.generated"
 import { VISTA } from "@/lib/landing/proyeccion"
 
-/** A square window around the lote, for glyph-sized uses. */
-const VISTA_RECORTADA = "540 360 360 360"
-
 type Props = {
   /** Draw the outline once on load (landing.css `.trazo-lote--animado`). */
   animado?: boolean
-  /** Crop the view to the lote itself instead of the whole frame. */
-  recorte?: boolean
   className?: string
 }
 
@@ -17,15 +12,14 @@ type Props = {
  * over dark canopy and pale soil alike. Shares VISTA with the raster, so
  * placing this SVG over the hero image registers the two exactly.
  */
-export function TrazoLote({
-  animado = false,
-  recorte = false,
-  className = "",
-}: Props) {
+export function TrazoLote({ animado = false, className = "" }: Props) {
   const clase = animado ? "trazo-lote trazo-lote--animado" : "trazo-lote"
-  const viewBox = recorte ? VISTA_RECORTADA : `0 0 ${VISTA.ancho} ${VISTA.alto}`
   return (
-    <svg viewBox={viewBox} className={className} aria-hidden="true">
+    <svg
+      viewBox={`0 0 ${VISTA.ancho} ${VISTA.alto}`}
+      className={className}
+      aria-hidden="true"
+    >
       <path
         d={LOTE_PATH}
         pathLength={1}

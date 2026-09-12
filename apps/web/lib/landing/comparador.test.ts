@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  POSICION_INICIAL,
-  limitarPosicion,
-  recorteDeVista,
-} from "./comparador"
+import { POSICION_INICIAL, limitarPosicion, recorteDeVista } from "./comparador"
 
 describe("POSICION_INICIAL", () => {
   it("parks the divider in the middle, so both halves are visible at rest", () => {

@@ -93,8 +93,14 @@ const VENTANA_RESPALDO = { desde: "2025-07-01", hasta: "2025-09-30" } as const
  * obvious without a legend: continuous mottled canopy against the straight
  * strips of a clearing.
  */
-const REFERENCIA_PRINCIPAL = { desde: "2020-06-15", hasta: "2020-09-10" } as const
-const REFERENCIA_RESPALDO = { desde: "2020-05-01", hasta: "2020-10-31" } as const
+const REFERENCIA_PRINCIPAL = {
+  desde: "2020-06-15",
+  hasta: "2020-09-10",
+} as const
+const REFERENCIA_RESPALDO = {
+  desde: "2020-05-01",
+  hasta: "2020-10-31",
+} as const
 
 const HERO_MAX_BYTES = 400 * 1024
 /** The reference frame is the same scene through the same pipeline. */
@@ -266,8 +272,7 @@ function procedenciaRegistrada(): Procedencia {
   const texto = readFileSync(GENERADO, "utf8")
   return {
     imagen: ventanaEn(texto, "VENTANA_IMAGEN") ?? porDefecto.imagen,
-    referencia:
-      ventanaEn(texto, "VENTANA_REFERENCIA") ?? porDefecto.referencia,
+    referencia: ventanaEn(texto, "VENTANA_REFERENCIA") ?? porDefecto.referencia,
   }
 }
 

@@ -5,7 +5,7 @@ import { VERDICT_UI } from "@/lib/ui/verdict"
 
 import { RevelarEnVista } from "./revelar-en-vista"
 
-type Simbolo = "check" | "alerta" | "cruz" | "guion"
+type Simbolo = "check" | "alerta" | "cruz"
 
 type Fila = {
   clave: string
@@ -46,35 +46,29 @@ const FILAS: Fila[] = [
     texto: "text-white",
     simbolo: "cruz",
   },
-  {
-    clave: "sin-capa",
-    titulo: "Sin capa cargada",
-    resumen: REASON_COPY.OTBN_NO_COVERAGE,
-    explicacion: "El resultado queda Con observaciones.",
-    swatch: "bg-field border-line border",
-    texto: "text-ink",
-    simbolo: "guion",
-  },
 ]
 
 const TRAZOS: Record<Simbolo, string> = {
   check: "M3.5 8.5l3 3 6-6",
   alerta: "M8 3.5v5.5M8 12.5h.01",
   cruz: "M4.5 4.5l7 7M11.5 4.5l-7 7",
-  guion: "M4 8h8",
 }
 
 /**
- * The three verdicts and the state that is none of them. Colour never
- * travels alone: every row carries a symbol and its words, straight from the
- * product's own copy.
+ * The three verdicts. Colour never travels alone: every row carries a symbol
+ * and its words, straight from the product's own copy.
+ *
+ * There used to be a fourth row for a province with no OTBN layer. It said
+ * nothing the amber row does not already say — «…o provincia sin capa
+ * cargada» — and it turned the section into a list of holes. The scope it
+ * described now lives in «Alcance y fuentes», once, with the pull quote.
  */
 export function Resultados() {
   return (
     <section id="resultados" className="landing__seccion landing__papel">
       <div className="landing__marco flex flex-col gap-10 lg:gap-14">
         <h2 className="landing__h2">
-          Un resultado claro. Sus límites, también.
+          Tres resultados posibles. Cada uno con sus palabras.
         </h2>
 
         <ul className="border-b border-line">
@@ -112,17 +106,6 @@ export function Resultados() {
             </RevelarEnVista>
           ))}
         </ul>
-
-        <div className="flex flex-col gap-4 pt-2">
-          <p className="landing__cita">
-            Dato faltante no significa lote aprobado.
-          </p>
-          <p className="landing__cuerpo text-ink-soft">
-            Sin observaciones exige evidencia positiva de las dos capas. Un lote
-            en otra provincia, o en una provincia sin OTBN cargado, no se evalúa
-            como favorable.
-          </p>
-        </div>
       </div>
     </section>
   )

@@ -8,6 +8,7 @@ import { env } from "@/lib/config/env"
 const TOKEN_URL =
   "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 const PROCESS_URL = "https://sh.dataspace.copernicus.eu/api/v1/process"
+const CRS_4326 = "http://www.opengis.net/def/crs/EPSG/0/4326"
 
 let cachedToken: { value: string; exp: number } | null = null
 
@@ -56,37 +57,48 @@ export type GeoJSONPolygon = {
   coordinates: number[][][] | number[][][][]
 }
 
-/** Devuelve un PNG (Buffer) de Sentinel-2 recortado al polígono, mosaico menos nuboso del rango. */
-export async function getLoteImage(
-  geometry: GeoJSONPolygon,
-  from: string, // "YYYY-MM-DD"
-  to: string,
-  layer: keyof typeof EVALSCRIPTS = "trueColor",
-  size = 512
-): Promise<Buffer> {
+/** [minLon, minLat, maxLon, maxLat] in WGS84, lon/lat axis order. */
+export type Bbox4326 = readonly [number, number, number, number]
+
+type ProcessBounds =
+  | { geometry: GeoJSONPolygon; properties: { crs: string } }
+  | { bbox: number[]; properties: { crs: string } }
+
+type ProcessRequest = {
+  bounds: ProcessBounds
+  from: string
+  to: string
+  layer: keyof typeof EVALSCRIPTS
+  width: number
+  height: number
+  maxCloudCoverage: number
+}
+
+/** One Process API call; both public entry points differ only in their bounds. */
+async function procesar(request: ProcessRequest): Promise<Buffer> {
   const body = {
     input: {
-      bounds: {
-        geometry, // WGS84 por defecto (EPSG:4326). Recorta al polígono: afuera queda transparente.
-        properties: { crs: "http://www.opengis.net/def/crs/EPSG/0/4326" },
-      },
+      bounds: request.bounds,
       data: [
         {
           type: "sentinel-2-l2a",
           dataFilter: {
-            timeRange: { from: `${from}T00:00:00Z`, to: `${to}T23:59:59Z` },
-            maxCloudCoverage: 30, // % por tile; subilo si el rango no devuelve nada
+            timeRange: {
+              from: `${request.from}T00:00:00Z`,
+              to: `${request.to}T23:59:59Z`,
+            },
+            maxCloudCoverage: request.maxCloudCoverage, // % por tile; subilo si el rango no devuelve nada
             mosaickingOrder: "leastCC", // píxeles de la pasada menos nubosa
           },
         },
       ],
     },
     output: {
-      width: size,
-      height: size,
+      width: request.width,
+      height: request.height,
       responses: [{ identifier: "default", format: { type: "image/png" } }],
     },
-    evalscript: EVALSCRIPTS[layer],
+    evalscript: EVALSCRIPTS[request.layer],
   }
 
   const res = await fetch(PROCESS_URL, {
@@ -100,6 +112,54 @@ export async function getLoteImage(
   })
   if (!res.ok) throw new Error(`process ${res.status}: ${await res.text()}`)
   return Buffer.from(await res.arrayBuffer())
+}
+
+/** Devuelve un PNG (Buffer) de Sentinel-2 recortado al polígono, mosaico menos nuboso del rango. */
+export async function getLoteImage(
+  geometry: GeoJSONPolygon,
+  from: string, // "YYYY-MM-DD"
+  to: string,
+  layer: keyof typeof EVALSCRIPTS = "trueColor",
+  size = 512
+): Promise<Buffer> {
+  return procesar({
+    bounds: {
+      geometry, // WGS84 por defecto (EPSG:4326). Recorta al polígono: afuera queda transparente.
+      properties: { crs: CRS_4326 },
+    },
+    from,
+    to,
+    layer,
+    width: size,
+    height: size,
+    maxCloudCoverage: 30,
+  })
+}
+
+/**
+ * Rectangular frame instead of a masked polygon: the whole bbox is imagery,
+ * nothing is transparent. Used to bake static artwork (the landing hero), where
+ * width/height must match a fixed viewBox so vectors projected with the same
+ * bbox register pixel for pixel.
+ */
+export async function getFrameImage(
+  bbox: Bbox4326,
+  from: string,
+  to: string,
+  layer: keyof typeof EVALSCRIPTS = "trueColor",
+  width = 1024,
+  height = 1024,
+  maxCloudCoverage = 15
+): Promise<Buffer> {
+  return procesar({
+    bounds: { bbox: [...bbox], properties: { crs: CRS_4326 } },
+    from,
+    to,
+    layer,
+    width,
+    height,
+    maxCloudCoverage,
+  })
 }
 
 // Ejemplo: comparación "2020 vs hoy" para el slider del demo

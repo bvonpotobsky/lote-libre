@@ -1,10 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server"
 
+import { esRutaPublica } from "@/lib/auth/rutas-publicas"
+
 /**
  * Keeps signed-out visitors out of the app shell.
  *
  * Next 16 renamed middleware to proxy; a file called middleware.ts would simply
  * never run, leaving every route open.
+ *
+ * The public surface — the landing at "/", its static assets under /landing/,
+ * its Open Graph image and the sign-in routes — is decided by
+ * lib/auth/rutas-publicas.ts, where it is unit-tested. "/" is matched whole
+ * there: as a prefix it would be every path.
  *
  * The cookie is only ever read as a NEGATIVE signal. Its absence proves there
  * is no session; its presence proves nothing — a cookie can outlive the session
@@ -15,14 +22,10 @@ import { NextResponse, type NextRequest } from "next/server"
  * The positive check lives in the route groups, where it can read the actual
  * session, and authorization itself lives in the data layer.
  */
-const PUBLIC_PATHS = ["/ingresar", "/crear-cuenta"]
-
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
-    return NextResponse.next()
-  }
+  if (esRutaPublica(pathname)) return NextResponse.next()
 
   const maybeSignedIn =
     request.cookies.has("better-auth.session_token") ||
@@ -32,7 +35,7 @@ export function proxy(request: NextRequest) {
 
   const url = request.nextUrl.clone()
   url.pathname = "/ingresar"
-  url.search = pathname === "/" ? "" : `?volver=${encodeURIComponent(pathname)}`
+  url.search = `?volver=${encodeURIComponent(pathname)}`
   return NextResponse.redirect(url)
 }
 

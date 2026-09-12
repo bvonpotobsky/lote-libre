@@ -76,7 +76,11 @@ export function FormularioAcceso({ modo }: { modo: Modo }) {
       return
     }
 
-    router.push(volver ?? "/")
+    // Only a same-origin path is honoured: `volver` comes from the query
+    // string. "//host" and "/\host" are protocol-relative URLs, not paths.
+    const destino =
+      volver && /^\/(?![/\\])/.test(volver) ? volver : "/lotes"
+    router.push(destino)
     router.refresh()
   }
 

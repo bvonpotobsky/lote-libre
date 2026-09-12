@@ -26,7 +26,7 @@ export function Encabezado({ nombre }: { nombre: string }) {
      * siblings.
      */
     <header className="border-line bg-paper sticky top-0 z-10 flex items-center justify-between gap-4 border-b px-4 py-3 sm:px-6">
-      <Link href="/" className="font-bold tracking-tight">
+      <Link href="/lotes" className="font-bold tracking-tight">
         Lote Limpio
       </Link>
       <div className="flex items-center gap-4">

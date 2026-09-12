@@ -3,6 +3,8 @@ import { Archivo } from "next/font/google"
 
 import "@workspace/ui/globals.css"
 
+import { env } from "@/lib/config/env"
+
 /**
  * Archivo, by Omnibus-Type of Buenos Aires. An Argentine grotesque for an
  * Argentine field tool, and a workhorse at small sizes in bright light.
@@ -14,6 +16,8 @@ const archivo = Archivo({
 })
 
 export const metadata: Metadata = {
+  // Absolute Open Graph URLs need a base; the auth URL is the public origin.
+  metadataBase: new URL(env.auth.url),
   title: "Lote Limpio",
   description:
     "Verificá tus lotes contra el reglamento europeo de deforestación y descargá el documento para el acopio.",
@@ -30,8 +34,14 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es-AR" className={`${archivo.variable} antialiased`}>
-      <body className="bg-paper text-ink font-sans">{children}</body>
+    // The marketing layout stamps `data-js` on <html> before hydration, so
+    // React would otherwise report the attribute as a mismatch in dev.
+    <html
+      lang="es-AR"
+      className={`${archivo.variable} antialiased`}
+      suppressHydrationWarning
+    >
+      <body className="bg-paper font-sans text-ink">{children}</body>
     </html>
   )
 }

@@ -1,0 +1,462 @@
+/*
+ * Landing-only styles.
+ *
+ * This route group is the one surface where the product presents itself
+ * instead of working, so it deliberately departs from DESIGN.md on motion,
+ * perspective, grain and display size. Every rule is scoped under `.landing`
+ * so none of it can leak into the app shell.
+ *
+ * Plain CSS on purpose: no @apply, no theme(). Tokens come in as
+ * var(--color-*) from packages/ui/src/styles/globals.css.
+ *
+ * Motion constants mirror lib/landing/movimiento.ts — keep both in sync.
+ * The frozen scene states mirror ESTADOS_POR_CAPITULO in
+ * lib/landing/escena.ts — keep both in sync.
+ */
+
+.landing {
+  --dur-micro: 180ms;
+  --dur-entrada: 560ms;
+  --dur-trazo: 1100ms;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --perspectiva: 1200px;
+  --inclinacion-x: 24deg;
+  --inclinacion-z: -10deg;
+  --plano: 32px;
+  --parallax: 20px;
+
+  /* Fluid type. The H1 stops at 100px so "Tu lote, con evidencia." holds
+     two lines inside a six-column hero at every width from 1024 up. */
+  --h1: clamp(2.75rem, 1.2rem + 5.2vw, 6.25rem);
+  --h2: clamp(2rem, 1.2rem + 3vw, 4rem);
+  --cuerpo: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+}
+
+/* ------------------------------------------------------------ typography */
+
+.landing__h1 {
+  font-size: var(--h1);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  /* Room for accents and descenders inside any overflow context. */
+  padding-block: 0.06em;
+}
+
+.landing__h2 {
+  font-size: var(--h2);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  max-width: 24ch;
+  padding-block: 0.06em;
+}
+
+.landing__cuerpo {
+  font-size: var(--cuerpo);
+  line-height: 1.55;
+  max-width: 60ch;
+}
+
+/* A pull-quote: louder than body, quieter than the section title. */
+.landing__cita {
+  font-size: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  max-width: 28ch;
+}
+
+/* ---------------------------------------------------------------- layout */
+
+.landing__marco {
+  width: 100%;
+  max-width: 90rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 5rem);
+}
+
+/* Half the section gap on each side: 64–88px between sections on a phone,
+   112–160px on a desktop, once the two paddings meet. */
+.landing__seccion {
+  padding-block: clamp(2rem, 5vw, 5rem);
+}
+
+.landing [id] {
+  scroll-margin-top: 4rem;
+}
+
+/* Grain: one tiny static tile on paper sections only, never over controls,
+   the raster or the document sheet. */
+.landing__papel {
+  position: relative;
+}
+
+.landing__papel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url(/landing/grano.png) repeat;
+  background-size: 64px 64px;
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.landing__papel > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ------------------------------------------------------------------ hero */
+
+.landing .hero {
+  min-height: calc(100svh - 3.5rem);
+  display: flex;
+  align-items: center;
+  /* The tilted frame bleeds past the right edge on lg; clip (not hidden)
+     keeps the page from scrolling sideways without creating a scroll box. */
+  overflow-x: clip;
+}
+
+@media (min-width: 1024px) {
+  .landing .hero__camara {
+    perspective: var(--perspectiva);
+  }
+
+  .landing .hero__marco {
+    transform: rotateX(6deg) rotateY(-5deg);
+    transform-origin: 50% 50%;
+  }
+}
+
+.landing .chip {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.25rem;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* ------------------------------------------------------------------- CTA */
+
+.landing .cta {
+  transition:
+    background-color var(--dur-micro) var(--ease),
+    opacity 120ms var(--ease);
+}
+
+.landing .cta__flecha {
+  transition: transform var(--dur-micro) var(--ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .landing .cta:hover {
+    background-color: #1a1a1a;
+  }
+
+  .landing .cta:hover .cta__flecha {
+    transform: translateX(3px);
+  }
+}
+
+/* Feedback without moving the clickable area. */
+.landing .cta:active {
+  opacity: 0.92;
+}
+
+/* ---------------------------------------------------------------- reveal */
+
+.landing [data-revelar] {
+  transition:
+    opacity var(--dur-entrada) var(--ease),
+    transform var(--dur-entrada) var(--ease);
+  transition-delay: var(--retardo, 0ms);
+}
+
+/* Hidden only when JS is on and motion is welcome. No-JS and reduced-motion
+   visitors get the finished state, never a blank block. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-js] .landing [data-revelar]:not([data-visible]) {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* ------------------------------------------------------------- lote draw */
+
+/* pathLength="1" on the path, so one declaration serves both the timed draw
+   and the scroll-driven one: offset 1 is hidden, 0 is fully drawn. */
+.landing .trazo-lote {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html[data-js] .landing .trazo-lote--animado {
+    animation: trazo var(--dur-trazo) var(--ease) both;
+  }
+}
+
+@keyframes trazo {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- cadena */
+
+/* One line runs through the four nodes and travels once when the list
+   enters the viewport. Vertical below lg, horizontal from lg. */
+.landing .cadena {
+  position: relative;
+}
+
+.landing .cadena::before {
+  content: "";
+  position: absolute;
+  background: var(--color-ink);
+  left: 4px;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 1px;
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 1400ms var(--ease);
+}
+
+.landing .cadena__marca {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--color-ink);
+  outline: 3px solid var(--color-paper);
+  left: -24.5px;
+  top: 7px;
+}
+
+@media (min-width: 1024px) {
+  .landing .cadena::before {
+    left: 0;
+    right: 0;
+    top: 4px;
+    bottom: auto;
+    width: auto;
+    height: 1px;
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  .landing .cadena__marca {
+    left: 0;
+    top: -24.5px;
+  }
+}
+
+.landing [data-visible] .cadena::before,
+html:not([data-js]) .landing .cadena::before {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing .cadena::before {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------- escena */
+
+/* The section root carries the resting values. Static figures freeze their
+   own state with [data-estado]; the sticky figure has no data-estado and so
+   inherits whatever hooks/use-progreso-escena.ts writes on the root. */
+.landing .escena__pista {
+  --p: 0;
+  --resalte: 1;
+  --separacion: 0;
+  --papel: 0;
+}
+
+.landing .escena__figura[data-estado] {
+  --p: 0;
+  --resalte: 1;
+  --separacion: 0;
+  --papel: 0;
+}
+
+.landing .escena__figura[data-estado="2"] {
+  --separacion: 1;
+}
+
+.landing .escena__figura[data-estado="3"] {
+  --papel: 1;
+}
+
+@media (max-width: 1023px) {
+  .landing .escena__figura {
+    --inclinacion-x: 14deg;
+    --inclinacion-z: -6deg;
+  }
+}
+
+/* Padding is the room the tilted stack needs. Never overflow: hidden here. */
+.landing .escena__escenario {
+  position: relative;
+  padding: 9% 8%;
+  overflow: visible;
+}
+
+.landing .escena__camara {
+  position: relative;
+  z-index: 1;
+  aspect-ratio: 4 / 3;
+  transform-style: preserve-3d;
+  transform: perspective(var(--perspectiva))
+    rotateX(calc(var(--separacion) * var(--inclinacion-x)))
+    rotateZ(calc(var(--separacion) * var(--inclinacion-z)))
+    scale(calc(1 - 0.14 * var(--papel)));
+}
+
+/* Four sibling planes: SVG cannot carry preserve-3d, so each layer is its
+   own element and the separation is a real translateZ. */
+.landing .escena__capa {
+  position: absolute;
+  inset: 0;
+  transform: translate3d(
+    0,
+    0,
+    calc(var(--separacion) * var(--plano) * var(--n))
+  );
+}
+
+.landing .escena__capa svg,
+.landing .escena__capa img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.landing .escena__capa[data-capa="imagen"] {
+  --n: 0;
+  opacity: calc(1 - 0.3 * var(--resalte));
+  border-radius: 0.375rem;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+}
+
+.landing .escena__capa[data-capa="umsef"] {
+  --n: 1;
+  opacity: max(var(--separacion), calc(0.7 * var(--papel)));
+}
+
+.landing .escena__capa[data-capa="otbn"] {
+  --n: 2;
+  opacity: max(var(--separacion), calc(0.7 * var(--papel)));
+}
+
+.landing .escena__capa[data-capa="lote"] {
+  --n: 3;
+}
+
+.landing .escena__figura .trazo-lote {
+  stroke-dashoffset: calc(1 - var(--resalte));
+}
+
+/* The sheet sits behind the camera and only becomes visible at the end. */
+.landing .escena__hoja {
+  z-index: 0;
+  opacity: var(--papel);
+  transform: translateY(calc((1 - var(--papel)) * 24px));
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------- escena sticky */
+
+/* The pinned stage exists in the markup for everyone but only shows once
+   hooks/use-progreso-escena.ts sets data-escena="activa" on the root, which
+   happens solely on a wide viewport with motion welcome. Until then the page
+   is byte-for-byte the stacked version above. */
+.landing .escena__estrado {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .landing .escena__pista[data-escena="activa"] {
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    column-gap: 3rem;
+    align-items: start;
+  }
+
+  .landing .escena__pista[data-escena="activa"] .escena__capitulos {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Three chapters of 85svh each: ≈255svh of track for the scene. */
+  .landing .escena__pista[data-escena="activa"] .escena__capitulo {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 85svh;
+    opacity: 0.35;
+    transition: opacity var(--dur-entrada) var(--ease);
+  }
+
+  .landing
+    .escena__pista[data-escena="activa"][data-capitulo="1"]
+    .escena__capitulo[data-n="1"],
+  .landing
+    .escena__pista[data-escena="activa"][data-capitulo="2"]
+    .escena__capitulo[data-n="2"],
+  .landing
+    .escena__pista[data-escena="activa"][data-capitulo="3"]
+    .escena__capitulo[data-n="3"] {
+    opacity: 1;
+  }
+
+  .landing .escena__pista[data-escena="activa"] .escena__figura-estatica {
+    display: none;
+  }
+
+  .landing .escena__pista[data-escena="activa"] .escena__estrado {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: sticky;
+    top: 3.5rem;
+    height: calc(100svh - 3.5rem);
+    overflow: visible;
+  }
+
+  /* Fit the tilted stack plus its legend inside the pinned height on short
+     viewports; on tall ones the column width is the limit. */
+  .landing .escena__figura[data-sticky] {
+    width: min(100%, calc((100svh - 8rem) * 1.2));
+    margin-inline: auto;
+  }
+
+  /* Decorative drift, ±20px across the whole track. */
+  .landing .escena__figura[data-sticky] .escena__camara {
+    transform: perspective(var(--perspectiva))
+      rotateX(calc(var(--separacion) * var(--inclinacion-x)))
+      rotateZ(calc(var(--separacion) * var(--inclinacion-z)))
+      scale(calc(1 - 0.14 * var(--papel)))
+      translateY(calc((var(--p) - 0.5) * var(--parallax) * -2));
+  }
+
+  .landing .escena__figura[data-sticky] .escena__leyenda {
+    opacity: var(--separacion);
+  }
+}

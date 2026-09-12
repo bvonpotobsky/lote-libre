@@ -1,0 +1,68 @@
+import Image from "next/image"
+
+import { ATRIBUCION } from "@/lib/landing/ejemplo-capas.generated"
+import hero from "@/public/landing/hero.jpg"
+
+import { BotonPrincipal } from "./boton-principal"
+import { TrazoLote } from "./trazo-lote"
+
+/**
+ * Editorial block left, cartography right, bleeding to the edge on `lg`.
+ * H1, bajada and CTA are in the initial HTML and never hidden; the only
+ * motion is the outline drawing itself once over the raster.
+ */
+export function Hero() {
+  return (
+    <section className="hero landing__seccion landing__papel">
+      <div className="landing__marco grid items-center gap-10 lg:grid-cols-12 lg:gap-8">
+        <div className="flex flex-col gap-6 lg:col-span-6">
+          <p className="text-base text-ink-soft">
+            Trazabilidad EUDR para soja y ganadería
+          </p>
+          <h1 className="landing__h1">Tu lote, con evidencia.</h1>
+          <p className="landing__cuerpo text-ink-soft">
+            Verificá tu lote con capas oficiales y generá un documento de
+            respaldo para presentar al acopio.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <BotonPrincipal href="/crear-cuenta">Creá tu cuenta</BotonPrincipal>
+            <a
+              href="#como-funciona"
+              className="inline-flex tap items-center rounded-sm font-semibold underline decoration-1 underline-offset-4 focus-ink"
+            >
+              Cómo funciona
+            </a>
+          </div>
+          <p className="max-w-[52ch] text-sm leading-relaxed text-ink-soft">
+            Cobertura de capas: Córdoba, Santiago del Estero y Chaco. Un lote en
+            otra provincia se guarda igual, pero todavía no se puede verificar.
+          </p>
+        </div>
+
+        <figure className="lg:col-span-6 lg:-mr-[clamp(1.25rem,4vw,5rem)]">
+          <div className="hero__camara">
+            <div className="hero__marco relative aspect-[4/3] overflow-hidden rounded-md border border-line">
+              <Image
+                src={hero}
+                alt="Imagen satelital Sentinel-2 del encuadre de ejemplo en el departamento Pellegrini, Santiago del Estero"
+                priority
+                sizes="(min-width: 1024px) 56vw, 100vw"
+                className="h-full w-full object-cover"
+              />
+              <TrazoLote animado className="absolute inset-0 h-full w-full" />
+              <span className="chip absolute top-3 left-3">
+                Imagen satelital: evidencia visual
+              </span>
+              <span className="chip absolute bottom-3 left-3">
+                Ejemplo ilustrativo · Dpto. Pellegrini, Santiago del Estero
+              </span>
+            </div>
+          </div>
+          <figcaption className="mt-2 text-xs text-ink-soft">
+            {ATRIBUCION}
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+  )
+}

@@ -8,6 +8,7 @@
     "build": "next build",
     "build:layers": "tsx scripts/build-layers.ts",
     "maplibre:worker": "tsx scripts/copy-maplibre-worker.ts",
+    "build:landing": "tsx --env-file-if-exists=.env.local scripts/build-landing-assets.ts",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
@@ -64,6 +65,7 @@
     "@workspace/typescript-config": "workspace:*",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
+    "sharp": "^0.34.5",
     "tsx": "^4.23.13",
     "typescript": "^5",
     "vitest": "^5.0.0"

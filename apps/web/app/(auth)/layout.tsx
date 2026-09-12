@@ -30,7 +30,7 @@ export default async function AuthLayout({
 }) {
   // Reads the real session, the same source the app shell uses. Deciding this
   // from the cookie in proxy.ts is what caused the redirect loop.
-  if (await getCurrentUser()) redirect("/")
+  if (await getCurrentUser()) redirect("/lotes")
 
   return (
     <div className="min-h-svh lg:grid lg:grid-cols-[1fr_28rem]">

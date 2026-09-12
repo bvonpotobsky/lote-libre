@@ -24,6 +24,22 @@ import {
   type ModoMapa,
 } from "@/lib/geo/drawing"
 import {
+  ANCHO_DEPARTAMENTO,
+  ANCHO_LIMITE,
+  CAPA_DEPARTAMENTOS,
+  CAPA_LIMITES,
+  COLOR_LIMITE,
+  DEPARTAMENTOS_URL,
+  FUENTE_DEPARTAMENTOS,
+  FUENTE_LIMITES,
+  GUION_DEPARTAMENTO,
+  GUION_LIMITE,
+  LIMITES_URL,
+  OPACIDAD_DEPARTAMENTO,
+  OPACIDAD_LIMITE,
+  ZOOM_MINIMO_DEPARTAMENTO,
+} from "@/lib/geo/limites"
+import {
   boundsOf,
   toFeatureCollection,
   verdictColorExpression,
@@ -77,6 +93,11 @@ export type MapaProps = {
   editandoId?: string | null
   /** Fires on every committed trace or adjustment, at pointer-up. */
   onGeometria?: (resultado: ResultadoDibujo) => void
+  /**
+   * What a screen reader calls this map. The overview shows every field and the
+   * detail screen shows one, so the name cannot be hard-coded here.
+   */
+  etiqueta?: string
   className?: string
 }
 
@@ -124,6 +145,7 @@ export default function MapaMapLibre({
   modo = "ver",
   editandoId = null,
   onGeometria,
+  etiqueta = "Mapa",
   className,
 }: MapaProps) {
   const contenedor = useRef<HTMLDivElement>(null)
@@ -189,17 +211,65 @@ export default function MapaMapLibre({
     })
     mapaRef.current = mapa
 
-    // Esri's terms require the credit; it is not decoration.
+    /*
+     * Esri's terms require the credit; it is not decoration. Bottom left, not
+     * bottom right: the zoom controls own that corner now, and they are the
+     * only thing on this map sized for a thumb.
+     */
     mapa.addControl(
       new maplibre.AttributionControl({ compact: true }),
-      "bottom-right"
+      "bottom-left"
     )
-    mapa.addControl(
-      new maplibre.NavigationControl({ showCompass: false }),
-      "top-left"
-    )
+    /*
+     * No `NavigationControl`. Its buttons are 29px of vendor chrome — under
+     * half this system's 3.25rem floor, with a corner radius and an icon that
+     * belong to no design here. The pair below replaces it in the system's own
+     * language, and MapLibre's keyboard zoom keeps working either way.
+     */
 
     mapa.on("load", () => {
+      /*
+       * Borders go in first, so every layer added after this one stacks above
+       * them. A lote is the subject of this map; a border is the paper it is
+       * drawn on, and must never cover it.
+       *
+       * MapLibre fetches these URLs itself — no `fetch`, no loading state, no
+       * failure path to write. If a file 404s the map simply has no borders,
+       * which is exactly the right degradation for a reference grid.
+       *
+       * Departments before provinces: finest grain at the bottom, so a shared
+       * edge is painted by the more important of the two.
+       */
+      mapa.addSource(FUENTE_DEPARTAMENTOS, {
+        type: "geojson",
+        data: DEPARTAMENTOS_URL,
+      })
+      mapa.addLayer({
+        id: CAPA_DEPARTAMENTOS,
+        type: "line",
+        source: FUENTE_DEPARTAMENTOS,
+        minzoom: ZOOM_MINIMO_DEPARTAMENTO,
+        paint: {
+          "line-color": COLOR_LIMITE,
+          "line-width": ANCHO_DEPARTAMENTO,
+          "line-opacity": OPACIDAD_DEPARTAMENTO,
+          "line-dasharray": GUION_DEPARTAMENTO,
+        },
+      })
+
+      mapa.addSource(FUENTE_LIMITES, { type: "geojson", data: LIMITES_URL })
+      mapa.addLayer({
+        id: CAPA_LIMITES,
+        type: "line",
+        source: FUENTE_LIMITES,
+        paint: {
+          "line-color": COLOR_LIMITE,
+          "line-width": ANCHO_LIMITE,
+          "line-opacity": OPACIDAD_LIMITE,
+          "line-dasharray": GUION_LIMITE,
+        },
+      })
+
       mapa.addSource(FUENTE_LOTES, { type: "geojson", data: COLECCION_VACIA })
       mapa.addLayer({
         id: CAPA_RELLENO,
@@ -426,7 +496,10 @@ export default function MapaMapLibre({
     const ids = lotes.map((lote) => lote.id).join(",")
     const limites = boundsOf(visibles)
     if (limites && modo === "ver" && idsPrevios.current !== ids) {
-      mapa.fitBounds(limites, { padding: 48, maxZoom: 15 })
+      mapa.fitBounds(limites, {
+        padding: rellenoDeEncuadre(mapa),
+        maxZoom: 15,
+      })
     }
     idsPrevios.current = ids
   }
@@ -523,24 +596,126 @@ export default function MapaMapLibre({
     const lote = lotes.find((candidato) => candidato.id === seleccionadoId)
     if (!lote) return
     const limites = boundsOf([lote])
-    if (limites) mapa.fitBounds(limites, { padding: 48, duration: 800 })
+    if (limites)
+      mapa.fitBounds(limites, {
+        padding: rellenoDeEncuadre(mapa),
+        duration: 800,
+      })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seleccionadoId])
 
+  /** One step in or out, holding still for anyone who asked for no motion. */
+  function acercar(pasos: 1 | -1) {
+    const mapa = mapaRef.current
+    if (!mapa) return
+    const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const opciones = quieto ? { duration: 0 } : undefined
+    if (pasos === 1) mapa.zoomIn(opciones)
+    else mapa.zoomOut(opciones)
+  }
+
   return (
-    <div
-      ref={contenedor}
-      /*
-       * `isolate` is kept from the Leaflet original. MapLibre has no pane
-       * z-index ladder to trap, but `estado-vacio` still overlays a card on
-       * this map, and an explicit stacking context is what makes plain DOM
-       * order decide who paints on top.
-       */
-      className={`${className ?? ""} isolate`}
-      role="application"
-      aria-label="Mapa del lote"
-    />
+    /*
+     * `isolate` is kept from the Leaflet original. MapLibre has no pane
+     * z-index ladder to trap, but `estado-vacio` still overlays a card on
+     * this map, and an explicit stacking context is what makes plain DOM
+     * order decide who paints on top.
+     *
+     * The engine gets its own child rather than this element: MapLibre appends
+     * into whatever container it is handed, and React must not be reconciling
+     * siblings inside it.
+     */
+    <div className={`${className ?? ""} isolate`}>
+      {/*
+       * Its own positioning box, and the engine's container sized by `h-full`
+       * rather than by insets. `maplibre-gl.css` sets `position: relative` on
+       * `.maplibregl-map` and loads after Tailwind, so an `absolute inset-0`
+       * here silently collapses to zero height — a blank map with no error.
+       */}
+      <div className="relative h-full w-full">
+        <div
+          ref={contenedor}
+          className="h-full w-full"
+          role="application"
+          aria-label={etiqueta}
+        />
+
+        {/*
+         * Top right, not the bottom corner a GIS console would use. On the
+         * detail screen the map stretches to the height of a panel that is
+         * taller than the window, so anything anchored to the map's bottom
+         * edge is scrolled off the screen it belongs to. This corner is the
+         * only one free on all four screens: the empty state parks its card
+         * at the bottom and Esri's credit sits bottom left.
+         */}
+        <div className="border-line absolute top-3 right-3 flex flex-col overflow-hidden rounded-md border bg-white sm:top-4 sm:right-4">
+          <BotonZoom accion="acercar" onClick={() => acercar(1)} />
+          <span aria-hidden="true" className="bg-line h-px" />
+          <BotonZoom accion="alejar" onClick={() => acercar(-1)} />
+        </div>
+      </div>
+    </div>
   )
+}
+
+/**
+ * Half of the zoom pair.
+ *
+ * Square at the tap floor, so the two of them stack into a control a gloved
+ * thumb can hit without looking. The glyph is drawn rather than typed: a text
+ * plus sign carries the font's own metrics and will not sit on the optical
+ * centre of a 3.25rem box.
+ */
+function BotonZoom({
+  accion,
+  onClick,
+}: {
+  accion: "acercar" | "alejar"
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={accion === "acercar" ? "Acercar el mapa" : "Alejar el mapa"}
+      className="tap focus-ink text-ink flex w-[3.25rem] items-center justify-center"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        className="size-6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      >
+        <path d="M5 12h14" />
+        {accion === "acercar" ? <path d="M12 5v14" /> : null}
+      </svg>
+    </button>
+  )
+}
+
+/**
+ * How much room a fit leaves around the lotes.
+ *
+ * Framing the polygons is not framing the map: the label is centred on the
+ * polygon, it is wider than the field is at this zoom, and it is the thing the
+ * producer actually reads and taps. With two lotes four provinces apart each
+ * one shrinks to a few pixels and its label hangs half off the edge, so the
+ * padding has to clear a label rather than a field. Capped as a share of the
+ * container so a phone still gets a fit instead of a refusal.
+ */
+function rellenoDeEncuadre(mapa: maplibre.Map) {
+  const { clientWidth: ancho, clientHeight: alto } = mapa.getContainer()
+  const vertical = Math.min(64, alto * 0.15)
+  const horizontal = Math.min(96, ancho * 0.2)
+  return {
+    top: vertical,
+    bottom: vertical,
+    left: horizontal,
+    right: horizontal,
+  }
 }
 
 /** Average of the outer ring — good enough to hang a label on. */

@@ -42,7 +42,13 @@ export function proxy(request: NextRequest) {
  * to start, and the map then hangs with no error anywhere — the same silent
  * failure the worker URL itself causes. Static assets must not depend on a
  * session.
+ *
+ * `geo` is excluded for the same reason and fails the same way: MapLibre fetches
+ * the provincial outline itself, and a GeoJSON source handed the sign-in HTML
+ * reports nothing — the layer is simply never drawn. Redirecting a boundary file
+ * to a login page also makes no sense on its own terms: it is public
+ * cartography from the IGN, not this producer's data.
  */
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|maplibre).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|maplibre|geo).*)"],
 }

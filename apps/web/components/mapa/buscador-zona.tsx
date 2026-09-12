@@ -360,6 +360,16 @@ export function BuscadorZona({ onIr }: { onIr: (camara: Camara) => void }) {
                     /* Present on every row, false included: several screen
                      * readers treat a missing aria-selected as unselectable. */
                     aria-selected={indice === activo}
+                    /*
+                     * Committing on `pointerdown` unmounts this row before its
+                     * own `pointerup`, which the browser then hit-tests onto
+                     * the map canvas underneath. Terra Draw reads a `pointerup`
+                     * there as a click, so without the adapter's
+                     * `ignoreMismatchedPointerEvents` — set in
+                     * mapa-maplibre.tsx — picking a place with the mouse also
+                     * plants the first vertex of the lote. Move that flag and
+                     * this row breaks.
+                     */
                     onPointerDown={() => elegir(sugerencia, true)}
                     /*
                      * `tap`, never `tap-compacto`. The compact exception is for an

@@ -467,7 +467,24 @@ export default function MapaMapLibre({
     ) => ValidateNotSelfIntersecting(rasgo)
 
     const dibujo = new TerraDraw({
-      adapter: new TerraDrawMapLibreGLAdapter({ map: mapa }),
+      /*
+       * `ignoreMismatchedPointerEvents` is what keeps an overlay from planting a
+       * vertex. Terra Draw listens for `pointerup` straight on the canvas — never
+       * for `click` — so a row that unmounts on its own `pointerdown` hands the
+       * `pointerup` to whatever the browser now hit-tests underneath, which is
+       * the canvas, and that lands as the first vertex of the polygon. The
+       * buscador's suggestion list does exactly that. With this on, a `pointerup`
+       * whose `pointerdown` was somewhere else is not a click on the map.
+       *
+       * It narrows nothing that drawing needs: a trace is `pointerdown` and
+       * `pointerup` both on the canvas, touch included, and a drag that leaves
+       * the canvas was already dropped by the target check Terra Draw has always
+       * run.
+       */
+      adapter: new TerraDrawMapLibreGLAdapter({
+        map: mapa,
+        ignoreMismatchedPointerEvents: true,
+      }),
       modes: [
         new TerraDrawPolygonMode({
           validation: validar,
@@ -795,9 +812,14 @@ export default function MapaMapLibre({
          *
          * A sibling of the engine's container rather than a child of it, which
          * is what makes `stopPropagation` unnecessary anywhere in the widget:
-         * a pointerdown on the field cannot reach MapLibre's handlers, and a
-         * tap in the dropdown cannot reach Terra Draw. The zoom buttons already
-         * rely on this.
+         * a pointerdown here cannot propagate to MapLibre's handlers. The zoom
+         * buttons already rely on this.
+         *
+         * Being a sibling stops propagation, not re-targeting, and those are
+         * two different things. A row that unmounts on its own `pointerdown`
+         * leaves the `pointerup` to be hit-tested afresh, and the canvas is
+         * what is underneath. Terra Draw would read that as the first vertex;
+         * `ignoreMismatchedPointerEvents` on the adapter above is what does not.
          */}
         {conBuscador ? <BuscadorZona onIr={irA} /> : null}
 

@@ -14,6 +14,10 @@ import {
   BadgeVeredicto,
   PanelVeredicto,
 } from "@/components/verificacion/panel-veredicto"
+import {
+  PISO_VERIFICACION_MS,
+  ProgresoVerificacion,
+} from "@/components/verificacion/progreso-verificacion"
 import type { Lote, LoteVerification } from "@/lib/db/schema"
 import { metricAspect } from "@/lib/geo/raster"
 import { isVerificationCurrent } from "@/lib/lotes/freshness"
@@ -140,15 +144,31 @@ export function DetalleLote({
     }
   }, [capa, cargada, otraCargada, cargarCapa])
 
+  /**
+   * The wait is held to a floor rather than padded by one.
+   *
+   * `Promise.all` means a lookup that already takes four seconds is shown as
+   * four seconds of progress, not seven. The delay exists so the steps can be
+   * read, and a request slower than the steps has already bought that.
+   *
+   * `finally` is not decoration either. A rejected fetch used to leave
+   * `verificando` true and the button disabled forever — invisible while the
+   * pending state was one word on a button, a panel hanging there permanently
+   * now that it is three.
+   */
   const verificar = useCallback(async () => {
     setVerificando(true)
-    const respuesta = await fetch(`/api/lotes/${lote.id}/verify`, {
-      method: "POST",
-    })
-    const cuerpo = await respuesta.json()
-    if (cuerpo.ok) setVerificacion(cuerpo.data as LoteVerification)
-    setVerificando(false)
-    router.refresh()
+    try {
+      const [respuesta] = await Promise.all([
+        fetch(`/api/lotes/${lote.id}/verify`, { method: "POST" }),
+        new Promise((listo) => setTimeout(listo, PISO_VERIFICACION_MS)),
+      ])
+      const cuerpo = await respuesta.json()
+      if (cuerpo.ok) setVerificacion(cuerpo.data as LoteVerification)
+    } finally {
+      setVerificando(false)
+      router.refresh()
+    }
   }, [lote.id, router])
 
   const guardarGeometria = useCallback(async () => {
@@ -367,7 +387,7 @@ export function DetalleLote({
           </section>
         ) : null}
 
-        {vencida && !editando ? (
+        {vencida && !editando && !verificando ? (
           <div className="border-l-4 border-amarillo bg-white py-3 pl-3">
             <p className="font-semibold">Cambió el contorno del lote.</p>
             <p className="mt-1 text-sm leading-relaxed text-ink-soft">
@@ -377,6 +397,14 @@ export function DetalleLote({
           </div>
         ) : null}
 
+        {/*
+          It sits where the verdict will land, so the panel is replaced by the
+          answer it was working towards rather than by a jump. No guard on
+          `veredicto` is needed: the button only exists while `!lista`, and
+          `veredicto` derives from `lista`, so it is null for the whole wait.
+        */}
+        {verificando ? <ProgresoVerificacion /> : null}
+
         {veredicto ? (
           <>
             <BadgeVeredicto verificacion={veredicto} />
@@ -385,7 +413,7 @@ export function DetalleLote({
           </>
         ) : null}
 
-        {fallo ? (
+        {fallo && !verificando ? (
           <div className="border-l-4 border-amarillo bg-white py-3 pl-3">
             <p className="font-semibold">
               {sinCobertura
@@ -409,7 +437,7 @@ export function DetalleLote({
             className="flex tap focus-ink items-center justify-center rounded-md bg-ink px-4 text-base font-semibold text-paper disabled:opacity-50"
           >
             {verificando
-              ? "Verificando…"
+              ? "Generando el reporte…"
               : fallo
                 ? "Reintentar la verificación"
                 : "Verificar este lote"}

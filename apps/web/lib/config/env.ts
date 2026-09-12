@@ -81,4 +81,23 @@ function loadEnv(): Env {
   }
 }
 
-export const env: Env = loadEnv()
+let cached: Env | null = null
+
+/**
+ * Validates the environment and caches the result.
+ *
+ * Called explicitly from instrumentation.ts so a misconfigured deployment still
+ * dies at boot with a useful message. Everywhere else it resolves lazily, which
+ * keeps a unit test of a pure helper from demanding Copernicus credentials just
+ * because it lives in a module that also talks to Copernicus.
+ */
+export function assertEnvironment(): Env {
+  cached ??= loadEnv()
+  return cached
+}
+
+/** Lazily validated. Reading any property triggers `assertEnvironment()`. */
+export const env: Env = new Proxy({} as Env, {
+  get: (_target, property) =>
+    assertEnvironment()[property as keyof Env],
+})

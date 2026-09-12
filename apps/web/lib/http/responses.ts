@@ -144,8 +144,8 @@ export class ApiError extends Error {
  * Next's HTML error page — which a fetch() on the client cannot parse.
  */
 export function withRoute<Args extends unknown[]>(
-  handler: (...args: Args) => Promise<NextResponse>,
-): (...args: Args) => Promise<NextResponse> {
+  handler: (...args: Args) => Promise<Response>,
+): (...args: Args) => Promise<Response> {
   return async (...args: Args) => {
     try {
       return await handler(...args)

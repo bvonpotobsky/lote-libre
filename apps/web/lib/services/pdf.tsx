@@ -7,9 +7,9 @@ import {
   renderToBuffer,
 } from "@react-pdf/renderer"
 
+import type { OtbnShare, SourceRef } from "@/lib/db/schema"
 import type { DueDiligencePayload } from "./document"
-import { CAVEAT_APTITUD } from "@/lib/ui/aptitud"
-import { OTBN_UI } from "@/lib/ui/verdict"
+import { CAVEAT_APTITUD, filasAptitud } from "@/lib/ui/aptitud"
 
 const VERDICT_COLOR: Record<string, string> = {
   verde: "#15803d",
@@ -113,6 +113,29 @@ const formatDate = (iso: string): string =>
 const pct = (value: number | null): string =>
   value === null ? "sin dato" : `${value.toFixed(2)} %`
 
+/**
+ * The OTBN layer's own warning, so it sits beside the figures it qualifies.
+ *
+ * `CAVEAT_APTITUD` is the general statement about scale and simplification.
+ * This is the consulted province's, which can say something far stronger —
+ * Chaco's declares its polygons zone territory rather than forest and are "no
+ * utilizable para estadísticas de superficie", which is exactly what this
+ * section computes. It stays in "Fuentes consultadas" too: same text, two
+ * readers.
+ */
+const otbnCaveat = (fuentes: readonly SourceRef[]): string | undefined =>
+  fuentes.find((fuente) => fuente.id.startsWith("otbn-"))?.caveat
+
+/** The document declares its split in Spanish; `filasAptitud` speaks OtbnShare. */
+const comoReparto = (
+  reparto: DueDiligencePayload["verificacion"]["otbn"]["reparto"],
+): OtbnShare[] =>
+  (reparto ?? []).map((parte) => ({
+    bucket: parte.categoria as OtbnShare["bucket"],
+    hectares: parte.hectareas,
+    pct: parte.porcentajeSuperficie,
+  }))
+
 function DueDiligenceDocument({
   payload,
   hash,
@@ -185,40 +208,30 @@ function DueDiligenceDocument({
               Ordenamiento Territorial de Bosques Nativos (Ley 26.331). Cómo se
               reparte la superficie del lote.
             </Text>
-            {verificacion.otbn.reparto.map((parte) => {
-              const ui = OTBN_UI[parte.categoria as keyof typeof OTBN_UI]
-              return (
-                <View key={parte.categoria} style={styles.aptitudRow}>
-                  <View>
-                    <Text style={styles.aptitudLabel}>
-                      {ui?.etiqueta ?? parte.categoria}
-                    </Text>
-                    <Text style={styles.aptitudDetail}>{ui?.detalle ?? ""}</Text>
-                  </View>
-                  <View style={styles.aptitudFigure}>
-                    <Text style={styles.aptitudLabel}>
-                      {parte.hectareas === 0
-                        ? "menos de 1 ha"
-                        : `${parte.hectareas.toLocaleString("es-AR")} ha`}
-                    </Text>
-                    <Text style={styles.aptitudDetail}>
-                      {parte.porcentajeSuperficie.toLocaleString("es-AR", {
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      %
-                    </Text>
-                  </View>
+            {/* `swatch` is a Tailwind class: no meaning here, so it is ignored. */}
+            {filasAptitud(comoReparto(verificacion.otbn.reparto)).map((fila) => (
+              <View key={fila.bucket} style={styles.aptitudRow}>
+                <View>
+                  <Text style={styles.aptitudLabel}>{fila.etiqueta}</Text>
+                  <Text style={styles.aptitudDetail}>{fila.detalle}</Text>
                 </View>
-              )
-            })}
+                <View style={styles.aptitudFigure}>
+                  <Text style={styles.aptitudLabel}>{fila.hectareas}</Text>
+                  <Text style={styles.aptitudDetail}>{fila.porcentaje}</Text>
+                </View>
+              </View>
+            ))}
             <Text style={[styles.caveat, { marginTop: 5 }]}>
               {CAVEAT_APTITUD}
             </Text>
+            {otbnCaveat(fuentes) ? (
+              <Text style={styles.caveat}>{otbnCaveat(fuentes)}</Text>
+            ) : null}
           </View>
         ) : null}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Resultado de la verificación</Text>
+          <Text style={styles.sectionTitle}>Resultado de exportación</Text>
           <Field label="Fecha" value={formatDate(verificacion.fecha)} />
           <Field
             label="Pérdida de cobertura"

@@ -47,6 +47,14 @@ describe("CAVEAT_APTITUD", () => {
   it("names the scale, because the number invites more trust than it earns", () => {
     expect(CAVEAT_APTITUD).toContain("1:250 000")
   })
+
+  it("says which way the simplification error runs, not just that it exists", () => {
+    // The error is not symmetric noise: simplification drops small scattered
+    // Categoría III patches, which land in the bucket a buyer reads as least
+    // restricted. A caveat that hides the direction understates the risk.
+    expect(CAVEAT_APTITUD).toContain("Categoría III")
+    expect(CAVEAT_APTITUD).toContain("Fuera del OTBN")
+  })
 })
 
 describe("hectareasTexto", () => {

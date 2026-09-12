@@ -159,9 +159,26 @@ Se tocan cuatro secciones; cuatro quedan intactas.
   sin cambios. `AlcanceFuentes` gana peso argumental por sí sola: los caveats de
   1:250 000 dejan de leerse como disculpa y pasan a ser parte de la propuesta.
 
-El lote de ejemplo de la landing debe traer un desglose **real**, horneado por
-`scripts/build-landing-assets.ts` (`pnpm --filter web build:landing`) hacia
-`lib/landing/ejemplo-capas.generated.ts`, nunca escrito a mano en un componente.
+El lote de ejemplo de la landing trae un desglose **inventado**, escrito a mano
+en `lib/landing/aptitud-ejemplo.ts` y compartido por la sección de resultados y
+por la hoja del documento.
+
+Esta decisión revierte el requisito original de esta misma spec, que pedía un
+desglose real horneado por `scripts/build-landing-assets.ts` hacia
+`lib/landing/ejemplo-capas.generated.ts`. El motivo es la Regla del Ejemplo
+Rotulado de `DESIGN.md`: el encuadre generado es un lugar real —Pellegrini
+Norte— y publicar el reparto por categoría de un departamento real es
+exactamente el resultado que esa regla veta, porque nadie fuera del producto lo
+leería como ilustrativo. Un dato horneado sería más verificable y menos
+publicable.
+
+Lo que sí se conserva del requisito es la disciplina: el ejemplo cierra
+aritméticamente (sus hectáreas suman las 312 que declara y sus porcentajes el
+100 %), usa el mismo redondeo que `buildOtbnBreakdown`, produce el mismo
+veredicto que `lib/services/verdict.ts` daría para ese reparto, viaja con el
+rótulo obligatorio de ejemplo ficticio y está cubierto por
+`aptitud-ejemplo.test.ts`. Ninguna hectárea sale de
+`lib/landing/ejemplo-capas.generated.ts`, que sigue sin exportar resúmenes.
 
 ## Vocabulario
 

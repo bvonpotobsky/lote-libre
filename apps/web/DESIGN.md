@@ -807,7 +807,13 @@ una tercera superficie, y una sola: la tinta, enumerada abajo.
    las capas del MAyDS publican una defectuosa y una insignia leería como aval.
 10. **Resultados en dos ejes, nunca fusionados.** La sección muestra dos
     subsecciones bajo un único `<h2>`: «Qué se puede hacer» (aptitud, reparto de
-    hectáreas en filas idénticas a las de `PanelAptitud`) arriba, «Qué se puede
+    hectáreas en filas con la misma estructura que las de `PanelAptitud`:
+    mismas etiquetas, mismo orden y las mismas cifras, porque las dos salen de
+    `filasAptitud`. Difieren en la presentación —la landing usa `font-bold`,
+    `py-4`, `gap-x-4` y `leading-relaxed` donde el panel usa `font-semibold`,
+    `py-3`, `gap-x-3` y `leading-snug`— y en que las filas de la landing no
+    llevan `CAVEAT_APTITUD`: debajo va el rótulo del ejemplo ficticio, y los
+    límites de cada capa los da `AlcanceFuentes`) arriba, «Qué se puede
     vender» (exportabilidad, el semáforo de tres filas ya existente) abajo. El
     reparto de aptitud que muestra es un lote enteramente inventado
     (`lib/landing/aptitud-ejemplo.ts`, 312 ha) y lleva el rótulo obligatorio

@@ -30,14 +30,29 @@ const BUCKET_ORDER: readonly OtbnBucket[] = [
  * Below this, a bucket is arithmetic rather than territory.
  *
  * The zoned totals come from unrounded intersection areas while `loteAreaHa`
- * arrives rounded (`measure()` in lib/geo/metrics.ts rounds to six decimals),
- * so the derived remainder carries a rounding artifact of roughly 1e-5 ha. The
- * OTBN layers are 1:250 000 — one millimetre on that map is 250 m on the
- * ground — so 100 m² is orders of magnitude below anything the source can
- * resolve. Emitting it would print "Fuera del OTBN" on a lote that is entirely
- * zoned.
+ * arrives rounded — `measure()` in lib/geo/metrics.ts applies `toFixed(4)` to
+ * `areaHa`, so the worst rounding artifact the derived remainder can carry is
+ * half of the last kept digit, 5e-5 ha. This threshold sits about 200× above
+ * that worst case. (`COORD_DECIMALS = 6` in that module rounds coordinates,
+ * not areas.) Emitting the artifact would print "Fuera del OTBN" on a lote
+ * that is entirely zoned.
+ *
+ * The filter runs on all four buckets, not only the derived one, and the same
+ * reasoning covers a measured bucket: the OTBN layers are 1:250 000 — one
+ * millimetre on that map is 250 m on the ground — so 100 m² is below what the
+ * source resolves in any category. A sliver that small is the boundary's own
+ * uncertainty, whichever bucket it lands in.
  */
 const MIN_BUCKET_HA = 0.01
+
+/**
+ * How far the zoned total may exceed the lote before the split is discarded.
+ *
+ * Relative, so ordinary float and rounding noise does not trip it: the zoned
+ * areas are unrounded and `loteAreaHa` is not, so an exactly-covered lote can
+ * land a hair either side of 100 %.
+ */
+const MAX_ZONED_OVERSHOOT = 1.01
 
 /**
  * How the lote's surface divides across the OTBN, in hectares.
@@ -47,6 +62,13 @@ const MIN_BUCKET_HA = 0.01
  * which is what prices it: Categoría I cannot be cleared at all, so a field
  * that is 40 % Categoría I has a permanent ceiling on its productive surface.
  * Both come from the same intersection; only the first was being kept.
+ *
+ * `overlapByKey` sums per-feature intersections without unioning them, so a
+ * published layer whose polygons overlap can zone more surface than the lote
+ * has. When that happens the whole split is dropped, not clamped: a reparto
+ * that sums past the whole field is not a measurement of anything, and the
+ * product's rule is that a missing datum is never dressed up as a clean
+ * result. Showing nothing is honest; showing 137 % of the lote is not.
  */
 export function buildOtbnBreakdown(
   hectaresByKey: ReadonlyMap<string, number>,
@@ -64,9 +86,11 @@ export function buildOtbnBreakdown(
     zoned += hectares
   }
 
-  // Overlapping polygons in a published layer can total more than the lote.
-  // Clamp rather than rescale: rescaling would move hectares between categories
-  // the layer never claimed, which is inventing data to make a sum look tidy.
+  // Rescaling the buckets back down to the lote is not an option either: it
+  // would move hectares between categories the layer never claimed, inventing
+  // data to make a sum look tidy.
+  if (zoned > loteAreaHa * MAX_ZONED_OVERSHOOT) return []
+
   byBucket.set("fuera_de_otbn", Math.max(0, loteAreaHa - zoned))
 
   return BUCKET_ORDER.flatMap((bucket) => {
@@ -77,7 +101,7 @@ export function buildOtbnBreakdown(
       {
         bucket,
         hectares: Math.round(hectares),
-        pct: Number.parseFloat(((hectares / loteAreaHa) * 100).toFixed(2)),
+        pct: Number.parseFloat(((hectares / loteAreaHa) * 100).toFixed(1)),
       },
     ]
   })

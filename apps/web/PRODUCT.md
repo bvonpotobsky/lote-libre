@@ -105,8 +105,10 @@ mecanismo:
    `buildOtbnBreakdown` no vuelve a medir nada: reutiliza las hectáreas por
    categoría que `lookupOtbn` ya calculaba para elegir el color del semáforo. Se
    informa en hectáreas enteras —un decimal sobre una capa 1:250 000 es una
-   mentira de precisión— y cada balde viaja con su caveat pegado, nunca como un
-   total único de "hectáreas transformables".
+   mentira de precisión— con la escala y el caveat de la capa consultada
+   impresos al lado del reparto, nunca como un total único de "hectáreas
+   transformables". El caveat acompaña al reparto entero, no a cada balde por
+   separado: es la capa la que tiene límites, no la categoría.
 
 ## Operating Context
 
@@ -351,8 +353,10 @@ una superficie futura.
    capa de datos**, no en el handler: toda consulta filtra por `userId` para que
    ningún endpoint pueda olvidarse.
 6. **Una superficie informada viaja con la escala de la capa que la produjo.**
-   Un reparto sobre una capa 1:250 000 se informa en hectáreas enteras y con su
-   caveat pegado, nunca como un total único de "hectáreas transformables": la
+   Un reparto sobre una capa 1:250 000 se informa en hectáreas enteras y en
+   porcentajes de un decimal, y lleva al lado tanto el caveat general de escala
+   y simplificación como la advertencia propia de la capa provincial
+   consultada, nunca como un total único de "hectáreas transformables": la
    precisión que se muestra no puede superar la que la fuente puede sostener.
 
 ## Accessibility & Inclusion

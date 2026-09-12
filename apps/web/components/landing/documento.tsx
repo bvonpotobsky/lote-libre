@@ -38,8 +38,13 @@ const BENEFICIOS = [
  * corner — and the caption says so. The figures that do show the real frame
  * (Hero, EscenaTerritorio, EvidenciaSatelital) still carry no result at all.
  *
- * The numbers are internally consistent with lib/services/verdict.ts: no loss
- * after the cutoff plus Categoría III is the only combination that reads green.
+ * The numbers are internally consistent with lib/services/verdict.ts, and the
+ * aptitude section below is what makes that checkable. `APTITUD_EJEMPLO` splits
+ * the 312 ha so that Categoría I takes 0,641 % and Categoría II 0,962 % — both
+ * under `MIN_OTBN_SHARE_PCT`, so neither governs. `dominantOtbnCategory` lands
+ * on Categoría III at 98,1 %, which is the share printed here, and with no loss
+ * after the cutoff `decideVerdict` returns verde: the badge this sheet shows.
+ * The sub-1 % buckets are precisely why the verdict stays green.
  */
 const EJEMPLO = {
   denominacion: "Lote de ejemplo",
@@ -49,7 +54,7 @@ const EJEMPLO = {
   renspa: "no declarado",
   fecha: "12/09/2026",
   perdida: "0,00 % de la superficie",
-  categoria: "Categoría III — 98,20 % del lote",
+  categoria: "Categoría III — 98,1 % del lote",
 } as const
 
 type FilaProps = { etiqueta: string; children: React.ReactNode }

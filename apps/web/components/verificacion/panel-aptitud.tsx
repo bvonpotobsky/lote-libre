@@ -22,6 +22,16 @@ export function PanelAptitud({
   const reparto = verificacion.otbnBreakdown ?? []
   if (reparto.length === 0) return null
 
+  // The consulted province's own warning about its layer, beside the figures it
+  // qualifies. CAVEAT_APTITUD is the general statement about scale and
+  // simplification; this one can say something far stronger — Chaco's declares
+  // its polygons are "no utilizable para estadísticas de superficie", which is
+  // exactly what this section computes. It stays in "Fuentes consultadas" too:
+  // same text, two readers.
+  const caveatOtbn = verificacion.sources.find((fuente) =>
+    fuente.id.startsWith("otbn-"),
+  )?.caveat
+
   return (
     <section className="grid gap-4">
       <div>
@@ -60,9 +70,10 @@ export function PanelAptitud({
         ))}
       </ul>
 
-      <p className="border-alerta text-alerta border-l-4 py-2 pl-3 text-sm leading-relaxed">
-        {CAVEAT_APTITUD}
-      </p>
+      <div className="border-alerta text-alerta grid gap-2 border-l-4 py-2 pl-3 text-sm leading-relaxed">
+        <p>{CAVEAT_APTITUD}</p>
+        {caveatOtbn ? <p>{caveatOtbn}</p> : null}
+      </div>
     </section>
   )
 }

@@ -51,7 +51,7 @@ export type OtbnShare = {
   bucket: OtbnBucket
   /** Whole hectares. The layers are 1:250 000; a decimal would be a lie. */
   hectares: number
-  /** Share of the lote, 0-100, two decimals. */
+  /** Share of the lote, 0-100, one decimal — the scale sustains no more. */
   pct: number
 }
 

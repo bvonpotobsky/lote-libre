@@ -6,8 +6,8 @@ import { OTBN_UI } from "./verdict"
  *
  * Presentation lives here, apart from any component, because this repo's vitest
  * only sees `lib/**` and runs in `node`: a rule that lives inside a `.tsx` file
- * cannot be tested at all. The panel and the PDF both render these rows, so
- * they cannot disagree about how a hectare reads.
+ * cannot be tested at all. The panel, the PDF and the landing sheet all render
+ * these rows, so they cannot disagree about how a hectare reads.
  */
 export type FilaAptitud = {
   bucket: OtbnShare["bucket"]
@@ -28,7 +28,7 @@ export type FilaAptitud = {
  * figure invites surveyor-grade trust; this is what it is actually worth.
  */
 export const CAVEAT_APTITUD =
-  "Superficies medidas sobre las capas provinciales publicadas, a escala 1:250 000 y simplificadas para poder servirlas. Sirven para dimensionar el lote, no para amojonarlo."
+  "Superficies medidas sobre las capas provinciales publicadas, a escala 1:250 000 y simplificadas para poder servirlas. La simplificación se come parches chicos de Categoría III, así que esa superficie queda subestimada y la diferencia aparece en «Fuera del OTBN». Sirven para dimensionar el lote, no para amojonarlo."
 
 /**
  * How a hectare figure reads, in one place.

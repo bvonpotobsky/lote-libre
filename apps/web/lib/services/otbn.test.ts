@@ -14,9 +14,9 @@ describe("buildOtbnBreakdown", () => {
     )
 
     expect(result).toEqual([
-      { bucket: "rojo", hectares: 150, pct: 18.75 },
+      { bucket: "rojo", hectares: 150, pct: 18.8 },
       { bucket: "amarillo", hectares: 340, pct: 42.5 },
-      { bucket: "verde", hectares: 310, pct: 38.75 },
+      { bucket: "verde", hectares: 310, pct: 38.8 },
     ])
   })
 
@@ -37,10 +37,12 @@ describe("buildOtbnBreakdown", () => {
     ])
   })
 
-  it("clamps the remainder instead of rescaling when polygons overlap", () => {
-    // A published layer with overlapping polygons can total more than the lote.
-    // Rescaling would silently move hectares between categories the layer never
-    // claimed; clamping only refuses to invent a negative bucket.
+  it("gives no split at all when overlapping polygons zone more than the lote", () => {
+    // `overlapByKey` sums per-feature intersections without unioning them, so a
+    // published layer whose polygons overlap double-counts. This fixture zones
+    // 1 100 ha of an 800 ha lote — 137,5 % — which is what the layer would
+    // report, not a measurement of the field. Rescaling would move hectares
+    // between categories the layer never claimed, so the split is dropped.
     const result = buildOtbnBreakdown(
       new Map([
         ["rojo", 600],
@@ -49,8 +51,15 @@ describe("buildOtbnBreakdown", () => {
       800,
     )
 
-    expect(result.find((share) => share.bucket === "fuera_de_otbn")).toBeUndefined()
-    expect(result).toHaveLength(2)
+    expect(result).toEqual([])
+  })
+
+  it("tolerates a zoned total that overshoots only by rounding noise", () => {
+    // The zoned areas are unrounded and `loteAreaHa` is not, so an exactly
+    // covered lote can land a hair over 100 %. That is not an overlap.
+    const result = buildOtbnBreakdown(new Map([["verde", 800.05]]), 800)
+
+    expect(result.map((share) => share.bucket)).toEqual(["verde"])
   })
 
   it("rounds hectares to whole numbers", () => {
@@ -61,7 +70,7 @@ describe("buildOtbnBreakdown", () => {
   it("keeps a sliver visible as zero hectares rather than dropping it", () => {
     // 0 ha with a non-zero share is how the UI learns to say "menos de 1 ha".
     const result = buildOtbnBreakdown(new Map([["rojo", 0.4]]), 500)
-    expect(result[0]).toEqual({ bucket: "rojo", hectares: 0, pct: 0.08 })
+    expect(result[0]).toEqual({ bucket: "rojo", hectares: 0, pct: 0.1 })
   })
 
   it("drops a remainder that is only a rounding artefact", () => {

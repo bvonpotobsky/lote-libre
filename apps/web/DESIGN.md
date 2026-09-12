@@ -591,8 +591,9 @@ tracking abierto, los dos quiebres (`sm` ajusta, `lg` reestructura), `tap` +
 `focus-ink` en todo control (el CTA principal mide 52 px), `svh`, `gap-*`, los
 botones escritos a mano con `bg-ink text-paper`, el color de veredicto siempre
 con sus palabras, los colores del OTBN sin armonizar y el ámbar de texto en
-`alerta` para toda advertencia de fuente. Las superficies siguen siendo dos:
-papel y una sola hoja blanca con filete de 1 px, que es el documento.
+`alerta` para toda advertencia de fuente. El papel y la hoja blanca con filete
+de 1 px —que es el documento— siguen significando lo mismo; la landing agrega
+una tercera superficie, y una sola: la tinta, enumerada abajo.
 
 ### Qué se permite, y con qué número
 
@@ -627,6 +628,31 @@ papel y una sola hoja blanca con filete de 1 px, que es el documento.
 6. **Punto medio en rótulos de lugar.** «Ejemplo ilustrativo · Dpto. Pellegrini,
    Santiago del Estero» es un rótulo cartográfico y puede llevarlo. Las cadenas
    de metadatos no.
+7. **Una superficie de tinta, y una sola.** «Mirá el cambio, no lo imagines» va
+   a sangre en `landing__tinta`; el texto secundario sobre ella es `line`, nunca
+   `ink-soft`, que fue elegido contra papel. Existe porque un comparador de
+   barrido es ilegible sobre papel: el marco necesita un fondo que no compita
+   con la fotografía. Sobre tinta se invierte el anillo de foco —`focus-ink`
+   pinta negro, y sobre negro no hay anillo—, que es la misma regla al revés:
+   tinta a plena fuerza con un hueco de papel alrededor, o papel a plena fuerza
+   con un hueco de tinta.
+8. **El comparador, en la landing.** Misma especificación que el de la app (ver
+   «Comparador»): dos imágenes apiladas, `clip-path` porcentual, divisor de 2 px
+   blanco con anillo negro de 1 px, `input[type=range]` nativo con
+   `accent-color`. Dos diferencias, las dos forzadas: el marco es 4:3 y no
+   cuadrado, porque `MARCO`/`VISTA` mandan y el contorno tiene que registrar; y
+   sus dos imágenes son bytes commiteados. **La landing nunca llama a Copernicus
+   en tiempo de request**: la caché de la app (`.cache/sentinel`) no sobrevive a
+   un redeploy y sus rutas exigen sesión. El divisor no lleva transición, así
+   que no hay nada que `prefers-reduced-motion` tenga que deshacer.
+9. **Divulgación nativa.** Las advertencias de cada fuente viven en
+   `<details>/<summary>`. Nativo y no un desplegable de React porque la Regla
+   del Contenido Completo pide que la página esté terminada sin JavaScript, y
+   sólo un elemento nativo deja el contenido en el HTML inicial y además pliega.
+   El `summary` conserva su marcador —no se le toca el `display`, que en
+   cualquier valor distinto de `list-item` lo borra— y llega a 3,25 rem con
+   padding, no con `flex`. La licencia se imprime adentro, nunca como insignia:
+   las capas del MAyDS publican una defectuosa y una insignia leería como aval.
 
 ### Named Rules
 
@@ -641,7 +667,15 @@ de Copernicus Sentinel». El encuadre es un lugar real con capas oficiales
 reales, y por eso nunca se le atribuye un resultado: sin veredicto, hectáreas,
 años, nombre de lote ni RENSPA. El módulo generado
 (`lib/landing/ejemplo-capas.generated.ts`) no exporta resúmenes para que la
-tentación no exista.
+tentación no exista; las ventanas de adquisición sí, porque son procedencia.
+
+La hoja del documento es la contracara: **no describe el encuadre**. Es un
+registro explícitamente ficticio —coordenadas redondeadas a tres decimales, un
+cuadrado de ~100 m que nadie confunde con una esquina relevada, y un pie que lo
+dice— y por eso puede mostrar un veredicto completo. Antes computaba superficie
+y centroide desde `ANILLO_LOTE`, que es el lote del seed: imprimía 501 ha y seis
+decimales de un lugar real. Si una figura muestra el encuadre, no lleva
+resultado; si muestra un resultado, no es el encuadre.
 
 **La Regla del Contenido Completo.** El H1, la bajada y el CTA están en el HTML
 inicial y nunca se ocultan. Los estados ocultos del revelado sólo existen bajo
@@ -656,7 +690,11 @@ el `viewBox` de todos los SVG son los mismos números (`MARCO` y `VISTA` en
 `lib/landing/proyeccion.ts`): la relación de aspecto se calcula con el coseno
 de la latitud y se pide la imagen con esas dimensiones exactas. Por eso el
 raster y los polígonos registran píxel a píxel sin un segundo sistema de
-coordenadas.
+coordenadas. Gobierna también el cuadro de referencia del comparador: las dos
+mitades del barrido se piden con el mismo `MARCO` y el mismo `VISTA`, y con la
+misma ganancia, porque una diferencia de procesado se lee como una diferencia
+en el terreno. Si el contorno se corre entre una mitad y la otra, el que está
+mal es el PNG: se regenera, no se mueve el SVG.
 
 ## Do's and Don'ts
 

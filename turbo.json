@@ -7,6 +7,14 @@
     "NEXT_RUNTIME",
     "VERCEL"
   ],
+  "globalPassThroughEnv": [
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "SH_CLIENT_ID",
+    "SH_CLIENT_SECRET",
+    "XWEATHER_CLIENT_ID",
+    "XWEATHER_CLIENT_SECRET"
+  ],
   "tasks": {
     "build": {
       "dependsOn": [

@@ -30,6 +30,17 @@ export async function runVerification(
     lote.provincia,
   )
 
+  if (forestLoss.status === "not_covered") {
+    return persist({
+      userId,
+      loteId: lote.id,
+      status: "failed",
+      failureCode: "PROVINCE_NOT_COVERED",
+      sources: [],
+      reasons: [],
+    })
+  }
+
   if (forestLoss.status === "unavailable") {
     console.warn(
       `[verification] forest loss unavailable for lote ${lote.id}: ${forestLoss.reason}`,

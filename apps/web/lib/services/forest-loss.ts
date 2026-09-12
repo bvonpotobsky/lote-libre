@@ -4,6 +4,13 @@ import { loadLayer, loadSourceManifest, overlapByKey } from "@/lib/geo/layers"
 /** EUDR cutoff: goods must not come from land deforested after this date. */
 export const CUTOFF_YEAR = 2020
 
+/** Provinces whose layers ship with the app. */
+export const COVERED_PROVINCES = new Set([
+  "cordoba",
+  "chaco",
+  "santiago-del-estero",
+])
+
 export type ForestLossResult =
   | {
       status: "ok"
@@ -15,7 +22,16 @@ export type ForestLossResult =
       yearsFound: number[]
       source: SourceRef | null
     }
-  | { status: "unavailable"; reason: string }
+  | {
+      /** A transient read failure. Retrying can succeed. */
+      status: "unavailable"
+      reason: string
+    }
+  | {
+      /** We do not ship this province at all. Retrying will never succeed. */
+      status: "not_covered"
+      provincia: string
+    }
 
 /**
  * Post-cutoff tree cover loss intersecting a lote.
@@ -30,11 +46,17 @@ export async function lookupForestLoss(
   loteAreaHa: number,
   provincia: string,
 ): Promise<ForestLossResult> {
+  // Telling someone to retry something that cannot succeed is worse than
+  // telling them nothing. An uncovered province is a permanent answer.
+  if (!COVERED_PROVINCES.has(provincia)) {
+    return { status: "not_covered", provincia }
+  }
+
   const layer = await loadLayer(`forest-loss/${provincia}.geojson`)
   if (!layer) {
     return {
       status: "unavailable",
-      reason: `no forest-loss layer for province "${provincia}"`,
+      reason: `forest-loss layer for "${provincia}" could not be read`,
     }
   }
   if (loteAreaHa <= 0) {

@@ -26,7 +26,7 @@
       "outputFeatureCount": 2,
       "simplification": "mapshaper -dissolve2 categoria, re-import, -simplify visvalingam weighted 30% keep-shapes, precision 0.0001",
       "areaRetained": "99.9%",
-      "caveat": "Córdoba OTBN: contains no Categoría III areas at all. Los polígonos del OTBN de Córdoba fueron digitalizados a partir de un mapa JPG, por lo que la precisión de los límites es limitada: cualquier intersección cercana a un límite es indicativa, no legalmente dispositiva."
+      "caveat": "Córdoba no tiene ninguna zona de Categoría III en su OTBN. Los polígonos del OTBN de Córdoba fueron digitalizados a partir de un mapa JPG, por lo que la precisión de los límites es limitada: cualquier intersección cercana a un límite es indicativa, no legalmente dispositiva."
     },
     "chaco": {
       "label": "OTBN Chaco — Ordenamiento Territorial de Bosques Nativos (Ley 26.331, Ley provincial 6409)",
@@ -47,7 +47,7 @@
       "outputFeatureCount": 3,
       "simplification": "mapshaper -dissolve2 categoria, re-import, -simplify visvalingam weighted 3% keep-shapes, precision 0.0001",
       "areaRetained": "98.3% (Categoría III 94.0%: desaparecen los parches más pequeños y dispersos)",
-      "caveat": "Chaco OTBN: published layer is vintage 2009. The 2024 re-zoning (Ley 4005-R) is legally in force since STJ Sentencia 19/2026 but is not published as geodata anywhere. Además, los polígonos de la capa de Chaco zonifican TERRITORIO, no sólo bosque: sus superficies superan en ~38% la cifra oficial de hectáreas. Sirve para consultar la categoría, pero no es utilizable para estadísticas de superficie."
+      "caveat": "La capa publicada de Chaco corresponde al ordenamiento de 2009. La rezonificación de 2024 (Ley 4005-R) está vigente desde la Sentencia 19/2026 del Superior Tribunal de Justicia, pero no está publicada como dato geográfico en ningún lado. Además, los polígonos de la capa de Chaco zonifican TERRITORIO, no sólo bosque: sus superficies superan en ~38% la cifra oficial de hectáreas. Sirve para consultar la categoría, pero no es utilizable para estadísticas de superficie."
     },
     "santiago-del-estero": {
       "label": "OTBN Santiago del Estero — Ordenamiento Territorial de Bosques Nativos (Ley 26.331, Ley provincial 6942 y Decreto 3133)",

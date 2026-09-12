@@ -50,3 +50,6 @@ next-env.d.ts
 # base de datos y caché de imágenes locales
 .data/
 .cache/
+
+# artefactos de pruebas con navegador
+.playwright-mcp/

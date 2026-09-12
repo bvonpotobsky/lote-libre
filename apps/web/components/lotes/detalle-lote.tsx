@@ -56,6 +56,7 @@ export function DetalleLote({
 
   const lista = verificacion?.status === "ready"
   const fallo = verificacion?.status === "failed"
+  const sinCobertura = verificacion?.failureCode === "PROVINCE_NOT_COVERED"
 
   return (
     <div className="flex min-h-[calc(100svh-3.5rem)] flex-col lg:flex-row">
@@ -86,15 +87,20 @@ export function DetalleLote({
 
         {fallo ? (
           <div className="border-amarillo border-l-4 bg-white py-3 pl-3">
-            <p className="font-semibold">La verificación quedó pendiente.</p>
+            <p className="font-semibold">
+              {sinCobertura
+                ? "Todavía no cubrimos esta provincia."
+                : "La verificación quedó pendiente."}
+            </p>
             <p className="text-ink-soft mt-1 text-sm leading-relaxed">
-              No pudimos consultar la capa de pérdida forestal. Tu lote está
-              guardado: probá de nuevo cuando quieras.
+              {sinCobertura
+                ? "Por ahora tenemos las capas de Córdoba, Santiago del Estero y Chaco. Tu lote queda guardado y vas a poder verificarlo cuando sumemos la tuya."
+                : "No pudimos consultar la capa de pérdida forestal. Tu lote está guardado: probá de nuevo cuando quieras."}
             </p>
           </div>
         ) : null}
 
-        {!lista ? (
+        {!lista && !sinCobertura ? (
           <button
             type="button"
             onClick={verificar}

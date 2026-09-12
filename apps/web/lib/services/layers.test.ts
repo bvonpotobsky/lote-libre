@@ -98,8 +98,16 @@ describe("lookupForestLoss", () => {
     expect(result.pct).toBe(0)
   })
 
-  it("fails, retryably, when the province has no layer", async () => {
+  it("reports an uncovered province as permanent, not retryable", async () => {
+    // Telling a producer in Chubut to "try again in a moment" is a lie: we do
+    // not ship that province and retrying can never succeed.
     const result = await lookupForestLoss(LOTE, LOTE_HA, "chubut")
+    expect(result.status).toBe("not_covered")
+  })
+
+  it("reports a covered province whose layer failed to load as retryable", async () => {
+    primeLayerCache(LOSS_LAYER, null)
+    const result = await lookupForestLoss(LOTE, LOTE_HA, PROVINCE)
     expect(result.status).toBe("unavailable")
   })
 })

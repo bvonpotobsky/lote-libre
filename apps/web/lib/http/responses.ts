@@ -82,6 +82,11 @@ export const ERRORS = {
     message: "Todavía no verificaste este lote.",
     hint: "Verificalo primero: el documento necesita el veredicto y las fuentes consultadas.",
   },
+  PROVINCE_NOT_COVERED: {
+    status: 422,
+    message: "Todavía no tenemos las capas de esta provincia.",
+    hint: "Por ahora cubrimos Córdoba, Santiago del Estero y Chaco. El lote queda guardado y lo vas a poder verificar cuando sumemos la tuya.",
+  },
   FOREST_LOSS_UNAVAILABLE: {
     status: 502,
     message: "No pudimos consultar la capa de pérdida forestal.",

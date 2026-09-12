@@ -165,7 +165,14 @@ export default function MapaLeaflet({
   return (
     <div
       ref={contenedor}
-      className={className}
+      /*
+       * `isolate` is load bearing. Leaflet's container is position:relative with
+       * z-index:auto, so it creates NO stacking context, and its panes (z-index
+       * 400-700) compete in the root context against anything overlaid on the
+       * map — silently painting over it. Isolating traps them here so ordinary
+       * DOM order works again.
+       */
+      className={`${className ?? ""} isolate`}
       role="application"
       aria-label="Mapa del lote"
     />

@@ -44,6 +44,9 @@ importers:
       '@turf/bbox':
         specifier: ^7.4.0
         version: 7.4.0
+      '@turf/bbox-polygon':
+        specifier: ^7.4.0
+        version: 7.4.0
       '@turf/boolean-point-in-polygon':
         specifier: ^7.4.0
         version: 7.4.0
@@ -117,6 +120,9 @@ importers:
       '@types/better-sqlite3':
         specifier: ^9.6.0
         version: 9.6.0
+      '@types/geojson':
+        specifier: ^7946.0.16
+        version: 7946.0.16
       '@types/leaflet':
         specifier: ^1.9.22
         version: 1.9.22

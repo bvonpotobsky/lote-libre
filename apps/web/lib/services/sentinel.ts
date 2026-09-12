@@ -3,6 +3,8 @@
 // 2) SH_CLIENT_ID y SH_CLIENT_SECRET en .env
 // Uso: const png = await getLoteImage(geojsonPolygon, "2020-11-01", "2020-12-31", "ndvi");
 
+import { env } from "@/lib/config/env"
+
 const TOKEN_URL =
   "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 const PROCESS_URL = "https://sh.dataspace.copernicus.eu/api/v1/process"
@@ -16,8 +18,8 @@ export async function getToken(): Promise<string> {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "client_credentials",
-      client_id: process.env.SH_CLIENT_ID!,
-      client_secret: process.env.SH_CLIENT_SECRET!,
+      client_id: env.copernicus.clientId,
+      client_secret: env.copernicus.clientSecret,
     }),
   })
   if (!res.ok) throw new Error(`token ${res.status}: ${await res.text()}`)

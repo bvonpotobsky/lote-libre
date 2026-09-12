@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { CAVEAT_APTITUD, filasAptitud } from "./aptitud"
+import { CAVEAT_APTITUD, filasAptitud, hectareasTexto } from "./aptitud"
 
 describe("filasAptitud", () => {
   it("gives every bucket its legal sentence, never just a colour", () => {
@@ -46,5 +46,19 @@ describe("filasAptitud", () => {
 describe("CAVEAT_APTITUD", () => {
   it("names the scale, because the number invites more trust than it earns", () => {
     expect(CAVEAT_APTITUD).toContain("1:250 000")
+  })
+})
+
+describe("hectareasTexto", () => {
+  it("says 'menos de 1 ha' rather than a bare zero", () => {
+    expect(hectareasTexto(0)).toBe("menos de 1 ha")
+  })
+
+  it("groups thousands the es-AR way", () => {
+    expect(hectareasTexto(1310)).toBe("1.310 ha")
+  })
+
+  it("leaves a plain figure alone", () => {
+    expect(hectareasTexto(800)).toBe("800 ha")
   })
 })

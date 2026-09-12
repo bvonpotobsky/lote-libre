@@ -30,6 +30,19 @@ export type FilaAptitud = {
 export const CAVEAT_APTITUD =
   "Superficies medidas sobre las capas provinciales publicadas, a escala 1:250 000 y simplificadas para poder servirlas. Sirven para dimensionar el lote, no para amojonarlo."
 
+/**
+ * How a hectare figure reads, in one place.
+ *
+ * Rounded to zero but present is a sliver, not nothing: a bare "0 ha" reads as
+ * "none", so it says so in words instead. The panel, the PDF and the landing
+ * all render hectares through here, so they cannot disagree.
+ */
+export function hectareasTexto(hectares: number): string {
+  return hectares === 0
+    ? "menos de 1 ha"
+    : `${hectares.toLocaleString("es-AR")} ha`
+}
+
 export function filasAptitud(
   reparto: readonly OtbnShare[],
 ): FilaAptitud[] {
@@ -41,11 +54,7 @@ export function filasAptitud(
       etiqueta: ui.etiqueta,
       detalle: ui.detalle,
       swatch: ui.swatch,
-      // Rounded to zero but present: the share says there is something there.
-      hectareas:
-        share.hectares === 0
-          ? "menos de 1 ha"
-          : `${share.hectares.toLocaleString("es-AR")} ha`,
+      hectareas: hectareasTexto(share.hectares),
       porcentaje: `${share.pct.toLocaleString("es-AR", {
         maximumFractionDigits: 2,
       })} %`,

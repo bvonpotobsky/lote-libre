@@ -5,7 +5,7 @@ import {
 import { REASON_COPY } from "@/lib/services/verdict"
 // Both verdict modules import the DB schema as TYPES only; keep it that way,
 // or this marketing page starts requiring DATABASE_URL at build time.
-import { filasAptitud } from "@/lib/ui/aptitud"
+import { filasAptitud, hectareasTexto } from "@/lib/ui/aptitud"
 import { VERDICT_UI } from "@/lib/ui/verdict"
 
 import { RevelarEnVista } from "./revelar-en-vista"
@@ -115,8 +115,8 @@ export function Resultados() {
 
           <p className="text-sm leading-relaxed text-ink-soft">
             Ejemplo ilustrativo sobre un lote ficticio de{" "}
-            {SUPERFICIE_EJEMPLO_HA.toLocaleString("es-AR")} ha. Las superficies
-            que informa la app se miden sobre las capas provinciales publicadas.
+            {hectareasTexto(SUPERFICIE_EJEMPLO_HA)}. Las superficies que
+            informa la app se miden sobre las capas provinciales publicadas.
           </p>
         </div>
 

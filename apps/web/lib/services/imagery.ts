@@ -1,13 +1,11 @@
 import { mkdir, writeFile } from "node:fs/promises"
 import { resolve } from "node:path"
-import area from "@turf/area"
-import bboxPolygon from "@turf/bbox-polygon"
-import bbox from "@turf/bbox"
-import { polygon as turfPolygon } from "@turf/helpers"
 import { and, desc, eq, gte, lte } from "drizzle-orm"
 import { nanoid } from "nanoid"
 
 import { db } from "@/lib/db"
+import { encuadreDeLote } from "@/lib/geo/encuadre"
+import { mascaraDeLote } from "@/lib/geo/mascara"
 import { satelliteImages, type SatelliteImage } from "@/lib/db/schema"
 import { CACHE_DIR, cacheFileName, stillOnDisk } from "./imagery-cache"
 import {
@@ -17,7 +15,7 @@ import {
   type SearchWindow,
 } from "./imagery-window"
 import { EVALSCRIPT_VERSION, getLoteImage } from "./sentinel"
-import { clearRatio, isEmptyCoverage, measureCoverage } from "./png"
+import { isEmptyCoverage, measureCoverage } from "./png"
 import { pickClearWindow } from "./xweather"
 
 export type { ImagePeriod } from "./imagery-window"
@@ -161,13 +159,6 @@ async function findLatestImage(
   return row ?? null
 }
 
-/** How much of its own bounding box a polygon fills. Drives empty detection. */
-function footprintRatio(geometry: GeoJSON.Polygon): number {
-  const feature = turfPolygon(geometry.coordinates)
-  const boxArea = area(bboxPolygon(bbox(feature)))
-  return boxArea === 0 ? 1 : area(feature) / boxArea
-}
-
 type ResolvedWindow = {
   from: string
   to: string
@@ -249,7 +240,10 @@ export async function getOrCreateImage(
     centroid,
     search,
   )
-  const expected = footprintRatio(geometry)
+  // Built once from the same frame getLoteImage asks Copernicus for, so the
+  // clear figure is about the lote rather than about the neighbours now sharing
+  // the picture with it.
+  const mascara = mascaraDeLote(encuadreDeLote(geometry), geometry)
 
   let from = window.from
   let to = window.to
@@ -257,8 +251,8 @@ export async function getOrCreateImage(
   let cloudAvgPct = window.cloudAvgPct
 
   let png = await getLoteImage(geometry, from, to, layer)
-  let coverage = measureCoverage(png)
-  let isEmpty = isEmptyCoverage(coverage, expected, EMPTY_TOLERANCE)
+  let coverage = measureCoverage(png, mascara)
+  let isEmpty = isEmptyCoverage(coverage, EMPTY_TOLERANCE)
 
   // Sentinel-2 revisits every five days, so a "clear" five-day window can
   // contain exactly one pass — and if that pass was clouded over this tile,
@@ -271,8 +265,8 @@ export async function getOrCreateImage(
   // the toggle change what is being compared. A hole is the honest answer there.
   if (isEmpty && windowSource === "xweather" && !window.shared) {
     const ampliada = await getLoteImage(geometry, search.from, search.to, layer)
-    const ampliadaCoverage = measureCoverage(ampliada)
-    if (!isEmptyCoverage(ampliadaCoverage, expected, EMPTY_TOLERANCE)) {
+    const ampliadaCoverage = measureCoverage(ampliada, mascara)
+    if (!isEmptyCoverage(ampliadaCoverage, EMPTY_TOLERANCE)) {
       png = ampliada
       coverage = ampliadaCoverage
       from = search.from
@@ -302,7 +296,7 @@ export async function getOrCreateImage(
     isEmpty,
     pixelWidth: coverage.width,
     pixelHeight: coverage.height,
-    clearRatio: clearRatio(coverage, expected),
+    clearRatio: coverage.opaqueRatio,
   }
 
   const [row] = await db

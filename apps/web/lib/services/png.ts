@@ -1,85 +1,91 @@
 import { PNG } from "pngjs"
 
+import type { Mascara } from "@/lib/geo/mascara"
+
 export type PngCoverage = {
   width: number
   height: number
-  /** Share of pixels with a non-zero alpha channel, 0-1. */
+  /** Pixels the reading covered: the denominator of `opaqueRatio`. */
+  measured: number
+  /** Share of the measured pixels carrying alpha, 0-1. */
   opaqueRatio: number
 }
 
 /**
+ * How much of the lote came back painted, 0-1.
+ *
  * Sentinel Hub answers 200 with a fully transparent PNG when nothing in the
- * requested range clears its cloud filter. There is no error to catch — the
- * only evidence is the alpha channel.
+ * requested range clears its cloud filter, and the evalscripts leave a single
+ * pixel transparent when no orbit in the window resolved it. There is no error
+ * to catch — the only evidence is the alpha channel.
+ *
+ * @param mask restricts the reading to the lote's own pixels. The raster frames
+ * the lote together with the country around it, so without this the number
+ * would be about the picture rather than about the field, and `clearLine`
+ * promises the field: "Imagen limpia en el N % del lote". That is a measurement
+ * on the Sentinel scene, and a different and stronger claim than the Xweather
+ * figure beside it, which is surface weather at the centroid and knows nothing
+ * about the image. Omit it to read the whole frame, which is what the landing
+ * bake wants.
+ *
+ * @throws if the mask was cut for a raster of another size. Publishing a
+ * misaligned percentage as evidence is worse than failing: the route's catch
+ * turns this into SENTINEL_UNAVAILABLE, which says what is true.
  */
-export function measureCoverage(buffer: Buffer): PngCoverage {
+export function measureCoverage(buffer: Buffer, mask?: Mascara): PngCoverage {
   const png = PNG.sync.read(buffer)
 
-  let opaque = 0
-  for (let index = 3; index < png.data.length; index += 4) {
-    if (png.data[index]! > 0) opaque += 1
+  if (mask && (mask.ancho !== png.width || mask.alto !== png.height)) {
+    throw new Error(
+      `mask is ${mask.ancho}x${mask.alto} but the raster is ${png.width}x${png.height}`,
+    )
   }
 
-  const total = png.width * png.height
+  let measured = 0
+  let opaque = 0
+
+  for (let fila = 0; fila < png.height; fila += 1) {
+    for (let columna = 0; columna < png.width; columna += 1) {
+      if (mask && !mask.dentro(columna, fila)) continue
+      measured += 1
+      if (png.data[(fila * png.width + columna) * 4 + 3]! > 0) opaque += 1
+    }
+  }
+
+  // A polygon too small to cover one pixel centre would otherwise divide by
+  // zero and report the lote as entirely clouded. Unreachable given the frame's
+  // padding floor, but the fallback costs nothing.
+  if (measured === 0) return measureCoverage(buffer)
+
   return {
     width: png.width,
     height: png.height,
-    opaqueRatio: total === 0 ? 0 : opaque / total,
+    measured,
+    opaqueRatio: opaque / measured,
   }
-}
-
-/** Guards against dividing by a footprint rounded down to nothing. */
-const MIN_EXPECTED_RATIO = 0.01
-
-/**
- * How much of the lote itself came back painted, 0-1.
- *
- * Raw opacity is not the measure. The raster covers the polygon's bounding box
- * and masks everything outside the polygon, so a perfectly good image of an
- * L-shaped lote is mostly transparent by design. Dividing by the coverage that
- * shape should produce turns the alpha channel into a statement about the lote.
- *
- * Since the evalscripts leave a pixel transparent when no orbit in the window
- * resolved it, this is a measurement on the Sentinel scene: the share of the
- * field that was actually seen through the clouds. That is a different and
- * stronger claim than the Xweather figure beside it, which is surface weather
- * at the centroid and knows nothing about the image.
- *
- * @param expectedRatio polygon area divided by its bounding box area, 0-1.
- */
-export function clearRatio(
-  coverage: PngCoverage,
-  expectedRatio: number,
-): number {
-  const expected = Math.max(expectedRatio, MIN_EXPECTED_RATIO)
-  return Math.min(1, coverage.opaqueRatio / expected)
 }
 
 /** Whether a measured raster carries too little of the lote to be evidence. */
 export function isEmptyCoverage(
   coverage: PngCoverage,
-  expectedRatio: number,
   tolerance = 0.2,
 ): boolean {
-  if (coverage.opaqueRatio === 0) return true
-  return clearRatio(coverage, expectedRatio) < tolerance
+  return coverage.opaqueRatio < tolerance
 }
 
-/**
- * Whether the returned image carries no usable imagery.
- *
- * @param expectedRatio polygon area divided by its bounding box area, 0-1.
- */
+/** Whether the returned image carries no usable imagery. */
 export function isEffectivelyEmpty(
   buffer: Buffer,
-  expectedRatio: number,
+  mask?: Mascara,
   tolerance = 0.2,
 ): boolean {
   try {
-    return isEmptyCoverage(measureCoverage(buffer), expectedRatio, tolerance)
-  } catch {
-    // Undecodable bytes are not an empty image; let the caller surface the
-    // transport problem rather than reporting "no clear imagery".
+    return isEmptyCoverage(measureCoverage(buffer, mask), tolerance)
+  } catch (error) {
+    // A mask that does not fit the raster is a real fault and must not be
+    // swallowed here; undecodable bytes are not an empty image either, and the
+    // caller should surface the transport problem instead.
+    if (error instanceof Error && error.message.startsWith("mask is")) throw error
     return false
   }
 }

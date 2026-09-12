@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-12T07:29:27Z",
+  "title": "Design System: Lote Limpio",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Papel",
+        "canonical": "oklch(98.1% 0.003 106)",
+        "tonalRamp": ["oklch(15% 0.003 106)", "oklch(26% 0.003 106)", "oklch(37% 0.003 106)", "oklch(48% 0.003 106)", "oklch(59% 0.003 106)", "oklch(70% 0.003 106)", "oklch(81% 0.003 106)", "oklch(92% 0.003 106)"]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Blanco Panel",
+        "canonical": "oklch(100% 0 0)",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(26% 0 0)", "oklch(37% 0 0)", "oklch(48% 0 0)", "oklch(59% 0 0)", "oklch(70% 0 0)", "oklch(81% 0 0)", "oklch(92% 0 0)"]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Campo",
+        "canonical": "oklch(95.1% 0.006 138)",
+        "tonalRamp": ["oklch(15% 0.006 138)", "oklch(26% 0.006 138)", "oklch(37% 0.006 138)", "oklch(48% 0.006 138)", "oklch(59% 0.006 138)", "oklch(70% 0.006 138)", "oklch(81% 0.006 138)", "oklch(92% 0.006 138)"]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Filete",
+        "canonical": "oklch(86.9% 0.008 138)",
+        "tonalRamp": ["oklch(15% 0.008 138)", "oklch(26% 0.008 138)", "oklch(37% 0.008 138)", "oklch(48% 0.008 138)", "oklch(59% 0.008 138)", "oklch(70% 0.008 138)", "oklch(81% 0.008 138)", "oklch(92% 0.008 138)"]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Tinta Negra",
+        "canonical": "oklch(0% 0 0)",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(26% 0 0)", "oklch(37% 0 0)", "oklch(48% 0 0)", "oklch(59% 0 0)", "oklch(70% 0 0)", "oklch(81% 0 0)", "oklch(92% 0 0)"]
+      },
+      "ink-soft": {
+        "role": "primary",
+        "displayName": "Tinta Suave",
+        "canonical": "oklch(41.5% 0.012 155)",
+        "tonalRamp": ["oklch(15% 0.012 155)", "oklch(26% 0.012 155)", "oklch(37% 0.012 155)", "oklch(48% 0.012 155)", "oklch(59% 0.012 155)", "oklch(70% 0.012 155)", "oklch(81% 0.012 155)", "oklch(92% 0.012 155)"]
+      },
+      "verde": {
+        "role": "secondary",
+        "displayName": "Verde Bosque",
+        "canonical": "oklch(43.4% 0.099 158)",
+        "tonalRamp": ["oklch(15% 0.099 158)", "oklch(26% 0.099 158)", "oklch(37% 0.099 158)", "oklch(48% 0.099 158)", "oklch(59% 0.099 158)", "oklch(70% 0.099 158)", "oklch(81% 0.099 158)", "oklch(92% 0.099 158)"]
+      },
+      "amarillo": {
+        "role": "secondary",
+        "displayName": "Ámbar Señal",
+        "canonical": "oklch(74.0% 0.155 78)",
+        "tonalRamp": ["oklch(15% 0.155 78)", "oklch(26% 0.155 78)", "oklch(37% 0.155 78)", "oklch(48% 0.155 78)", "oklch(59% 0.155 78)", "oklch(70% 0.155 78)", "oklch(81% 0.155 78)", "oklch(92% 0.155 78)"]
+      },
+      "rojo": {
+        "role": "secondary",
+        "displayName": "Rojo Incumplimiento",
+        "canonical": "oklch(47.5% 0.192 27)",
+        "tonalRamp": ["oklch(15% 0.192 27)", "oklch(26% 0.192 27)", "oklch(37% 0.192 27)", "oklch(48% 0.192 27)", "oklch(59% 0.192 27)", "oklch(70% 0.192 27)", "oklch(81% 0.192 27)", "oklch(92% 0.192 27)"]
+      },
+      "alerta": {
+        "role": "secondary",
+        "displayName": "Ámbar de Tinta",
+        "canonical": "oklch(47.5% 0.106 76)",
+        "tonalRamp": ["oklch(15% 0.106 76)", "oklch(26% 0.106 76)", "oklch(37% 0.106 76)", "oklch(48% 0.106 76)", "oklch(59% 0.106 76)", "oklch(70% 0.106 76)", "oklch(81% 0.106 76)", "oklch(92% 0.106 76)"]
+      },
+      "otbn-i": {
+        "role": "tertiary",
+        "displayName": "OTBN Categoría I",
+        "canonical": "oklch(57.8% 0.248 29)",
+        "tonalRamp": ["oklch(15% 0.248 29)", "oklch(26% 0.248 29)", "oklch(37% 0.248 29)", "oklch(48% 0.248 29)", "oklch(59% 0.248 29)", "oklch(70% 0.248 29)", "oklch(81% 0.248 29)", "oklch(92% 0.248 29)"]
+      },
+      "otbn-ii": {
+        "role": "tertiary",
+        "displayName": "OTBN Categoría II",
+        "canonical": "oklch(93.0% 0.208 108)",
+        "tonalRamp": ["oklch(15% 0.208 108)", "oklch(26% 0.208 108)", "oklch(37% 0.208 108)", "oklch(48% 0.208 108)", "oklch(59% 0.208 108)", "oklch(70% 0.208 108)", "oklch(81% 0.208 108)", "oklch(92% 0.208 108)"]
+      },
+      "otbn-iii": {
+        "role": "tertiary",
+        "displayName": "OTBN Categoría III",
+        "canonical": "oklch(60.6% 0.170 143)",
+        "tonalRamp": ["oklch(15% 0.170 143)", "oklch(26% 0.170 143)", "oklch(37% 0.170 143)", "oklch(48% 0.170 143)", "oklch(59% 0.170 143)", "oklch(70% 0.170 143)", "oklch(81% 0.170 143)", "oklch(92% 0.170 143)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Una sola aparición en todo el producto: el titular del panel de acceso. Escala 1,875rem → 2,25rem en sm → 3rem en lg." },
+      "headline": { "displayName": "Headline", "purpose": "Título de pantalla y titular del panel de veredicto. Nunca dos en la misma vista." },
+      "title": { "displayName": "Title", "purpose": "Título de pantallas secundarias: carga de lote, estado vacío." },
+      "subhead": { "displayName": "Subhead", "purpose": "Encabezados de sección y títulos de fila. Sin clase de tamaño: heredan 1rem y se distinguen sólo por el peso." },
+      "readout": { "displayName": "Readout", "purpose": "Valor numérico de un dato. Siempre debajo de su etiqueta, nunca al lado." },
+      "body": { "displayName": "Body", "purpose": "Prosa explicativa, siempre con leading-relaxed y limitada a max-w-prose." },
+      "caption": { "displayName": "Caption", "purpose": "El caballo de batalla real: metadatos, ayuda, leyendas, notas. Siempre en ink-soft." },
+      "label": { "displayName": "Label", "purpose": "Etiqueta de campo. El 0,875rem de shadcn se sobreescribe siempre a 1rem: a 16px iOS no hace zoom al enfocar." },
+      "indicator": { "displayName": "Indicator", "purpose": "Columna de veredicto en la lista y etiqueta del marcador del mapa. Tipografía funcionando como señalética." }
+    },
+    "shadows": [
+      { "name": "levante-sobre-mapa", "value": "0 -2px 24px rgba(0,0,0,0.18)", "purpose": "Tarjeta del estado vacío flotando sobre imagen satelital. Proyecta hacia arriba porque está anclada al borde inferior." },
+      { "name": "legibilidad-sobre-satelite", "value": "0 1px 6px rgba(0,0,0,0.45)", "purpose": "Etiqueta del lote en el mapa. No es elevación: es lo único que hace sobrevivir un chip de color sobre textura fotográfica impredecible." },
+      { "name": "filete-comparador", "value": "0 0 0 1px rgba(0,0,0,0.35)", "purpose": "Anillo de 1px alrededor de la barra del comparador. Un borde disfrazado de sombra, para no sumar ancho al elemento." }
+    ],
+    "motion": [
+      { "name": "vuelo-de-camara", "value": "800ms", "purpose": "Única animación deliberada del sistema: el fitBounds de MapLibre al seleccionar un lote. Todo lo demás es estático." },
+      { "name": "transicion-de-color", "value": "transition-colors (150ms)", "purpose": "Sólo en los campos de formulario vendorizados, para el cambio de borde al enfocar." },
+      { "name": "reduced-motion", "value": "animation-duration: 0.01ms !important; transition-duration: 0.01ms !important", "purpose": "Regla global en globals.css bajo prefers-reduced-motion: reduce. Clampea todo el sistema." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Tinta sólida sobre papel. La acción que hace avanzar la tarea: guardar, verificar, confirmar. El foco es la utilidad focus-ink: outline de 2px en tinta con 2px de aire, porque un anillo pegado al borde desaparecería dentro del relleno negro.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Verificar este lote</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 3.25rem; padding: 0 1rem; border: none; border-radius: 0.3rem; background: var(--color-ink, #000000); color: var(--color-paper, #fafaf8); font-family: Archivo, ui-sans-serif, system-ui, sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-ink, #000000); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: default; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Borde de 2px en tinta. Acción alternativa de igual peso semántico, no una acción menor: importar, cancelar, editar, descargar el documento.",
+      "html": "<button class=\"ds-btn-outline\" type=\"button\">Descargar el documento</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; min-height: 3.25rem; padding: 0 1rem; border: 2px solid var(--color-ink, #000000); border-radius: 0.3rem; background: transparent; color: var(--color-ink, #000000); font-family: Archivo, ui-sans-serif, system-ui, sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; } .ds-btn-outline:focus-visible { outline: 2px solid var(--color-ink, #000000); outline-offset: 2px; } .ds-btn-outline:disabled { opacity: 0.5; cursor: default; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Etiqueta de 1rem sobre campo de 1rem y 3,25rem de alto. El tamaño base de shadcn se sobreescribe siempre: a 16px iOS no hace zoom al enfocar. El anillo de foco es negro, no azul.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field-label\" for=\"ds-field-renspa\">RENSPA <span class=\"ds-field-optional\">(opcional)</span></label><input class=\"ds-field-input\" id=\"ds-field-renspa\" type=\"text\" placeholder=\"00.000.0.00000/00\" /><p class=\"ds-field-help\">No lo validamos contra SENASA.</p></div>",
+      "css": ".ds-field { display: grid; gap: 0.5rem; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; } .ds-field-label { display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 500; line-height: 1; color: var(--color-ink, #000000); } .ds-field-optional { font-weight: 400; color: var(--color-ink-soft, #4a524c); } .ds-field-input { width: 100%; min-height: 3.25rem; padding: 0.25rem 0.625rem; border: 1px solid var(--color-line, #d5d9d2); border-radius: 0.375rem; background: transparent; color: var(--color-ink, #000000); font-family: inherit; font-size: 1rem; transition: border-color 150ms; } .ds-field-input::placeholder { color: var(--color-ink-soft, #4a524c); } .ds-field-input:focus-visible { outline: none; border-color: var(--color-ink, #000000); box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-ink, #000000), transparent 50%); } .ds-field-help { margin: 0; font-size: 0.875rem; color: var(--color-ink-soft, #4a524c); }"
+    },
+    {
+      "name": "Verdict Hero",
+      "kind": "custom",
+      "refersTo": "verdict-hero-amarillo",
+      "description": "El bloque de color a sangre que abre el panel de veredicto. Sobre una superficie de color no se cambia de tinta: se baja la opacidad. Mostrado en ámbar, el único de los tres que lleva texto tinta.",
+      "html": "<section class=\"ds-verdict ds-verdict--amarillo\"><p class=\"ds-verdict-title\">Con observaciones</p><p class=\"ds-verdict-summary\">Hay algo que el acopio va a querer mirar antes de comprar.</p><p class=\"ds-verdict-date\">Verificado el 12/09/2026</p></section>",
+      "css": ".ds-verdict { border-radius: 0.375rem; padding: 1rem 1.25rem; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; } .ds-verdict--amarillo { background: var(--color-amarillo, #e0a106); color: var(--color-ink, #000000); } .ds-verdict-title { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; } .ds-verdict-summary { margin: 0.25rem 0 0; font-size: 0.875rem; line-height: 1.625; opacity: 0.95; } .ds-verdict-date { margin: 0.75rem 0 0; font-size: 0.75rem; opacity: 0.9; }"
+    },
+    {
+      "name": "Lote List Row",
+      "kind": "card",
+      "refersTo": "list-row",
+      "description": "El componente que más define la aplicación: columna de veredicto a sangre, estirada a la altura completa de la fila, y el texto a su derecha. Alto mínimo 4,5rem. Las filas se separan con divisor, no con espacio.",
+      "html": "<a class=\"ds-row\" href=\"#\"><span class=\"ds-row-indicator ds-row-indicator--rojo\">No cumple</span><span class=\"ds-row-text\"><span class=\"ds-row-title\">Pellegrini Norte</span><span class=\"ds-row-meta\">Santiago del Estero · 184,2 ha</span></span></a>",
+      "css": ".ds-row { display: flex; align-items: stretch; gap: 1rem; min-height: 4.5rem; background: var(--color-card, #ffffff); border: 1px solid var(--color-line, #d5d9d2); border-radius: 0.375rem; overflow: hidden; text-decoration: none; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; } .ds-row:hover, .ds-row:focus-visible { background: var(--color-field, #eff1ec); outline: none; } .ds-row-indicator { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 6rem; padding: 0.75rem 0.5rem; text-align: center; font-size: 0.75rem; font-weight: 700; line-height: 1.25; } .ds-row-indicator--rojo { background: var(--color-rojo, #b3161c); color: #ffffff; } .ds-row-text { display: flex; flex: 1; flex-direction: column; justify-content: center; padding: 0.75rem 1rem 0.75rem 0; } .ds-row-title { font-size: 1rem; font-weight: 600; line-height: 1.375; color: var(--color-ink, #000000); } .ds-row-meta { margin-top: 0.125rem; font-size: 0.875rem; color: var(--color-ink-soft, #4a524c); }"
+    },
+    {
+      "name": "Alert",
+      "kind": "custom",
+      "refersTo": "alert-error",
+      "description": "Filete izquierdo de 4px sobre fondo blanco, sin tinte y sin ícono. Dos líneas: qué pasó en peso 600 y color del hecho, qué hacer en tinta suave.",
+      "html": "<div class=\"ds-alert ds-alert--rojo\" role=\"alert\"><p class=\"ds-alert-what\">El archivo tiene más de un polígono.</p><p class=\"ds-alert-do\">Dejá sólo el lote que querés cargar y volvé a importarlo.</p></div>",
+      "css": ".ds-alert { background: var(--color-card, #ffffff); border-left: 4px solid; padding: 0.5rem 0 0.5rem 0.75rem; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; } .ds-alert--rojo { border-left-color: var(--color-rojo, #b3161c); } .ds-alert--amarillo { border-left-color: var(--color-amarillo, #e0a106); } .ds-alert-what { margin: 0; font-weight: 600; color: var(--color-rojo, #b3161c); } .ds-alert-do { margin: 0.25rem 0 0; color: var(--color-ink-soft, #4a524c); }"
+    },
+    {
+      "name": "Data Row",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "La fila de dato del panel de veredicto: etiqueta chica en tinta suave, valor grande debajo, detalle opcional al pie. Separadas por borde superior, la primera sin borde ni padding superior.",
+      "html": "<div class=\"ds-dato\"><p class=\"ds-dato-label\">Pérdida de bosque nativo</p><p class=\"ds-dato-value\">2,14 %</p><p class=\"ds-dato-detail\">3,9 ha, primer año detectado 2023.</p></div>",
+      "css": ".ds-dato { border-top: 1px solid var(--color-line, #d5d9d2); padding: 0.75rem 0; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; font-variant-numeric: tabular-nums; } .ds-dato:first-child { border-top: none; padding-top: 0; } .ds-dato-label { margin: 0; font-size: 0.875rem; color: var(--color-ink-soft, #4a524c); } .ds-dato-value { margin: 0.125rem 0 0; font-size: 1.125rem; font-weight: 600; color: var(--color-ink, #000000); } .ds-dato-detail { margin: 0.125rem 0 0; font-size: 0.875rem; line-height: 1.375; color: var(--color-ink-soft, #4a524c); }"
+    },
+    {
+      "name": "OTBN Category Chip",
+      "kind": "chip",
+      "refersTo": "panel",
+      "description": "Muestra de 16px con el color SLD publicado por el Ministerio de Ambiente, alineada con el nombre de la categoría. La muestra es aria-hidden porque su etiqueta está al lado. Sin capa cargada, la muestra es campo con borde en vez de color.",
+      "html": "<div class=\"ds-otbn\"><p class=\"ds-otbn-label\">Categoría OTBN</p><p class=\"ds-otbn-line\"><span class=\"ds-otbn-swatch ds-otbn-swatch--i\" aria-hidden=\"true\"></span>Categoría I<span class=\"ds-otbn-pct\">62,0 %</span></p><p class=\"ds-otbn-detail\">Conservación. No se puede desmontar.</p></div>",
+      "css": ".ds-otbn { border-top: 1px solid var(--color-line, #d5d9d2); padding: 0.75rem 0; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; } .ds-otbn-label { margin: 0; font-size: 0.875rem; color: var(--color-ink-soft, #4a524c); } .ds-otbn-line { display: flex; align-items: center; gap: 0.5rem; margin: 0.25rem 0 0; font-size: 1.125rem; font-weight: 600; color: var(--color-ink, #000000); } .ds-otbn-swatch { display: inline-block; width: 1rem; height: 1rem; border-radius: 0.225rem; } .ds-otbn-swatch--i { background: var(--color-otbn-i, #f10000); } .ds-otbn-swatch--ii { background: var(--color-otbn-ii, #eff60b); } .ds-otbn-swatch--iii { background: var(--color-otbn-iii, #33a02c); } .ds-otbn-swatch--ninguna { background: var(--color-field, #eff1ec); border: 1px solid var(--color-line, #d5d9d2); } .ds-otbn-pct { font-size: 0.875rem; font-weight: 400; color: var(--color-ink-soft, #4a524c); } .ds-otbn-detail { margin: 0.125rem 0 0; font-size: 0.875rem; line-height: 1.375; color: var(--color-ink-soft, #4a524c); }"
+    },
+    {
+      "name": "Map Label Marker",
+      "kind": "custom",
+      "refersTo": "map-label",
+      "description": "La etiqueta es el objetivo táctil, no el polígono: a zoom alejado un campo mide dos o tres píxeles. Es un button real con aria-label, y la sombra no es elevación sino la única forma de sobrevivir sobre textura satelital. HUECO CONOCIDO: no lleva focus-ink, así que hoy es el único control enfocable por teclado del sistema sin anillo propio.",
+      "html": "<button class=\"ds-marker ds-marker--verde\" type=\"button\" aria-label=\"Abrir La Amarga. Sin observaciones.\">La Amarga · Sin observaciones</button>",
+      "css": ".ds-marker { border: none; border-radius: 0.25rem; padding: 0.25rem 0.5rem; text-align: center; font-family: Archivo, ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 700; line-height: 1.25; box-shadow: 0 1px 6px rgba(0,0,0,0.45); cursor: pointer; } .ds-marker--verde { background: var(--color-verde, #17663a); color: #ffffff; } .ds-marker--amarillo { background: var(--color-amarillo, #e0a106); color: var(--color-ink, #000000); } .ds-marker--rojo { background: var(--color-rojo, #b3161c); color: #ffffff; } .ds-marker--pendiente { background: var(--color-field, #eff1ec); color: var(--color-ink-soft, #4a524c); }"
+    },
+    {
+      "name": "App Header",
+      "kind": "nav",
+      "refersTo": "button-link",
+      "description": "Cabecera pegajosa de 3,5rem sobre papel con borde inferior. Sin logo, sin menú, sin hamburguesa: la aplicación tiene tres pantallas y no necesita navegación. El 3,5rem está escrito a mano en cada calc(100svh - 3.5rem) del sistema.",
+      "html": "<header class=\"ds-header\"><a class=\"ds-header-brand\" href=\"#\">Lote Limpio</a><div class=\"ds-header-right\"><span class=\"ds-header-user\">Ana Gómez</span><button class=\"ds-header-exit\" type=\"button\">Salir</button></div></header>",
+      "css": ".ds-header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; background: var(--color-paper, #fafaf8); border-bottom: 1px solid var(--color-line, #d5d9d2); font-family: Archivo, ui-sans-serif, system-ui, sans-serif; } .ds-header-brand { font-size: 1rem; font-weight: 700; letter-spacing: -0.025em; color: var(--color-ink, #000000); text-decoration: none; } .ds-header-right { display: flex; align-items: center; gap: 1rem; } .ds-header-user { font-size: 0.875rem; color: var(--color-ink-soft, #4a524c); } .ds-header-exit { border: none; background: none; padding: 0; font-family: inherit; font-size: 0.875rem; font-weight: 600; color: var(--color-ink, #000000); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; } .ds-header-exit:focus-visible { outline: 2px solid var(--color-ink, #000000); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Instrumento de Campo",
+    "overview": "Esto no es un tablero de control. Es un instrumento que se usa afuera, con una mano, bajo el sol del mediodía, y a veces con guantes puestos. Toda decisión visual del sistema es consecuencia de esa escena y no de una preferencia estética: el papel en vez de la tarjeta, la tinta negra pura en vez del gris elegante, los objetivos táctiles de 3,25 rem en vez de los 44 px de manual. Si algo no sobrevive al mediodía, no entra.\n\nLa superficie es papel (#fafaf8), un blanco roto cálido que baja el brillo especular sin perder luminancia. Encima se apoyan paneles blancos puros (#ffffff) separados por un filete de 1 px (#d5d9d2), nunca por una sombra. La tinta es negro puro —una elección deliberada, no un default heredado—: maximiza el contraste de luminancia, que es lo único que salva la legibilidad cuando la pantalla compite con el cielo. El acento no existe como concepto: el único color de marca es el veredicto, y el veredicto es información, no decoración.\n\nEl sistema es deliberadamente austero en su vocabulario y generoso en su dimensión. Una sola familia tipográfica. Dos pesos de trabajo. Un radio. Tres sombras en toda la aplicación, cada una con una justificación física. Cero animación fuera del vuelo de cámara del mapa. Lo que queda después de sacar todo eso es tamaño, contraste y palabras — que es exactamente lo que una herramienta de campo necesita.",
+    "keyCharacteristics": [
+      "Papel y tinta, no superficie y acento.",
+      "Negro puro (#000000) como texto principal, por contraste, no por estilo.",
+      "Altura mínima de 3,25 rem en todo lo que se toca.",
+      "Sin sombras en el flujo ordinario: la profundidad es un filete de 1 px.",
+      "Sin animación: el movimiento es ruido en un vehículo.",
+      "El color del veredicto nunca viaja solo; siempre lleva sus palabras.",
+      "Una sola familia (Archivo), dos pesos (600/700), un radio base (0,375 rem).",
+      "Sólo claro. El sistema no tiene modo oscuro y no debe tenerlo sin rediseñarse."
+    ],
+    "rules": [
+      { "name": "La Regla del Papel", "body": "Hay exactamente dos superficies: papel (#fafaf8) es el suelo, blanco (#ffffff) es todo lo que se apoya encima. No inventes una tercera. field no es una superficie: es la ausencia de dato, y usarla como fondo decorativo rompe esa lectura.", "section": "colors" },
+      { "name": "La Regla de la Palabra", "body": "Ningún color de veredicto aparece jamás solo. Aproximadamente uno de cada doce varones no separa el rojo del verde, y esta audiencia es mayormente de varones trabajando al aire libre. Todo verde, ámbar o rojo arrastra su título —Sin observaciones / Con observaciones / No cumple— en la lista, en el marcador del mapa y en el PDF.", "section": "colors" },
+      { "name": "La Regla del Ámbar Prestado", "body": "amarillo (#e0a106) sólo existe como fondo. Como texto sobre blanco es ilegible, y su contraparte es alerta (#8a5a00). Nunca escribas texto en #e0a106.", "section": "colors" },
+      { "name": "La Regla del Color Citado", "body": "Los tres colores del OTBN no son nuestros: son los del organismo que publica la capa, para que la muestra coincida con un mapa que el productor tal vez ya vio. No los armonices con la paleta. Esa disonancia es exactamente el punto.", "section": "colors" },
+      { "name": "La Regla de la Única Familia", "body": "Archivo es display y body. No hay pareja tipográfica, y agregar una segunda familia quiebra la premisa: un instrumento no tiene dos voces.", "section": "typography" },
+      { "name": "La Regla del Peso Doble", "body": "El sistema trabaja con 600 y 700. font-medium (500) aparece dos veces en toda la aplicación y font-normal (400) sólo para deshacer una negrita heredada. Si necesitás un tercer peso para resolver una jerarquía, la jerarquía está mal planteada: usá tamaño o color.", "section": "typography" },
+      { "name": "La Regla de los Números Alineados", "body": "font-variant-numeric: tabular-nums vive en el elemento html, no en una utilidad. Hectáreas y porcentajes alinean columna a columna en toda la aplicación por defecto, y nadie tiene que acordarse. No lo deshabilites localmente.", "section": "typography" },
+      { "name": "La Regla de la Versalita Ausente", "body": "No hay uppercase ni tracking-wide en ninguna parte del sistema. Las mayúsculas sostenidas leen peor en movimiento y esta interfaz no tiene etiquetas decorativas que las justifiquen.", "section": "typography" },
+      { "name": "La Regla del svh", "body": "Toda altura de viewport usa svh, nunca vh ni dvh. En un teléfono con la barra del navegador retraída, dvh reacomoda el mapa a mitad de un gesto de dibujo; svh se queda quieto. La estabilidad gana sobre aprovechar los últimos píxeles.", "section": "layout" },
+      { "name": "La Regla de los 3,5 rem", "body": "La cabecera mide 3,5 rem y ese número está escrito a mano en cada calc(100svh - 3.5rem) del sistema. Si cambiás el padding de la cabecera, cambiá los cinco cálculos — o el mapa empieza a empujar la página.", "section": "layout" },
+      { "name": "La Regla de los Dos Quiebres", "body": "sm ajusta, lg reestructura. Si una pantalla nueva necesita un tercer quiebre, probablemente necesita menos contenido.", "section": "layout" },
+      { "name": "La Regla del Filete", "body": "La profundidad se construye con un borde de 1 px, no con una sombra. Una sombra en este sistema tiene que justificarse contra una textura fotográfica o contra una restricción de anclaje — nunca contra una jerarquía.", "section": "elevation" },
+      { "name": "La Regla de la Franja Izquierda", "body": "Todo aviso, error o advertencia se marca con un filete vertical de 4 px en el color del hecho (rojo para error, amarillo para advertencia) sobre fondo blanco, sin tinte de fondo y sin ícono. La lista de motivos del veredicto usa la misma gramática con 2 px en line, porque enumera en vez de alertar.", "section": "elevation" },
+      { "name": "La Regla del Radio Único", "body": "Un radio, tres escalones derivados por cálculo. No introduzcas un valor arbitrario: si un elemento nuevo necesita otra esquina, usá el escalón más cercano.", "section": "shapes" },
+      { "name": "La Regla del Borde Parlante", "body": "1 px es estructura, 2 px es acción, punteado es vacío. Un borde de 2 px que no sea un control interactivo miente sobre lo que se puede tocar.", "section": "shapes" },
+      { "name": "La Regla del Par", "body": "tap y focus-ink viajan juntas. La primera resuelve el dedo, la segunda el teclado, y un control al que le falte cualquiera de las dos está a medio terminar. Las dos viven en globals.css por la misma razón: son decisiones del sistema, no de la pantalla que las usa.", "section": "components" },
+      { "name": "La Regla del Anillo Separado", "body": "El foco se dibuja con outline y 2 px de aire, nunca pegado al borde ni a media opacidad. Un anillo negro sobre un botón negro no existe, y uno al 50 % no sobrevive al sol. Si el anillo no se ve desde un brazo de distancia, no es un anillo de foco.", "section": "components" }
+    ],
+    "dos": [
+      "Do poner tap (altura mínima 3,25 rem) en todo lo que se toque: botón, campo, fila de control. Es la regla que más define el sistema.",
+      "Do acompañar todo color de veredicto con su texto —Sin observaciones / Con observaciones / No cumple— en la misma superficie.",
+      "Do usar svh para toda altura de viewport, y actualizar los cinco calc(100svh - 3.5rem) si cambiás el alto de la cabecera.",
+      "Do construir la profundidad con un borde de 1 px en line y un cambio de papel a blanco.",
+      "Do escribir texto ámbar en alerta (#8a5a00), nunca en amarillo.",
+      "Do marcar avisos con filete izquierdo de 4 px sobre fondo blanco, con qué pasó en peso 600 y qué hacer en ink-soft.",
+      "Do sobreescribir el tamaño de campos y etiquetas a 1 rem; el 0,875 rem que trae shadcn es demasiado chico para esta escena y provoca zoom en iOS.",
+      "Do poner focus-ink en todo control que reciba foco de teclado, igual que ponés tap. Van de a dos."
+    ],
+    "donts": [
+      "Don't agregar sombras de elevación. El sistema tiene tres sombras y las tres resuelven un problema físico: flotar sobre el mapa, leerse sobre satélite, o hacer de borde sin sumar ancho.",
+      "Don't introducir una segunda familia tipográfica ni un tercer peso. Archivo, 600 y 700.",
+      "Don't escribir en mayúsculas sostenidas ni abrir el tracking. No existe en el sistema y lee peor en movimiento.",
+      "Don't armonizar los colores del OTBN con la paleta. Son los del Ministerio y su disonancia es intencional.",
+      "Don't usar field (#eff1ec) como superficie decorativa. Significa sin dato.",
+      "Don't agregar variantes de modo oscuro. El bloque .dark de globals.css es boilerplate de shadcn, no hay ThemeProvider montado y sus valores no corresponden a esta paleta. El sistema es sólo claro por la escena de uso.",
+      "Don't animar transiciones de estado. Fuera del vuelo de cámara del mapa (800 ms) el sistema no tiene movimiento, y agregarlo contradice la premisa de una pantalla que se lee de un vistazo, en movimiento.",
+      "Don't hacer del polígono el objetivo táctil en el mapa. Siempre la etiqueta.",
+      "Don't usar space-y-*. El ritmo vertical del sistema se construye con gap-*."
+    ]
+  }
+}

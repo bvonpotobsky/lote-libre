@@ -39,7 +39,7 @@
 - `apps/web/lib/db/schema.ts` — tipos `OtbnBucket` y `OtbnShare`; columna `otbn_breakdown`.
 - `apps/web/lib/services/otbn.ts` — función pura `buildOtbnBreakdown`; `OtbnResult` gana `breakdown`.
 - `apps/web/lib/services/verification.ts:71-72` — persiste el reparto.
-- `apps/web/components/verificacion/panel-veredicto.tsx` — se le saca el bloque OTBN (pasa a aptitud) y se le extrae el badge.
+- `apps/web/components/verificacion/panel-veredicto.tsx` — se le extrae el badge y se le nombra el eje. El plegado `<details>` del OTBN se conserva entero.
 - `apps/web/components/lotes/detalle-lote.tsx:309` — orden de las secciones del panel.
 - `apps/web/lib/services/document.ts` — `PAYLOAD_VERSION` 1 → 2; `otbn.reparto`.
 - `apps/web/lib/services/document.test.ts` — regresión de huella v1.
@@ -566,49 +566,26 @@ git commit -m "feat(ui): read the OTBN breakdown as hectares with its caveat"
 
 **Files:**
 - Create: `apps/web/components/verificacion/panel-aptitud.tsx`
-- Modify: `apps/web/components/verificacion/panel-veredicto.tsx`
-- Modify: `apps/web/components/lotes/detalle-lote.tsx:10-11` y `:309`
+- Modify: `apps/web/components/verificacion/panel-veredicto.tsx` (dos ediciones puntuales)
+- Modify: `apps/web/components/lotes/detalle-lote.tsx:11` y `:309`
 
 **Interfaces:**
-- Consumes: `filasAptitud`, `CAVEAT_APTITUD` (Task 4); `VERDICT_UI`, `formatFecha` (`lib/ui/verdict.ts`); `LoteVerification.otbnBreakdown` (Task 3).
-- Produces: `PanelAptitud`, y `panel-veredicto.tsx` pasa a exportar `BadgeVeredicto` **y** `PanelVeredicto`.
+- Consumes: `filasAptitud`, `CAVEAT_APTITUD` (Task 4); `VERDICT_UI`, `formatFecha`, `formatHa` (`lib/ui/verdict.ts`); `LoteVerification.otbnBreakdown` (Task 3).
+- Produces: `PanelAptitud`; `panel-veredicto.tsx` pasa a exportar `BadgeVeredicto` **además de** `PanelVeredicto`.
 
-**Por qué el badge se extrae:** los dos ejes tienen que quedar separados en pantalla, y el badge es el titular de los dos —el usuario acaba de apretar «Verificar» y quiere la respuesta arriba—. Con el badge afuera, el orden del panel queda igual al del documento: titular, aptitud, exportación. El bloque OTBN sale de `PanelVeredicto` porque su lugar es la sección de aptitud; los motivos siguen nombrando la categoría en palabras (`OTBN_CATEGORY_I`), así que el fundamento del veredicto no pierde nada.
+**Restricción dura de este task.** `panel-veredicto.tsx` contiene un plegado `<details>` recién construido: la categoría dominante del OTBN y los motivos viven adentro, con un componente `Motivos` de nivel de encabezado configurable y tres comentarios que explican por qué. **Ese plegado se conserva entero.** Los dos ejes conviven así: el reparto en hectáreas es el titular —es lo que mueve el precio— y la categoría dominante con su fundamentación sigue plegada abajo, que es detalle de por qué salió ese veredicto. No se mueve el bloque OTBN, no se toca `Motivos`, no se tocan los comentarios. Las únicas ediciones al archivo son las dos de los Steps 1 y 2.
 
-- [ ] **Step 1: Extraer el badge en `panel-veredicto.tsx`**
+- [ ] **Step 1: Extraer el badge de `panel-veredicto.tsx`**
 
-Reemplazar el bloque del badge (líneas 46-52) por un componente exportado, y dejar `PanelVeredicto` sin él. El archivo completo queda:
+Sacar el `<div>` del badge (líneas 73-79) de adentro de `PanelVeredicto` y declararlo como componente exportado, inmediatamente antes de `export function PanelVeredicto` (línea 58). Insertar:
 
 ```tsx
-import type { LoteVerification } from "@/lib/db/schema"
-import { REASON_COPY, type VerdictReason } from "@/lib/services/verdict"
-import { VERDICT_UI, formatFecha, formatHa, formatPct } from "@/lib/ui/verdict"
-
-function Dato({
-  etiqueta,
-  valor,
-  detalle,
-}: {
-  etiqueta: string
-  valor: string
-  detalle?: string
-}) {
-  return (
-    <div className="border-line border-t py-3 first:border-t-0 first:pt-0">
-      <p className="text-ink-soft text-sm">{etiqueta}</p>
-      <p className="mt-0.5 text-lg font-semibold">{valor}</p>
-      {detalle ? (
-        <p className="text-ink-soft mt-0.5 text-sm leading-snug">{detalle}</p>
-      ) : null}
-    </div>
-  )
-}
-
 /**
  * The headline both axes answer to.
  *
  * Split out of the panel so the aptitude section can sit between it and the
- * export result, in the same order the document prints them.
+ * export result, in the order the document prints them. Nothing else about the
+ * panel moves: the OTBN disclosure below stays where it is.
  */
 export function BadgeVeredicto({
   verificacion,
@@ -629,61 +606,26 @@ export function BadgeVeredicto({
     </div>
   )
 }
+```
 
-/** The export axis: post-cutoff forest loss and why the verdict landed there. */
-export function PanelVeredicto({
-  verificacion,
-}: {
-  verificacion: LoteVerification
-}) {
-  if (verificacion.status !== "ready" || !verificacion.verdict) return null
+Y borrar de `PanelVeredicto` el `<div>` de las líneas 73-79 más la línea en blanco que lo sigue. `const ui = VERDICT_UI[verificacion.verdict]` (línea 65) queda sin uso en `PanelVeredicto`: borrarla también, o lint falla.
 
-  const motivos = (verificacion.reasons as VerdictReason[]) ?? []
+- [ ] **Step 2: Nombrar el eje dentro de `PanelVeredicto`**
 
-  return (
-    <section className="grid gap-5">
+Donde estaba el badge, como primer hijo del `<section className="grid gap-5">`, insertar el encabezado del eje:
+
+```tsx
       <div>
         <h2 className="font-semibold">Qué se puede vender</h2>
         <p className="text-ink-soft mt-1 text-sm leading-relaxed">
           Reglamento (UE) 2023/1115, exigible desde el 30/12/2026.
         </p>
       </div>
-
-      <Dato
-        etiqueta="Pérdida de bosque posterior al 31/12/2020"
-        valor={formatPct(verificacion.forestLossPct)}
-        detalle={
-          verificacion.forestLossHa
-            ? `${formatHa(verificacion.forestLossHa)} ha dentro del lote${
-                verificacion.forestLossFirstYear
-                  ? `, detectadas desde ${verificacion.forestLossFirstYear}`
-                  : ""
-              }`
-            : "No se detectó pérdida dentro del lote."
-        }
-      />
-
-      {motivos.length > 0 ? (
-        <div>
-          <h3 className="font-semibold">Por qué</h3>
-          <ul className="mt-2 grid gap-2">
-            {motivos.map((motivo) => (
-              <li
-                key={motivo}
-                className="border-line text-ink-soft border-l-2 pl-3 text-sm leading-relaxed"
-              >
-                {REASON_COPY[motivo] ?? motivo}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-    </section>
-  )
-}
 ```
 
-- [ ] **Step 2: Crear `panel-aptitud.tsx`**
+Nada más cambia en el archivo. El `<div>` con el `Dato` de pérdida forestal, el `<details>`, el `Motivos` anidado y el bloque `!otbn && motivos.length > 0` quedan exactamente como están.
+
+- [ ] **Step 3: Crear `panel-aptitud.tsx`**
 
 ```tsx
 import type { LoteVerification } from "@/lib/db/schema"
@@ -696,6 +638,9 @@ import { formatHa } from "@/lib/ui/verdict"
  * Deliberately not a traffic light. Collapsing the split back to one colour is
  * exactly what the lookup used to do, and it is the information a purchase
  * turns on: Categoría I cannot be cleared at all, ever.
+ *
+ * The governing category and the reasons behind the verdict stay folded in the
+ * panel below. This answers how much; that one answers why.
  */
 export function PanelAptitud({
   verificacion,
@@ -706,8 +651,6 @@ export function PanelAptitud({
 }) {
   const reparto = verificacion.otbnBreakdown ?? []
   if (reparto.length === 0) return null
-
-  const filas = filasAptitud(reparto)
 
   return (
     <section className="grid gap-4">
@@ -720,7 +663,7 @@ export function PanelAptitud({
       </div>
 
       <ul className="border-line border-t">
-        {filas.map((fila) => (
+        {filasAptitud(reparto).map((fila) => (
           <li
             key={fila.bucket}
             className="border-line grid grid-cols-[auto_1fr_auto] items-baseline gap-x-3 border-b py-3"
@@ -755,7 +698,7 @@ export function PanelAptitud({
 }
 ```
 
-- [ ] **Step 3: Conectar en `detalle-lote.tsx`**
+- [ ] **Step 4: Conectar en `detalle-lote.tsx`**
 
 Reemplazar el import de la línea 11:
 
@@ -779,23 +722,29 @@ Reemplazar la línea 309:
         ) : null}
 ```
 
-- [ ] **Step 4: Verificar**
+- [ ] **Step 5: Verificar**
 
 Run: `pnpm --filter web typecheck && pnpm --filter web lint && pnpm --filter web test`
-Expected: PASS en los tres.
+Expected: PASS en los tres. 259 tests verdes más los que agregaron las Tasks 1-4.
 
-Verificación manual: `pnpm --filter web dev`, entrar a un lote verificado, confirmar que aparecen las tres piezas en orden —badge, «Qué se puede hacer», «Qué se puede vender»— y que el caveat se lee en ámbar. Si la clase `border-alerta` / `text-alerta` no existe en el tema, usar la misma que ya usa `fuentes-consultadas.tsx` para las advertencias de fuente.
+Verificación manual (no hay tests de componentes en este repo):
+1. `pnpm --filter web dev`, entrar a un lote verificado.
+2. Confirmar el orden: badge de veredicto → «Qué se puede hacer» con sus filas → «Qué se puede vender».
+3. **Confirmar que el plegado «Ordenamiento de Bosques Nativos» sigue ahí, plegado por defecto, con su marcador nativo, y que abre.** Si desapareció o perdió el marcador, el Step 1 o el 2 se pasó de largo: revertir y rehacerlos como ediciones puntuales.
+4. Confirmar que el caveat se lee en ámbar. Si `border-alerta` / `text-alerta` no existen en el tema, usar las mismas clases que ya usa `fuentes-consultadas.tsx` para las advertencias de fuente.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
+
+Rutas explícitas, nunca `git add -A`:
 
 ```bash
-git add apps/web/components/verificacion apps/web/components/lotes/detalle-lote.tsx
-git commit -m "feat(lotes): show what the land allows beside what it can export"
+git add apps/web/components/verificacion/panel-aptitud.tsx \
+        apps/web/components/verificacion/panel-veredicto.tsx \
+        apps/web/components/lotes/detalle-lote.tsx
+git commit -m "feat(lotes): show what the land allows above what it can export"
 ```
 
 ---
-
-## Tajo 2 — El informe
 
 ### Task 6: Fijar la huella v1 antes de tocar nada
 

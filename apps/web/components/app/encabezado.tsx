@@ -35,7 +35,7 @@ export function Encabezado({ nombre }: { nombre: string }) {
           type="button"
           onClick={salir}
           disabled={saliendo}
-          className="text-ink text-sm font-semibold underline underline-offset-4 disabled:opacity-50"
+          className="text-ink focus-ink text-sm font-semibold underline underline-offset-4 disabled:opacity-50"
         >
           {saliendo ? "Saliendo…" : "Salir"}
         </button>

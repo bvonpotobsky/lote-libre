@@ -189,6 +189,18 @@ html {
   min-height: 3.25rem;
 }
 
+/* The focus ring is ours, not the browser's. Ink at full strength with a gap of
+   paper around it: drawn on the element's own edge it would vanish into a solid
+   ink button, and at partial opacity it would vanish into the sun. `outline`
+   rather than `ring` because the gap has to be a real hole — a box-shadow
+   offset paints its own colour, and the one it defaults to is not this paper. */
+@utility focus-ink {
+  &:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

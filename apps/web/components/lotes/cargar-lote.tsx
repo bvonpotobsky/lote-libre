@@ -138,6 +138,7 @@ export function CargarLote() {
          */}
         <Mapa
           className="absolute inset-0 h-full w-full"
+          etiqueta="Mapa para trazar el lote"
           modo="dibujar"
           editandoId="nuevo"
           lotes={
@@ -201,7 +202,7 @@ export function CargarLote() {
           <button
             type="button"
             onClick={() => archivoRef.current?.click()}
-            className="flex tap w-full items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink"
+            className="flex tap focus-ink w-full items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink"
             autoFocus={modoInicial === "importar"}
           >
             Importar KML o GeoJSON
@@ -273,7 +274,7 @@ export function CargarLote() {
         <button
           type="submit"
           disabled={guardando}
-          className="mt-auto flex tap items-center justify-center rounded-md bg-ink px-4 text-base font-semibold text-paper disabled:opacity-50"
+          className="mt-auto flex tap focus-ink items-center justify-center rounded-md bg-ink px-4 text-base font-semibold text-paper disabled:opacity-50"
         >
           {guardando ? "Guardando…" : "Guardar lote"}
         </button>

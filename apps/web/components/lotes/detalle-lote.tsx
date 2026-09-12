@@ -162,6 +162,7 @@ export function DetalleLote({
       <div className="relative min-h-[40svh] flex-1 lg:min-h-0">
         <Mapa
           className="absolute inset-0 h-full w-full"
+          etiqueta={`Mapa de ${lote.nombre}`}
           modo={editando ? "editar" : "ver"}
           editandoId={editando ? lote.id : null}
           lotes={[
@@ -248,7 +249,7 @@ export function DetalleLote({
                 type="button"
                 onClick={guardarGeometria}
                 disabled={guardando || borrador === null}
-                className="flex tap items-center justify-center rounded-md bg-ink px-4 text-base font-semibold text-paper disabled:opacity-50"
+                className="flex tap focus-ink items-center justify-center rounded-md bg-ink px-4 text-base font-semibold text-paper disabled:opacity-50"
               >
                 {guardando ? "Guardando…" : "Guardar y volver a verificar"}
               </button>
@@ -256,7 +257,7 @@ export function DetalleLote({
                 type="button"
                 onClick={cancelarEdicion}
                 disabled={guardando}
-                className="flex tap items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink disabled:opacity-50"
+                className="flex tap focus-ink items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -266,7 +267,7 @@ export function DetalleLote({
           <button
             type="button"
             onClick={() => setEditando(true)}
-            className="flex tap items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink"
+            className="flex tap focus-ink items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink"
           >
             Editar el contorno
           </button>
@@ -307,7 +308,7 @@ export function DetalleLote({
             type="button"
             onClick={verificar}
             disabled={verificando}
-            className="flex tap items-center justify-center rounded-md bg-ink px-4 text-base font-semibold text-paper disabled:opacity-50"
+            className="flex tap focus-ink items-center justify-center rounded-md bg-ink px-4 text-base font-semibold text-paper disabled:opacity-50"
           >
             {verificando
               ? "Verificando…"
@@ -340,7 +341,7 @@ export function DetalleLote({
         {lista && !editando ? (
           <a
             href={`/api/lotes/${lote.id}/document`}
-            className="mt-auto flex tap items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink"
+            className="mt-auto flex tap focus-ink items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink"
           >
             Descargar el documento
           </a>

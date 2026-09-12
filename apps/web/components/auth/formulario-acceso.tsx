@@ -155,7 +155,7 @@ export function FormularioAcceso({ modo }: { modo: Modo }) {
         {copy.pieTexto}{" "}
         <Link
           href={copy.pieHref}
-          className="text-ink font-semibold underline underline-offset-4"
+          className="text-ink focus-ink font-semibold underline underline-offset-4"
         >
           {copy.pieAccion}
         </Link>

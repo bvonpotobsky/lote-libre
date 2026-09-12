@@ -10,11 +10,19 @@ import {
   TerraDraw,
   TerraDrawPolygonMode,
   TerraDrawRenderMode,
+  TerraDrawSelectMode,
+  ValidateNotSelfIntersecting,
 } from "terra-draw"
 import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter"
 
 import "maplibre-gl/dist/maplibre-gl.css"
 
+import {
+  aFeatureDeDibujo,
+  firmaDeGeometria,
+  lotesVisibles,
+  type ModoMapa,
+} from "@/lib/geo/drawing"
 import {
   boundsOf,
   toFeatureCollection,
@@ -23,6 +31,32 @@ import {
 } from "@/lib/geo/map-style"
 import { VERDICT_UI } from "@/lib/ui/verdict"
 
+/**
+ * MapLibre 6 requires this under a bundler: it cannot resolve its own worker
+ * path, and without the call the worker never answers. Every GeoJSON source
+ * then hangs with `_isUpdatingWorker` stuck true and no vector layer ever
+ * paints — silently, because the raster basemap does not use the worker and
+ * keeps rendering, and nothing is logged.
+ *
+ * The file is staged into public/maplibre by scripts/copy-maplibre-worker.ts,
+ * which runs from predev and prebuild.
+ *
+ * Module scope, not inside the effect: it has to happen before any `new Map()`,
+ * and calling it once per mount would be pointless work. The file is only
+ * reached through `dynamic(ssr: false)`, so this never runs on the server.
+ */
+maplibre.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs")
+
+/**
+ * What the map reports back after a trace or an adjustment.
+ *
+ * The failure code is the same string the API uses, so a caller keys one copy
+ * table for what the browser refused and what the server refused.
+ */
+export type ResultadoDibujo =
+  | { ok: true; geometry: GeoJSON.Polygon; nuevo: boolean }
+  | { ok: false; code: "GEOMETRY_SELF_INTERSECTING" }
+
 export type MapaProps = {
   /** Every lote to draw. One for the detail screen, many for the overview. */
   lotes?: MapLote[]
@@ -30,8 +64,19 @@ export type MapaProps = {
   seleccionadoId?: string | null
   /** When provided, tapping a lote reports which one. */
   onSeleccionar?: (id: string) => void
-  /** When provided, the draw tool is enabled and reports what was traced. */
-  onDibujar?: (geometry: GeoJSON.Polygon | null) => void
+  /**
+   * "ver" reads; "dibujar" traces a new polygon; "editar" reshapes an existing
+   * one. A prop rather than the old mount-time flag, because the detail screen
+   * has to cross from reading to editing without rebuilding the map.
+   */
+  modo?: ModoMapa
+  /**
+   * Which lote Terra Draw owns while drawing or editing. That lote is withheld
+   * from this component's own source so the same field is never painted twice.
+   */
+  editandoId?: string | null
+  /** Fires on every committed trace or adjustment, at pointer-up. */
+  onGeometria?: (resultado: ResultadoDibujo) => void
   className?: string
 }
 
@@ -52,6 +97,17 @@ const COLECCION_VACIA: GeoJSON.FeatureCollection = {
   features: [],
 }
 
+/**
+ * The colour of a polygon under the pointer — `--color-paper`, the same value
+ * `NO_VERDICT_COLOR` carries in map-style.ts.
+ *
+ * A lote being drawn or reshaped has no standing verdict: either it does not
+ * exist yet, or the edit is about to invalidate the one it had. Showing it in
+ * the old verdict's colour would be claiming something about a shape nobody
+ * has checked.
+ */
+const COLOR_DIBUJO = "#fafaf8"
+
 /** How a lote announces itself on the map, in words and not only in colour. */
 function etiquetaDe(lote: MapLote): { texto: string; clases: string } {
   if (!lote.verdict) {
@@ -65,7 +121,9 @@ export default function MapaMapLibre({
   lotes = [],
   seleccionadoId,
   onSeleccionar,
-  onDibujar,
+  modo = "ver",
+  editandoId = null,
+  onGeometria,
   className,
 }: MapaProps) {
   const contenedor = useRef<HTMLDivElement>(null)
@@ -75,15 +133,35 @@ export default function MapaMapLibre({
   const listoRef = useRef(false)
   // Framing is a one-off per set of lotes, never a per-render reflex: re-fitting
   // while someone is panning yanks the map out from under them.
-  const cantidadPrevia = useRef(-1)
+  const idsPrevios = useRef("")
+
+  /**
+   * The newest props, readable from callbacks that were created earlier.
+   *
+   * `pintar` used to be called from inside `on("load")`, where it closed over
+   * the mount render's `lotes`; anything that arrived in between was dropped
+   * until the next change. Reading through a ref means load always paints what
+   * is current.
+   */
+  const datosRef = useRef({ lotes, modo, editandoId })
+  datosRef.current = { lotes, modo, editandoId }
 
   // Held in refs so changing a callback never tears the map down.
-  const onDibujarRef = useRef(onDibujar)
-  onDibujarRef.current = onDibujar
+  const onGeometriaRef = useRef(onGeometria)
+  onGeometriaRef.current = onGeometria
   const onSeleccionarRef = useRef(onSeleccionar)
   onSeleccionarRef.current = onSeleccionar
-  // Whether drawing is available is fixed at mount, like it was under Leaflet.
-  const dibujable = useRef(Boolean(onDibujar)).current
+
+  /** Terra Draw's own id for the polygon it currently holds, if any. */
+  const borradorIdRef = useRef<string | number | null>(null)
+  /**
+   * The last geometry this map reported upward.
+   *
+   * The parent stores it and feeds it straight back through `lotes`. Without
+   * this, that echo would be read as new data and re-loaded into the draw
+   * store, snapping the polygon back from wherever the pointer just left it.
+   */
+  const reportadoRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!contenedor.current || mapaRef.current) return
@@ -114,11 +192,11 @@ export default function MapaMapLibre({
     // Esri's terms require the credit; it is not decoration.
     mapa.addControl(
       new maplibre.AttributionControl({ compact: true }),
-      "bottom-right",
+      "bottom-right"
     )
     mapa.addControl(
       new maplibre.NavigationControl({ showCompass: false }),
-      "top-left",
+      "top-left"
     )
 
     mapa.on("load", () => {
@@ -153,10 +231,14 @@ export default function MapaMapLibre({
         mapa.getCanvas().style.cursor = ""
       })
 
-      if (dibujable) iniciarDibujo(mapa)
+      // Built unconditionally and parked in "quieto". The detail screen starts
+      // read-only and has to reach editing without rebuilding the map, and an
+      // idle Terra Draw renders nothing until it is given something to hold.
+      iniciarDibujo(mapa)
 
       listoRef.current = true
       pintar()
+      sincronizarModo()
     })
 
     return () => {
@@ -168,23 +250,73 @@ export default function MapaMapLibre({
       mapa.remove()
       mapaRef.current = null
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function iniciarDibujo(mapa: maplibre.Map) {
+    /*
+     * Refused while the pointer is still down, not after releasing it. The
+     * server checks again in validatePolygon — this one exists so the producer
+     * finds out during the drag, which is when they can still fix it.
+     *
+     * Only self-intersection: the area limits are a property of the finished
+     * lote, and enforcing them mid-trace would reject a two-vertex ring for
+     * being too small while it is still being drawn.
+     */
+    const validar = (
+      rasgo: Parameters<typeof ValidateNotSelfIntersecting>[0]
+    ) => ValidateNotSelfIntersecting(rasgo)
+
     const dibujo = new TerraDraw({
       adapter: new TerraDrawMapLibreGLAdapter({ map: mapa }),
       modes: [
         new TerraDrawPolygonMode({
+          validation: validar,
           styles: {
-            fillColor: "#fafaf8",
+            fillColor: COLOR_DIBUJO,
             fillOpacity: 0.25,
-            outlineColor: "#fafaf8",
+            outlineColor: COLOR_DIBUJO,
             outlineWidth: 3,
-            closingPointColor: "#fafaf8",
+            closingPointColor: COLOR_DIBUJO,
             closingPointWidth: 5,
             closingPointOutlineColor: "#000000",
             closingPointOutlineWidth: 1,
+          },
+        }),
+        new TerraDrawSelectMode({
+          flags: {
+            // Keyed by the mode that produced the feature, not by geometry type.
+            polygon: {
+              feature: {
+                validation: validar,
+                draggable: true,
+                coordinates: {
+                  draggable: true,
+                  midpoints: { draggable: true },
+                  deletable: true,
+                },
+              },
+            },
+          },
+          /*
+           * Same fill, same outline, same widths as the polygon mode: entering
+           * edit must not make the field look like a different field. All that
+           * appears is the handles.
+           *
+           * Deliberately no rotateable/scaleable: a boundary on the ground is
+           * traced, never spun or scaled as a whole.
+           */
+          styles: {
+            selectedPolygonColor: COLOR_DIBUJO,
+            selectedPolygonFillOpacity: 0.25,
+            selectedPolygonOutlineColor: COLOR_DIBUJO,
+            selectedPolygonOutlineWidth: 3,
+            selectionPointColor: COLOR_DIBUJO,
+            selectionPointOutlineColor: "#000000",
+            selectionPointOutlineWidth: 1,
+            selectionPointWidth: 6,
+            midPointColor: COLOR_DIBUJO,
+            midPointOutlineColor: "#000000",
+            midPointWidth: 4,
           },
         }),
         // Terra Draw needs somewhere inert to sit when drawing is off.
@@ -193,33 +325,43 @@ export default function MapaMapLibre({
     })
 
     dibujo.start()
-    dibujo.setMode("polygon")
+    dibujo.setMode("quieto")
 
     dibujo.on("finish", (id, contexto) => {
-      // `finish` also fires for drags and vertex edits; only a completed trace
-      // is a new lote.
-      if (contexto.action !== "draw") return
-
-      const rasgo = dibujo
-        .getSnapshot()
-        .find((candidato) => candidato.id === id)
+      const rasgo = dibujo.getSnapshotFeature(id)
       if (!rasgo || rasgo.geometry.type !== "Polygon") return
 
       const geometry = rasgo.geometry as GeoJSON.Polygon
 
-      // leaflet-draw refused self-intersections while tracing. Terra Draw does
-      // not, so we check once here — the server checks again in validatePolygon,
-      // but the producer deserves to hear it now, not after submitting.
+      /*
+       * `finish` fires for every commit: a completed trace, a dragged vertex, a
+       * deleted one, an inserted midpoint. All of them are edits worth
+       * reporting — the old `action !== "draw"` guard here is exactly what made
+       * the geometry write-once.
+       */
       if (kinks(turfPolygon(geometry.coordinates)).features.length > 0) {
-        dibujo.removeFeatures([id])
-        onDibujarRef.current?.(null)
+        onGeometriaRef.current?.({
+          ok: false,
+          code: "GEOMETRY_SELF_INTERSECTING",
+        })
         return
       }
 
-      // Hand the polygon over and clear the draft, so the lote exists exactly
-      // once: in our own source, styled like every other lote.
-      dibujo.removeFeatures([id])
-      onDibujarRef.current?.(geometry)
+      const nuevo = contexto.action === "draw"
+      if (nuevo) {
+        /*
+         * The trace used to be deleted here and re-rendered as a static layer,
+         * which is why a fresh lote could not be adjusted. It stays in the draw
+         * store now, selected, so a vertex that landed wrong can be nudged
+         * instead of redrawing the whole field.
+         */
+        borradorIdRef.current = id
+        dibujo.setMode("select")
+        dibujo.selectFeature(id)
+      }
+
+      reportadoRef.current = firmaDeGeometria(geometry)
+      onGeometriaRef.current?.({ ok: true, geometry, nuevo })
     })
 
     dibujoRef.current = dibujo
@@ -230,15 +372,21 @@ export default function MapaMapLibre({
     const mapa = mapaRef.current
     if (!mapa || !listoRef.current) return
 
+    const { lotes, modo, editandoId } = datosRef.current
+    // Whatever Terra Draw is holding is Terra Draw's to paint. Leaving it here
+    // too would draw the same field twice, and only one of the two would follow
+    // the pointer.
+    const visibles = lotesVisibles(lotes, modo === "ver" ? null : editandoId)
+
     // `GeoJSONSource` exists in MapLibre's types but is not exported, so the
     // narrowest honest cast is the one method we call.
     const fuente = mapa.getSource(FUENTE_LOTES) as
       | { setData: (data: GeoJSON.FeatureCollection) => void }
       | undefined
-    fuente?.setData(toFeatureCollection(lotes))
+    fuente?.setData(toFeatureCollection(visibles))
 
     marcadoresRef.current.forEach((marcador) => marcador.remove())
-    marcadoresRef.current = lotes.map((lote) => {
+    marcadoresRef.current = visibles.map((lote) => {
       const { texto, clases } = etiquetaDe(lote)
       const seleccionar = onSeleccionarRef.current
       const base = `${clases} rounded px-2 py-1 text-center text-xs font-bold leading-tight shadow-[0_1px_6px_rgba(0,0,0,0.45)]`
@@ -270,11 +418,84 @@ export default function MapaMapLibre({
         .addTo(mapa)
     })
 
-    const limites = boundsOf(lotes)
-    if (limites && cantidadPrevia.current !== lotes.length) {
+    /*
+     * Re-frame when the set of lotes changes, never when one of them merely
+     * changes shape. The old count-based gate broke the moment editing hid a
+     * lote: the visible count moved, and the map yanked itself mid-drag.
+     */
+    const ids = lotes.map((lote) => lote.id).join(",")
+    const limites = boundsOf(visibles)
+    if (limites && modo === "ver" && idsPrevios.current !== ids) {
       mapa.fitBounds(limites, { padding: 48, maxZoom: 15 })
     }
-    cantidadPrevia.current = lotes.length
+    idsPrevios.current = ids
+  }
+
+  /**
+   * Puts Terra Draw in the state the props ask for.
+   *
+   * Runs on every relevant change rather than only on transitions, so it has to
+   * be idempotent: each branch checks what the store already holds before
+   * touching it.
+   */
+  function sincronizarModo() {
+    const dibujo = dibujoRef.current
+    if (!dibujo || !listoRef.current) return
+
+    const { lotes, modo, editandoId } = datosRef.current
+
+    if (modo === "ver") {
+      if (borradorIdRef.current !== null) {
+        dibujo.clear()
+        borradorIdRef.current = null
+        reportadoRef.current = null
+      }
+      if (dibujo.getMode() !== "quieto") dibujo.setMode("quieto")
+      return
+    }
+
+    const enEdicion = editandoId
+      ? lotes.find((lote) => lote.id === editandoId)
+      : undefined
+
+    // Nothing to hold yet: offer a fresh trace.
+    if (!enEdicion) {
+      if (borradorIdRef.current !== null) {
+        dibujo.clear()
+        borradorIdRef.current = null
+        reportadoRef.current = null
+      }
+      if (dibujo.getMode() !== "polygon") dibujo.setMode("polygon")
+      return
+    }
+
+    // Our own edit coming back as a prop. Re-loading it would snap the polygon
+    // back to where the pointer no longer is.
+    if (firmaDeGeometria(enEdicion.geometry) === reportadoRef.current) return
+
+    if (borradorIdRef.current !== null) {
+      dibujo.clear()
+      borradorIdRef.current = null
+    }
+
+    /*
+     * addFeatures reports a refusal in its return value instead of throwing. A
+     * stored polygon that fails the validator would otherwise leave the
+     * producer pressing "Editar" and watching nothing happen.
+     */
+    const [resultado] = dibujo.addFeatures([aFeatureDeDibujo(enEdicion)])
+    if (!resultado?.valid) {
+      onGeometriaRef.current?.({
+        ok: false,
+        code: "GEOMETRY_SELF_INTERSECTING",
+      })
+      return
+    }
+
+    borradorIdRef.current = resultado.id ?? null
+    reportadoRef.current = firmaDeGeometria(enEdicion.geometry)
+    if (dibujo.getMode() !== "select") dibujo.setMode("select")
+    if (resultado.id !== undefined) dibujo.selectFeature(resultado.id)
   }
 
   /*
@@ -285,15 +506,15 @@ export default function MapaMapLibre({
   const firma = useMemo(
     () =>
       JSON.stringify(
-        lotes.map((lote) => [lote.id, lote.verdict, lote.geometry.coordinates]),
+        lotes.map((lote) => [lote.id, lote.verdict, lote.geometry.coordinates])
       ),
-    [lotes],
+    [lotes]
   )
 
   useEffect(() => {
     pintar()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firma])
+    sincronizarModo()
+  }, [firma, modo, editandoId])
 
   // Frame whichever lote was picked from the list.
   useEffect(() => {
@@ -328,7 +549,7 @@ function centroDe(geometry: GeoJSON.Polygon): [number, number] {
   if (anillo.length === 0) return CENTRO_INICIAL
   const total = anillo.reduce<[number, number]>(
     (suma, [lon, lat]) => [suma[0] + (lon ?? 0), suma[1] + (lat ?? 0)],
-    [0, 0],
+    [0, 0]
   )
   return [total[0] / anillo.length, total[1] / anillo.length]
 }

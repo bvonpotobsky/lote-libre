@@ -53,3 +53,6 @@ next-env.d.ts
 
 # artefactos de pruebas con navegador
 .playwright-mcp/
+
+# worker de MapLibre: se copia desde node_modules en predev/prebuild
+apps/web/public/maplibre/

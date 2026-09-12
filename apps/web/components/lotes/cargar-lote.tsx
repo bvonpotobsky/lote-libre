@@ -127,13 +127,19 @@ export function CargarLote() {
     <div className="flex h-[calc(100svh-3.5rem)] flex-col lg:flex-row">
       <div className="relative min-h-[42svh] flex-1 lg:min-h-0">
         {/*
-         * Under Leaflet this had to pass `null` while drawing, because the draw
-         * control and the rendered geometry shared one FeatureGroup. Terra Draw
-         * keeps its own layers and hands the finished polygon over, so the lote
-         * is simply drawn — one polygon, one owner, no special case.
+         * One polygon, one owner — but the owner is Terra Draw while the lote
+         * is being shaped, and this component's source once it is settled. The
+         * map withholds whatever `editandoId` names from its own layers, so
+         * nothing is ever painted twice.
+         *
+         * The same path makes an imported KML adjustable: it arrives as
+         * `geometry` exactly like a traced one, and is loaded into the draw
+         * store the same way.
          */}
         <Mapa
           className="absolute inset-0 h-full w-full"
+          modo="dibujar"
+          editandoId="nuevo"
           lotes={
             geometry
               ? [
@@ -147,29 +153,34 @@ export function CargarLote() {
                 ]
               : []
           }
-          onDibujar={(dibujado) => {
-            setGeometry(dibujado)
-            setOrigen("draw")
-            setAviso(
-              dibujado === null
-                ? {
-                    mensaje: "Los lados del lote se cruzan.",
-                    sugerencia:
-                      "Volvé a marcarlo sin que el contorno se corte a sí mismo.",
-                  }
-                : null,
-            )
+          onGeometria={(resultado) => {
+            if (!resultado.ok) {
+              // Keep whatever was already there. A rejected trace used to wipe
+              // an imported polygon and relabel its origin as a drawing.
+              setAviso({
+                mensaje: "Los lados del lote se cruzan.",
+                sugerencia:
+                  "Volvé a marcarlo sin que el contorno se corte a sí mismo.",
+              })
+              return
+            }
+
+            setGeometry(resultado.geometry)
+            // Adjusting an imported polygon does not turn it into a drawing:
+            // `source` records where the lote came from, and the PDF says so.
+            if (resultado.nuevo) setOrigen("draw")
+            setAviso(null)
           }}
         />
       </div>
 
       <form
         onSubmit={guardar}
-        className="border-line flex flex-col gap-5 overflow-y-auto border-t bg-white p-4 sm:p-6 lg:w-[26rem] lg:border-t-0 lg:border-l"
+        className="flex flex-col gap-5 overflow-y-auto border-t border-line bg-white p-4 sm:p-6 lg:w-[26rem] lg:border-t-0 lg:border-l"
       >
         <div>
           <h1 className="text-xl font-bold tracking-tight">Cargar un lote</h1>
-          <p className="text-ink-soft mt-1 text-sm leading-relaxed">
+          <p className="mt-1 text-sm leading-relaxed text-ink-soft">
             Tocá el mapa para ir marcando las esquinas del lote, y cerralo con
             doble toque sobre la última. O importá el archivo que ya tenés.
           </p>
@@ -190,7 +201,7 @@ export function CargarLote() {
           <button
             type="button"
             onClick={() => archivoRef.current?.click()}
-            className="border-ink text-ink tap flex w-full items-center justify-center rounded-md border-2 px-4 text-base font-semibold"
+            className="flex tap w-full items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink"
             autoFocus={modoInicial === "importar"}
           >
             Importar KML o GeoJSON
@@ -198,19 +209,19 @@ export function CargarLote() {
         </div>
 
         <div
-          className={`rounded-md px-4 py-3 ${superficieHa ? "bg-field" : "border-line border border-dashed"}`}
+          className={`rounded-md px-4 py-3 ${superficieHa ? "bg-field" : "border border-dashed border-line"}`}
         >
           {superficieHa ? (
             <>
               <p className="text-2xl font-bold">{formatHa(superficieHa)} ha</p>
-              <p className="text-ink-soft text-sm">
+              <p className="text-sm text-ink-soft">
                 {origen === "draw"
                   ? "Dibujado sobre el mapa"
                   : `Importado desde ${origen === "kml" ? "KML" : "GeoJSON"}`}
               </p>
             </>
           ) : (
-            <p className="text-ink-soft text-sm">
+            <p className="text-sm text-ink-soft">
               La superficie aparece acá cuando marques el lote.
             </p>
           )}
@@ -232,7 +243,7 @@ export function CargarLote() {
 
         <div className="grid gap-2">
           <Label htmlFor="renspa" className="text-base">
-            RENSPA <span className="text-ink-soft font-normal">(opcional)</span>
+            RENSPA <span className="font-normal text-ink-soft">(opcional)</span>
           </Label>
           <Input
             id="renspa"
@@ -241,7 +252,7 @@ export function CargarLote() {
             placeholder="01.234.5.67890/AB"
             className="tap text-base"
           />
-          <p className="text-ink-soft text-sm">
+          <p className="text-sm text-ink-soft">
             Se imprime en el documento tal cual lo escribas. No lo validamos
             contra SENASA.
           </p>
@@ -250,11 +261,11 @@ export function CargarLote() {
         {aviso ? (
           <div
             role="alert"
-            className="border-rojo border-l-4 bg-white py-2 pl-3 text-sm"
+            className="border-l-4 border-rojo bg-white py-2 pl-3 text-sm"
           >
-            <p className="text-rojo font-semibold">{aviso.mensaje}</p>
+            <p className="font-semibold text-rojo">{aviso.mensaje}</p>
             {aviso.sugerencia ? (
-              <p className="text-ink-soft mt-1">{aviso.sugerencia}</p>
+              <p className="mt-1 text-ink-soft">{aviso.sugerencia}</p>
             ) : null}
           </div>
         ) : null}
@@ -262,7 +273,7 @@ export function CargarLote() {
         <button
           type="submit"
           disabled={guardando}
-          className="bg-ink text-paper tap mt-auto flex items-center justify-center rounded-md px-4 text-base font-semibold disabled:opacity-50"
+          className="mt-auto flex tap items-center justify-center rounded-md bg-ink px-4 text-base font-semibold text-paper disabled:opacity-50"
         >
           {guardando ? "Guardando…" : "Guardar lote"}
         </button>

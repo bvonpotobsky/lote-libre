@@ -10,6 +10,7 @@
     "maplibre:worker": "tsx scripts/copy-maplibre-worker.ts",
     "build:landing": "tsx --env-file-if-exists=.env.local scripts/build-landing-assets.ts",
     "build:marca": "tsx scripts/build-marca.ts",
+    "build:zonas": "tsx scripts/build-zonas.ts",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",

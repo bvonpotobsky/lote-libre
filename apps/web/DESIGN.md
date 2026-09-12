@@ -690,10 +690,21 @@ feedback.
 
 ### Comparador
 
-Marco cuadrado con borde de 1 px sobre fondo negro, dos imágenes superpuestas y
-un `clip-path: inset()` manejado por porcentaje. El divisor es una barra blanca
-de 2 px con un anillo negro de 1 px, `aria-hidden`. Las dos esquinas superiores
+Marco con borde de 1 px sobre fondo negro, dos imágenes superpuestas y un
+`clip-path: inset()` manejado por porcentaje. El divisor es una barra blanca de
+2 px con un anillo negro de 1 px, `aria-hidden`. Las dos esquinas superiores
 llevan chips de 0,75 rem peso 600 en blanco sobre negro al 70 %.
+
+**El marco no es cuadrado: toma la proporción del lote.** El `aspect-ratio` sale
+de las dimensiones del ráster, que se recortan al bounding box del lote medido
+en metros, y las imágenes van con `object-contain`. Un marco cuadrado estiraba
+un lote alargado hasta que dejaba de coincidir con el mapa de arriba, y el
+`object-cover` que lo acompañaba recortaba evidencia. Mientras las imágenes
+cargan, el placeholder usa esa misma proporción para que nada salte.
+
+Arriba, en la fila del `h2`, va un único enlace de texto que alterna entre color
+real y NDVI. No es un segmented control: son dos estados, y el que no se está
+mirando es la etiqueta de la acción.
 
 El control es un `<input type="range">` **nativo, sin ningún estilo de thumb**,
 con `accent-color` en tinta y una fila táctil de 44 px. Funciona con pulgar, con
@@ -866,6 +877,11 @@ mal es el PNG: se regenera, no se mueve el SVG.
   que corra a pesar de `prefers-reduced-motion`, que es exactamente al revés de
   lo que pide la preferencia. El vuelo de 800 ms ya se acorta a 0 cuando alguien
   la tiene puesta.
+- **Don't** dar por aislado un control flotante sobre el mapa por ser hermano del
+  contenedor de MapLibre. Eso corta la propagación, no el redireccionamiento: un
+  elemento que se desmonta en su propio `pointerdown` deja que el `pointerup` se
+  vuelva a resolver contra el canvas, y Terra Draw lo lee como un vértice. Lo que
+  lo evita es `ignoreMismatchedPointerEvents` en el adapter.
 - **Don't** introducir una segunda familia tipográfica ni un tercer peso. Archivo,
   600 y 700.
 - **Don't** escribir en mayúsculas sostenidas ni abrir el tracking. No existe en

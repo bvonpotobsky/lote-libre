@@ -167,7 +167,7 @@ export function DetalleLote({
   const veredicto = lista && verificacion?.verdict ? verificacion : null
 
   return (
-    <div className="flex min-h-[calc(100svh-3.5rem)] flex-col lg:flex-row">
+    <div className="flex min-h-[calc(100svh-3.5rem)] flex-col lg:h-[calc(100svh-3.5rem)] lg:min-h-0 lg:flex-row">
       <div className="relative min-h-[40svh] flex-1 lg:min-h-0">
         <Mapa
           className="absolute inset-0 h-full w-full"
@@ -199,17 +199,35 @@ export function DetalleLote({
       </div>
 
       <aside className="flex w-full flex-col gap-6 border-t border-line bg-white p-4 sm:p-6 lg:w-[28rem] lg:overflow-y-auto lg:border-t-0 lg:border-l">
-        <div>
-          <h1 className="text-2xl leading-tight font-bold tracking-tight">
-            {lote.nombre}
-          </h1>
-          <p className="mt-1 text-sm text-ink-soft">
-            {formatHa(lote.areaHa)} ha · {nombreProvincia(lote.provincia)}
-            {lote.renspa ? ` · RENSPA ${lote.renspa}` : ""}
-          </p>
-          <p className="mt-0.5 text-sm text-ink-soft">
-            {lote.centroidLat.toFixed(5)}, {lote.centroidLon.toFixed(5)}
-          </p>
+        {/*
+         * The action rides alongside the title rather than under it: those two
+         * lines it used to occupy are what pushed the verdict below the fold.
+         * `flex-wrap` is the escape hatch — a lote named in one very long word
+         * drops the button to its own line instead of crushing it.
+         */}
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+          <div>
+            <h1 className="text-2xl leading-tight font-bold tracking-tight">
+              {lote.nombre}
+            </h1>
+            <p className="mt-1 text-sm text-ink-soft">
+              {formatHa(lote.areaHa)} ha · {nombreProvincia(lote.provincia)}
+              {lote.renspa ? ` · RENSPA ${lote.renspa}` : ""}
+            </p>
+            <p className="mt-0.5 text-sm text-ink-soft">
+              {lote.centroidLat.toFixed(5)}, {lote.centroidLon.toFixed(5)}
+            </p>
+          </div>
+
+          {editando ? null : (
+            <button
+              type="button"
+              onClick={() => setEditando(true)}
+              className="flex tap focus-ink shrink-0 items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink"
+            >
+              Editar el contorno
+            </button>
+          )}
         </div>
 
         {editando ? (
@@ -272,15 +290,7 @@ export function DetalleLote({
               </button>
             </div>
           </section>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setEditando(true)}
-            className="flex tap focus-ink items-center justify-center rounded-md border-2 border-ink px-4 text-base font-semibold text-ink"
-          >
-            Editar el contorno
-          </button>
-        )}
+        ) : null}
 
         {vencida && !editando ? (
           <div className="border-l-4 border-amarillo bg-white py-3 pl-3">
